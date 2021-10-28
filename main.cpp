@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
 
 	/* config area */
 	const char* host_name = from_console ? "" : argc < 3 ? "itechchallenge.dyndns.org" : argv[argc-2];
-	const unsigned short port = from_console ? 0 : (argc < 3 && argv[argc-1][0]) ? 11223 : std::atoi(argv[argc-1]);
+	const unsigned short port = from_console ? 0 : (argc < 3 && argv[argc-1][0]) ? 11224 : std::atoi(argv[argc-1]);
 	const char token[] = "QUe7rUkh";
 
 	try {

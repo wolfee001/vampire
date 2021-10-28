@@ -1,5 +1,17 @@
 [requires]
 boost/1.70.0
+imgui/1.85
+glfw/3.3.2
+glew/2.1.0
+stb/cci.20210713
 
 [options]
 boost:header_only=True
+glew:shared=False
+
+[imports]
+res/bindings, imgui_impl_glfw.cpp -> ./bindings
+res/bindings, imgui_impl_opengl3.cpp -> ./bindings
+res/bindings, imgui_impl_glfw.h -> ./bindings
+res/bindings, imgui_impl_opengl3.h -> ./bindings
+res/bindings, imgui_impl_opengl3_loader.h -> ./bindings

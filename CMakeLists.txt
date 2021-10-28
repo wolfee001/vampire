@@ -6,7 +6,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-#--------------
+#-------------- SETUPS
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)
 
@@ -27,14 +27,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(MAKE_DIRECTORY target)
 #--------------
 
+#-------------- NORMAL BUILD
 add_library(libmagic usual_magic.cpp)
 target_link_libraries(libmagic
     PUBLIC project_options
     PRIVATE CONAN_PKG::boost
 )
 
-add_library(libvampire solver.cpp)
-target_link_libraries(libvampire
+add_library(libsolver solver.cpp)
+target_link_libraries(libsolver
     PUBLIC project_options
     PRIVATE project_warnings
     PRIVATE libmagic
@@ -43,5 +44,56 @@ target_link_libraries(libvampire
 add_executable(vampire main.cpp)
 target_link_libraries(vampire
     PRIVATE project_options
-    PRIVATE libvampire
+    PRIVATE libsolver
 )
+#--------------
+
+#-------------- FRAMEWORK BUILD
+add_library(libframework
+    framework/game_recorder.cpp
+    framework/framework.cpp
+)
+target_link_libraries(libframework
+    PUBLIC project_options
+    PRIVATE project_warnings
+    PUBLIC CONAN_PKG::imgui
+    PRIVATE CONAN_PKG::stb
+)
+target_include_directories(libframework INTERFACE framework/)
+target_compile_definitions(libframework PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(libframework PRIVATE GL_SILENCE_DEPRECATION)
+
+add_library(libsolver_fw solver.cpp)
+target_link_libraries(libsolver_fw
+    PUBLIC project_options
+    PRIVATE project_warnings
+    PRIVATE libmagic
+    PRIVATE libframework
+)
+target_compile_definitions(libsolver_fw PRIVATE GAME_WITH_FRAMEWORK)
+
+add_library(vampire_fw main.cpp)
+target_link_libraries(vampire_fw
+    PUBLIC project_options
+    PRIVATE libsolver_fw
+)
+target_compile_definitions(vampire_fw PRIVATE GAME_WITH_FRAMEWORK)
+
+add_library(libimguibindings
+    ${CMAKE_BINARY_DIR}/bindings/imgui_impl_opengl3.cpp
+    ${CMAKE_BINARY_DIR}/bindings/imgui_impl_glfw.cpp
+)
+target_include_directories(libimguibindings INTERFACE ${CMAKE_BINARY_DIR}/bindings/)
+target_link_libraries(libimguibindings
+    PUBLIC project_options
+    PUBLIC CONAN_PKG::imgui
+    PUBLIC CONAN_PKG::glfw
+)
+
+add_executable(framework framework/main.cpp)
+target_link_libraries(framework
+    PRIVATE project_options
+    PRIVATE libimguibindings
+    PRIVATE vampire_fw
+)
+#--------------

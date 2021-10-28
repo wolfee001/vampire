@@ -162,7 +162,13 @@ public:
 	}
 };
 
-int main(int argc, char** argv) {
+#ifdef GAME_WITH_FRAMEWORK
+int __main(int argc, char** argv)
+{
+#else
+int main(int argc, char** argv)
+{
+#endif
 	if (argc > 1 && 0 == std::strcmp("help", argv[1])) {
 		std::cerr << "Usage: " << std::endl 
 			<< argv[0] << " help                   " << "\tPrint this message" << std::endl

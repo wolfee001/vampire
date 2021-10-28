@@ -10,6 +10,10 @@
 #include <stdexcept>
 #include <string>
 
+#ifdef GAME_WITH_FRAMEWORK
+#include <framework.h>
+#endif
+
 std::vector<std::pair<int, int>> solver::line2d(std::pair<int, int> from, const std::pair<int, int>& to)
 {
     std::vector<std::pair<int, int>> result;
@@ -53,10 +57,18 @@ void solver::startMessage(const std::vector<std::string>& startInfos)
         stream >> msg;
         if (msg == "MESSAGE") {
             std::string message;
-            stream >> message;
+            while (true) {
+                std::string tmp;
+                stream >> tmp;
+                if (!tmp.empty()) {
+                    message += " " + tmp;
+                } else {
+                    break;
+                }
+            }
             if (message != "OK") {
-                std::cerr << "Error with authentication: " << msg << std::endl;
-                throw std::runtime_error("Error with authentication: " + msg);
+                std::cerr << "Error with authentication: " << message << std::endl;
+                throw std::runtime_error("Error with authentication: " + message);
             }
         } else if (msg == "LEVEL") {
             stream >> mGameDescription.mLevelId;
@@ -75,6 +87,10 @@ void solver::startMessage(const std::vector<std::string>& startInfos)
             throw std::runtime_error("Unhandled message: " + msg);
         }
     }
+
+#ifdef GAME_WITH_FRAMEWORK
+    Framework::GetInstance().SetGameDescription(mGameDescription, startInfos);
+#endif
 
     mMagic = std::make_unique<UsualMagic>(mGameDescription);
 }
@@ -171,6 +187,10 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
     }
 
     mTickDescription = newDescription;
+
+#ifdef GAME_WITH_FRAMEWORK
+    Framework::GetInstance().Update(mTickDescription, infos);
+#endif
 
     UsualMagic::Answer answer = mMagic->Tick(mTickDescription);
 

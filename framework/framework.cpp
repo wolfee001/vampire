@@ -28,7 +28,9 @@ void Framework::SetGameDescription(const GameDescription& description, const std
 {
     mRenderLock.lock();
     mGameDescription = description;
-    mGameRecorder.StartRecording(infos);
+    if (mRecordGame) {
+        mGameRecorder.StartRecording(infos);
+    }
     mVampireAvatarMapping.clear();
     mRenderLock.unlock();
 }
@@ -42,7 +44,9 @@ void Framework::Update(const TickDescription& description, const std::vector<std
         mVampireAvatarMapping[mTickDescription.mEnemyVampires[1].mId] = "vampire3";
         mVampireAvatarMapping[mTickDescription.mEnemyVampires[2].mId] = "vampire4";
     }
-    mGameRecorder.AddTick(infos);
+    if (mRecordGame) {
+        mGameRecorder.AddTick(infos);
+    }
     mRenderLock.unlock();
 }
 
@@ -52,7 +56,7 @@ void Framework::Render()
 
     ImGui::NewFrame();
 
-    ImGui::ShowDemoWindow();
+    // ImGui::ShowDemoWindow();
 
     {
         ImGui::Begin("Game handler");
@@ -123,6 +127,57 @@ void Framework::Render()
 
         TickDescriptionWrapper tickDescription(mTickDescription);
         AddGuiElement(tickDescription);
+
+        ImGui::End();
+    }
+
+    {
+        ImGui::Begin("Vampires");
+
+        ImGui::BeginGroup();
+        ImGui::BeginGroup();
+        ImGui::Image(mAssets["vampire1"], ImVec2(64, 64));
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        ImGui::BeginGroup();
+        ImGui::Text("Health:");
+        ImGui::Text("Placable grenades:");
+        ImGui::Text("Grenade range:");
+        ImGui::Text("Running shoes:");
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        ImGui::BeginGroup();
+        ImGui::Text("%d", mTickDescription.mMe.mHealth);
+        ImGui::Text("%d", mTickDescription.mMe.mPlacableGrenades);
+        ImGui::Text("%d", mTickDescription.mMe.mGrenadeRange);
+        ImGui::Text("%d", mTickDescription.mMe.mRunningShoesTick);
+        ImGui::EndGroup();
+        ImGui::EndGroup();
+
+        ImGui::Separator();
+
+        for (const auto& vampire : mTickDescription.mEnemyVampires) {
+            ImGui::BeginGroup();
+            ImGui::BeginGroup();
+            ImGui::Image(mAssets[mVampireAvatarMapping[vampire.mId]], ImVec2(64, 64));
+            ImGui::EndGroup();
+            ImGui::SameLine();
+            ImGui::BeginGroup();
+            ImGui::Text("Health:");
+            ImGui::Text("Placable grenades:");
+            ImGui::Text("Grenade range:");
+            ImGui::Text("Running shoes:");
+            ImGui::EndGroup();
+            ImGui::SameLine();
+            ImGui::BeginGroup();
+            ImGui::Text("%d", vampire.mHealth);
+            ImGui::Text("%d", vampire.mPlacableGrenades);
+            ImGui::Text("%d", vampire.mGrenadeRange);
+            ImGui::Text("%d", vampire.mRunningShoesTick);
+            ImGui::EndGroup();
+            ImGui::EndGroup();
+            ImGui::Separator();
+        }
 
         ImGui::End();
     }

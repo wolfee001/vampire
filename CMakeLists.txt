@@ -52,12 +52,14 @@ target_link_libraries(vampire
 add_library(libframework
     framework/game_recorder.cpp
     framework/framework.cpp
+    framework/gui_element.cpp
 )
 target_link_libraries(libframework
     PUBLIC project_options
     PRIVATE project_warnings
     PUBLIC CONAN_PKG::imgui
     PRIVATE CONAN_PKG::stb
+    PRIVATE CONAN_PKG::fmt
 )
 target_include_directories(libframework INTERFACE framework/)
 target_compile_definitions(libframework PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}")

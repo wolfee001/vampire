@@ -25,7 +25,7 @@ struct Vampire {
     int mHealth = -1;
     int mPlacableGrenades = -1;
     int mGrenadeRange = -1;
-    int mRunningShoesTick = -1;
+    int mRunningShoesTick = 0;
 };
 
 struct Grenade {

@@ -2,6 +2,7 @@
 #include <chrono>
 #include <filesystem>
 #include <imgui.h>
+#include <string>
 #include <thread>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -12,6 +13,8 @@
 #else
 #include <GL/gl.h>
 #endif
+
+#include "model_wrapper.h"
 
 int __main(int, char**);
 
@@ -26,6 +29,7 @@ void Framework::SetGameDescription(const GameDescription& description, const std
     mRenderLock.lock();
     mGameDescription = description;
     mGameRecorder.StartRecording(infos);
+    mVampireAvatarMapping.clear();
     mRenderLock.unlock();
 }
 
@@ -33,6 +37,11 @@ void Framework::Update(const TickDescription& description, const std::vector<std
 {
     mRenderLock.lock();
     mTickDescription = description;
+    if (mVampireAvatarMapping.empty()) {
+        mVampireAvatarMapping[mTickDescription.mEnemyVampires[0].mId] = "vampire2";
+        mVampireAvatarMapping[mTickDescription.mEnemyVampires[1].mId] = "vampire3";
+        mVampireAvatarMapping[mTickDescription.mEnemyVampires[2].mId] = "vampire4";
+    }
     mGameRecorder.AddTick(infos);
     mRenderLock.unlock();
 }
@@ -69,53 +78,54 @@ void Framework::Render()
         const ImVec2 p = ImGui::GetCursorScreenPos();
         draw_list->AddRectFilled(p, ImVec2(p.x + 23 * 34, p.y + 23 * 34), IM_COL32(238, 238, 238, 255));
 
-        for (size_t x = 0; x < 23; ++x) {
-            for (size_t y = 0; y < 23; ++y) {
+        for (int x = 0; x < mGameDescription.mMapSize; ++x) {
+            for (int y = 0; y < mGameDescription.mMapSize; ++y) {
                 ImVec2 tl = ImGui::GetCursorScreenPos();
                 tl.x += static_cast<float>(x) * 34.f + 1.f;
                 tl.y += static_cast<float>(y) * 34.f + 1.f;
                 draw_list->AddRectFilled(tl, ImVec2(tl.x + 32, tl.y + 32), IM_COL32(96, 163, 98, 255));
-                if (x == 0 || y == 0 || x == 22 || y == 22 || (!(x % 2) && !(y % 2))) {
-                    draw_list->AddImage(mBushImage, tl, ImVec2(tl.x + 32, tl.y + 32));
+                if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
+                    draw_list->AddImage(mAssets["bush"], tl, ImVec2(tl.x + 32, tl.y + 32));
                 }
             }
+        }
+
+        {
+            ImVec2 myPos = ImVec2(p.x + static_cast<float>(mTickDescription.mMe.mX) * 34 + 1, p.y + static_cast<float>(mTickDescription.mMe.mY) * 34 + 1);
+            draw_list->AddImage(mAssets["vampire1"], myPos, ImVec2(myPos.x + 32, myPos.y + 32));
+        }
+
+        for (const auto& vampire : mTickDescription.mEnemyVampires) {
+            ImVec2 vampirePos = ImVec2(p.x + static_cast<float>(vampire.mX) * 34 + 1, p.y + static_cast<float>(vampire.mY) * 34 + 1);
+            draw_list->AddImage(mAssets[mVampireAvatarMapping[vampire.mId]], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
+        }
+
+        for (const auto& bat : mTickDescription.mAllBats) {
+            std::string batAvatar = "bat" + std::to_string(bat.mDensity);
+            ImVec2 pos = ImVec2(p.x + static_cast<float>(bat.mX) * 34 + 1, p.y + static_cast<float>(bat.mY) * 34 + 1);
+            draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
         }
 
         ImGui::End();
     }
 
-    // // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-    // {
-    //     static float f = 0.0f;
-    //     static int counter = 0;
+    {
+        ImGui::Begin("Game parameters");
 
-    //     ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
+        GameDescriptionWrapper gameDescription(mGameDescription);
+        AddGuiElement(gameDescription);
 
-    //     ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
-    //     ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
-    //     ImGui::Checkbox("Another Window", &show_another_window);
+        ImGui::End();
+    }
 
-    //     ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
+    {
+        ImGui::Begin("Tick parameters");
 
-    //     if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-    //         counter++;
-    //     ImGui::SameLine();
-    //     ImGui::Text("counter = %d", counter);
+        TickDescriptionWrapper tickDescription(mTickDescription);
+        AddGuiElement(tickDescription);
 
-    //     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0 / static_cast<double>(ImGui::GetIO().Framerate),
-    //         static_cast<double>(ImGui::GetIO().Framerate));
-    //     ImGui::End();
-    // }
-
-    // // 3. Show another simple window.
-    // if (show_another_window) {
-    //     ImGui::Begin("Another Window",
-    //         &show_another_window); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-    //     ImGui::Text("Hello from another window!");
-    //     if (ImGui::Button("Close Me"))
-    //         show_another_window = false;
-    //     ImGui::End();
-    // }
+        ImGui::End();
+    }
 
     // Rendering
     ImGui::Render();
@@ -126,7 +136,20 @@ void Framework::Render()
 
 Framework::Framework()
 {
-    mBushImage = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bush.png");
+    mAssets["bush"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bush.png");
+    mAssets["vampire1"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire1.png");
+    mAssets["vampire2"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire2.png");
+    mAssets["vampire3"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire3.png");
+    mAssets["vampire4"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire4.png");
+    mAssets["bat1"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat1.png");
+    mAssets["bat2"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat2.png");
+    mAssets["bat3"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat3.png");
+    mAssets["grenade"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "grande.png");
+    mAssets["explosion"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "explosion.png");
+    mAssets["battery"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "battery.png");
+    mAssets["grenade_pu"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "grenade_pu.png");
+    mAssets["shoe"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "shoe.png");
+    mAssets["tomato"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "tomato.png");
 }
 
 void* Framework::LoadImage(const std::filesystem::path& path)

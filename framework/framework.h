@@ -3,6 +3,7 @@
 #include "../models.h"
 #include <filesystem>
 #include <imgui.h>
+#include <map>
 #include <mutex>
 
 #include "game_recorder.h"
@@ -29,7 +30,9 @@ private:
     int mMapSelector = 0;
     bool mRecordGame = true;
 
-    void* mBushImage;
+    std::map<std::string, void*> mAssets;
 
     GameRecorder mGameRecorder;
+
+    std::map<int, std::string> mVampireAvatarMapping;
 };

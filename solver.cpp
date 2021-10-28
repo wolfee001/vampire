@@ -48,8 +48,9 @@ std::vector<std::pair<int, int>> solver::line2d(std::pair<int, int> from, const 
     return result;
 }
 
-void solver::startMessage(const std::vector<std::string>& startInfos)
+/* static */ GameDescription solver::parseGameDescription(const std::vector<std::string>& startInfos)
 {
+    GameDescription description;
     for (const auto& element : startInfos) {
         std::stringstream stream(element);
 
@@ -66,36 +67,31 @@ void solver::startMessage(const std::vector<std::string>& startInfos)
                     break;
                 }
             }
-            if (message != "OK") {
+            if (message != " OK") {
                 std::cerr << "Error with authentication: " << message << std::endl;
                 throw std::runtime_error("Error with authentication: " + message);
             }
         } else if (msg == "LEVEL") {
-            stream >> mGameDescription.mLevelId;
+            stream >> description.mLevelId;
         } else if (msg == "GAMEID") {
-            stream >> mGameDescription.mGameId;
+            stream >> description.mGameId;
         } else if (msg == "TEST") {
-            stream >> mGameDescription.mIsTest;
+            stream >> description.mIsTest;
         } else if (msg == "MAXTICK") {
-            stream >> mGameDescription.mMaxTick;
+            stream >> description.mMaxTick;
         } else if (msg == "GRENADERADIUS") {
-            stream >> mGameDescription.mGrenadeRadius;
+            stream >> description.mGrenadeRadius;
         } else if (msg == "SIZE") {
-            stream >> mGameDescription.mMapSize;
+            stream >> description.mMapSize;
         } else {
             std::cerr << "Unhandled message: " << msg << std::endl;
             throw std::runtime_error("Unhandled message: " + msg);
         }
     }
-
-#ifdef GAME_WITH_FRAMEWORK
-    Framework::GetInstance().SetGameDescription(mGameDescription, startInfos);
-#endif
-
-    mMagic = std::make_unique<UsualMagic>(mGameDescription);
+    return description;
 }
 
-std::vector<std::string> solver::processTick(const std::vector<std::string>& infos)
+/* static */ TickDescription solver::parseTickDescription(const std::vector<std::string>& infos)
 {
     TickDescription newDescription;
     for (const auto& element : infos) {
@@ -117,7 +113,7 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
             stream >> id;
 
             Vampire& vampire = id == newDescription.mRequest.mVampireId ? newDescription.mMe : newDescription.mEnemyVampires.emplace_back();
-            stream >> vampire.mId;
+            vampire.mId = id;
             stream >> vampire.mX;
             stream >> vampire.mY;
             stream >> vampire.mHealth;
@@ -156,26 +152,41 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
             stream >> powerUp.mX;
             stream >> powerUp.mX;
         } else if (msg == "BAT1") {
-            BatSquad squad;
-            squad.mDensity = 1;
-            stream >> squad.mX;
-            stream >> squad.mY;
-            newDescription.mBat1.push_back(squad);
-            newDescription.mAllBats.push_back(squad);
+            while (true) {
+                BatSquad squad;
+                squad.mDensity = 1;
+                stream >> squad.mX;
+                stream >> squad.mY;
+                if (squad.mX == -1) {
+                    break;
+                }
+                newDescription.mBat1.push_back(squad);
+                newDescription.mAllBats.push_back(squad);
+            }
         } else if (msg == "BAT2") {
-            BatSquad squad;
-            squad.mDensity = 2;
-            stream >> squad.mX;
-            stream >> squad.mY;
-            newDescription.mBat2.push_back(squad);
-            newDescription.mAllBats.push_back(squad);
+            while (true) {
+                BatSquad squad;
+                squad.mDensity = 2;
+                stream >> squad.mX;
+                stream >> squad.mY;
+                if (squad.mX == -1) {
+                    break;
+                }
+                newDescription.mBat2.push_back(squad);
+                newDescription.mAllBats.push_back(squad);
+            }
         } else if (msg == "BAT3") {
-            BatSquad squad;
-            squad.mDensity = 3;
-            stream >> squad.mX;
-            stream >> squad.mY;
-            newDescription.mBat3.push_back(squad);
-            newDescription.mAllBats.push_back(squad);
+            while (true) {
+                BatSquad squad;
+                squad.mDensity = 3;
+                stream >> squad.mX;
+                stream >> squad.mY;
+                if (squad.mX == -1) {
+                    break;
+                }
+                newDescription.mBat3.push_back(squad);
+                newDescription.mAllBats.push_back(squad);
+            }
         } else if (msg == "END") {
             stream >> newDescription.mEndMessage.mPoint;
             stream >> newDescription.mEndMessage.mReason;
@@ -185,8 +196,22 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
             throw std::runtime_error("Unhandled message: " + msg);
         }
     }
+    return newDescription;
+}
 
-    mTickDescription = newDescription;
+void solver::startMessage(const std::vector<std::string>& startInfos)
+{
+    mGameDescription = parseGameDescription(startInfos);
+#ifdef GAME_WITH_FRAMEWORK
+    Framework::GetInstance().SetGameDescription(mGameDescription, startInfos);
+#endif
+
+    mMagic = std::make_unique<UsualMagic>(mGameDescription);
+}
+
+std::vector<std::string> solver::processTick(const std::vector<std::string>& infos)
+{
+    mTickDescription = parseTickDescription(infos);
 
 #ifdef GAME_WITH_FRAMEWORK
     Framework::GetInstance().Update(mTickDescription, infos);

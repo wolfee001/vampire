@@ -13,6 +13,9 @@ class solver {
     static std::vector<std::pair<int, int>> line2d(std::pair<int, int> from, const std::pair<int, int>& to);
 
 public:
+    static GameDescription parseGameDescription(const std::vector<std::string>& startInfos);
+    static TickDescription parseTickDescription(const std::vector<std::string>& infos);
+
     void startMessage(const std::vector<std::string>& startInfos);
     std::vector<std::string> processTick(const std::vector<std::string>& infos);
 

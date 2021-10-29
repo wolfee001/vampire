@@ -51,3 +51,8 @@ jobs:
         git clone http://routing_all_stars:${{ secrets.GITLAB_PASSWORD }}@git-ecosim.dyndns.org:11111/graphisoft/2021/routing_all_stars.git
         cd routing_all_stars
         git checkout main_vampire
+        cp ../*.h ./
+        cp ../*.cpp ./
+        git add .
+        git commit -m "${{ github.event.head_commit.message }}"
+        git push

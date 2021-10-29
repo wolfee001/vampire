@@ -74,13 +74,6 @@ target_link_libraries(libsolver_fw
 )
 target_compile_definitions(libsolver_fw PRIVATE GAME_WITH_FRAMEWORK)
 
-add_library(vampire_fw main.cpp)
-target_link_libraries(vampire_fw
-    PUBLIC project_options
-    PRIVATE libsolver_fw
-)
-target_compile_definitions(vampire_fw PRIVATE GAME_WITH_FRAMEWORK)
-
 add_library(libimguibindings
     ${CMAKE_BINARY_DIR}/bindings/imgui_impl_opengl3.cpp
     ${CMAKE_BINARY_DIR}/bindings/imgui_impl_glfw.cpp
@@ -92,10 +85,11 @@ target_link_libraries(libimguibindings
     PUBLIC CONAN_PKG::glfw
 )
 
-add_executable(framework framework/main.cpp)
+add_executable(framework framework/main.cpp main.cpp)
 target_link_libraries(framework
     PRIVATE project_options
     PRIVATE libimguibindings
-    PRIVATE vampire_fw
+    PRIVATE libsolver_fw
 )
+target_compile_definitions(framework PRIVATE GAME_WITH_FRAMEWORK)
 #--------------

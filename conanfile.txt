@@ -9,6 +9,7 @@ fmt/8.0.1
 [options]
 boost:header_only=True
 glew:shared=False
+fmt:header_only=True
 
 [imports]
 res/bindings, imgui_impl_glfw.cpp -> ./bindings

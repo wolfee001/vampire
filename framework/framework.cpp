@@ -1,6 +1,7 @@
 #include "framework.h"
 #include <chrono>
 #include <filesystem>
+#include <fmt/core.h>
 #include <imgui.h>
 #include <string>
 #include <thread>
@@ -120,6 +121,50 @@ void Framework::Render()
             draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
         }
 
+        for (const auto& grenade : mTickDescription.mGrenades) {
+            if (grenade.mTick > 0) {
+                ImVec2 pos = ImVec2(p.x + static_cast<float>(grenade.mX) * 34 + 1, p.y + static_cast<float>(grenade.mY) * 34 + 1);
+                draw_list->AddImage(mAssets["grenade"], pos, ImVec2(pos.x + 32, pos.y + 32));
+                draw_list->AddText({ pos.x + 12, pos.y + 10 }, IM_COL32(255, 255, 255, 255), fmt::format("{}", grenade.mTick).c_str());
+            } else {
+                const auto drawExplosion = [&mTickDescription = mTickDescription, &mGameDescription = mGameDescription, &mAssets = mAssets, &draw_list, &p](
+                                               const int px, const int py) {
+                    ImVec2 pos = ImVec2(p.x + static_cast<float>(px) * 34 + 1, p.y + static_cast<float>(py) * 34 + 1);
+                    if (px == 0 || py == 0 || px == mGameDescription.mMapSize - 1 || py == mGameDescription.mMapSize - 1 || (!(px % 2) && !(py % 2))) {
+                        return false;
+                    }
+                    draw_list->AddImage(mAssets["explosion"], pos, ImVec2(pos.x + 32, pos.y + 32));
+                    for (const auto& bat : mTickDescription.mAllBats) {
+                        if (bat.mX == px && bat.mY == py) {
+                            return false;
+                            ;
+                        }
+                    }
+                    return true;
+                };
+                for (int x = 0; x < grenade.mRange + 1; ++x) {
+                    if (!drawExplosion(grenade.mX + x, grenade.mY)) {
+                        break;
+                    }
+                }
+                for (int x = 0; x < grenade.mRange + 1; ++x) {
+                    if (!drawExplosion(grenade.mX - x, grenade.mY)) {
+                        break;
+                    }
+                }
+                for (int y = 0; y < grenade.mRange + 1; ++y) {
+                    if (!drawExplosion(grenade.mX, grenade.mY + y)) {
+                        break;
+                    }
+                }
+                for (int y = 0; y < grenade.mRange + 1; ++y) {
+                    if (!drawExplosion(grenade.mX, grenade.mY - y)) {
+                        break;
+                    }
+                }
+            }
+        }
+
         ImGui::End();
     }
 
@@ -209,7 +254,7 @@ Framework::Framework()
     mAssets["bat1"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat1.png");
     mAssets["bat2"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat2.png");
     mAssets["bat3"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat3.png");
-    mAssets["grenade"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "grande.png");
+    mAssets["grenade"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "grenade.png");
     mAssets["explosion"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "explosion.png");
     mAssets["battery"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "battery.png");
     mAssets["grenade_pu"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "grenade_pu.png");

@@ -56,13 +56,13 @@ jobs:
 
     - name: Copy source
       run: |
-        rm *.h
-        rm *.cpp
+        cd routing_all_stars
         cp  -f ${{github.workspace}}/*.h ./
         cp  -f ${{github.workspace}}/*.cpp ./
 
     - name: Commit & push
       run: |
+        cd routing_all_stars
         git add .
         git commit -m "${{ github.event.head_commit.message }}"
         git push

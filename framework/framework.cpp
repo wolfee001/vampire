@@ -11,6 +11,7 @@
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #else
+#include <Windows.h>
 #include <GL/gl.h>
 #endif
 
@@ -191,29 +192,28 @@ void Framework::Render()
 
 Framework::Framework()
 {
-    mAssets["bush"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bush.png");
-    mAssets["vampire1"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire1.png");
-    mAssets["vampire2"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire2.png");
-    mAssets["vampire3"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire3.png");
-    mAssets["vampire4"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire4.png");
-    mAssets["bat1"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat1.png");
-    mAssets["bat2"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat2.png");
-    mAssets["bat3"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat3.png");
-    mAssets["grenade"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "grande.png");
-    mAssets["explosion"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "explosion.png");
-    mAssets["battery"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "battery.png");
-    mAssets["grenade_pu"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "grenade_pu.png");
-    mAssets["shoe"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "shoe.png");
-    mAssets["tomato"] = LoadImage(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "tomato.png");
+    mAssets["bush"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bush.png");
+    mAssets["vampire1"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire1.png");
+    mAssets["vampire2"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire2.png");
+    mAssets["vampire3"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire3.png");
+    mAssets["vampire4"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "vampire4.png");
+    mAssets["bat1"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat1.png");
+    mAssets["bat2"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat2.png");
+    mAssets["bat3"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "bat3.png");
+    mAssets["grenade"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "grande.png");
+    mAssets["explosion"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "explosion.png");
+    mAssets["battery"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "battery.png");
+    mAssets["grenade_pu"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "grenade_pu.png");
+    mAssets["shoe"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "shoe.png");
+    mAssets["tomato"] = LoadAsset(std::filesystem::path(PROJECT_DIR) / "framework" / "res" / "tomato.png");
 }
 
-void* Framework::LoadImage(const std::filesystem::path& path)
+void* Framework::LoadAsset(const std::filesystem::path& path)
 {
-    const char* p = path.c_str();
     // Load from file
     int image_width = 0;
     int image_height = 0;
-    unsigned char* image_data = stbi_load(p, &image_width, &image_height, NULL, 4);
+    unsigned char* image_data = stbi_load(path.string().c_str(), &image_width, &image_height, NULL, 4);
     if (image_data == NULL)
         return 0;
 
@@ -225,8 +225,6 @@ void* Framework::LoadImage(const std::filesystem::path& path)
     // Setup filtering parameters for display
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
 
     // Upload pixels into texture
 #if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)

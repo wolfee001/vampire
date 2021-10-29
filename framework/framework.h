@@ -20,7 +20,7 @@ public:
 private:
     Framework();
 
-    void* LoadImage(const std::filesystem::path& path);
+    void* LoadAsset(const std::filesystem::path& path);
 
 private:
     std::mutex mRenderLock;

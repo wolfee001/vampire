@@ -10,7 +10,6 @@ gtest/1.11.0
 [options]
 boost:header_only=True
 glew:shared=False
-fmt:header_only=True
 
 [imports]
 res/bindings, imgui_impl_glfw.cpp -> ./bindings

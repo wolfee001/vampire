@@ -26,14 +26,14 @@
 #define ___AddGuiElementFirstArgName_(V, ...) #V
 #define ___AddGuiElementFirstArgName(args) ___AddGuiElementFirstArgName_ args
 // clang-format off
-#ifdef _WIN32
-#define AddGuiElement(...) ___AddGuiElement(__VA_ARGS__)
-#else
+#ifdef __clang__
 #define AddGuiElement(...) \
     _Pragma("clang diagnostic push") \
     _Pragma("clang diagnostic ignored \"-Wgnu-zero-variadic-macro-arguments\"") \
     ___AddGuiElement(__VA_ARGS__) \
     _Pragma("clang diagnostic pop")
+#else
+#define AddGuiElement(...) ___AddGuiElement(__VA_ARGS__)
 #endif
 // clang-format on
 #define ___AddGuiElement(...) ___PropertyTree::___AddElement(___AddGuiElementFirstArgName((__VA_ARGS__)), __VA_ARGS__)

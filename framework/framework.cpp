@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fmt/core.h>
 #include <imgui.h>
+#include <stdexcept>
 #include <string>
 #include <thread>
 
@@ -162,6 +163,26 @@ void Framework::Render()
                         break;
                     }
                 }
+            }
+
+            for (const auto& pu : mTickDescription.mPowerUps) {
+                std::string icon = [](const PowerUp::Type type) {
+                    switch (type) {
+                    case PowerUp::Type::Battery:
+                        return "battery";
+                    case PowerUp::Type::Grenade:
+                        return "grenade_pu";
+                    case PowerUp::Type::Shoe:
+                        return "shoe";
+                    case PowerUp::Type::Tomato:
+                        return "tomato";
+                    default:
+                        throw std::runtime_error("Unhandled type!");
+                    }
+                }(pu.mType);
+                ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
+                draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32));
+                draw_list->AddText({ pos.x + 12, pos.y + 10 }, IM_COL32(0, 0, 0, 255), fmt::format("{}", pu.mRemainingTick).c_str());
             }
         }
 

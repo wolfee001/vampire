@@ -150,7 +150,7 @@ std::vector<std::pair<int, int>> solver::line2d(std::pair<int, int> from, const 
             }(t);
             stream >> powerUp.mRemainingTick;
             stream >> powerUp.mX;
-            stream >> powerUp.mX;
+            stream >> powerUp.mY;
         } else if (msg == "BAT1") {
             while (true) {
                 BatSquad squad;

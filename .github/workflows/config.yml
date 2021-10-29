@@ -56,6 +56,8 @@ jobs:
 
     - name: Copy source
       run: |
+        rm *.h
+        rm *.cpp
         cp  -f ${{github.workspace}}/*.h ./
         cp  -f ${{github.workspace}}/*.cpp ./
 

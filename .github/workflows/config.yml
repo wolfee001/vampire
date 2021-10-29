@@ -56,8 +56,8 @@ jobs:
 
     - name: Copy source
       run: |
-        cp ../*.h ./
-        cp ../*.cpp ./
+        cp ${{github.workspace}}/*.h ./
+        cp ${{github.workspace}}/*.cpp ./
 
     - name: Commit & push
       run: |

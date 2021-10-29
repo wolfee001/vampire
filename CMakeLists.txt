@@ -48,6 +48,24 @@ target_link_libraries(vampire
 )
 #--------------
 
+#-------------- TEST BUILD
+enable_testing()
+
+add_executable(unittest
+    test/main.cpp
+    test/test_solver.cpp
+)
+target_link_libraries(unittest
+    PRIVATE libsolver
+    PRIVATE CONAN_PKG::gtest
+)
+
+include(GoogleTest)
+gtest_discover_tests(unittest)
+
+add_test(NAME unittest COMMAND unittest)
+#--------------
+
 #-------------- FRAMEWORK BUILD
 add_library(libframework
     framework/game_recorder.cpp

@@ -11,7 +11,9 @@
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #else
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 #include <GL/gl.h>
 #endif
 

@@ -51,8 +51,16 @@ jobs:
         git clone http://routing_all_stars:${{ secrets.GITLAB_PASSWORD }}@git-ecosim.dyndns.org:11111/graphisoft/2021/routing_all_stars.git
         cd routing_all_stars
         git checkout main_vampire
+        git config --global user.email "routing@all.stars"
+        git config --global user.name "Routing All Stars"
+
+    - name: Copy source
+      run: |
         cp ../*.h ./
         cp ../*.cpp ./
+
+    - name: Commit & push
+      run: |
         git add .
         git commit -m "${{ github.event.head_commit.message }}"
         git push

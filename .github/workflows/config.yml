@@ -37,3 +37,17 @@ jobs:
       run: |
         cd ${{github.workspace}}/build
         ctest . -C Release
+
+  recommit:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Checkout the other
+      run: |
+        git clone http://routing_all_stars:${{ secrets.GITLAB_PASSWORD }}@git-ecosim.dyndns.org:11111/graphisoft/2021/routing_all_stars.git
+        cd routing_all_stars
+        git checkout main_vampire

@@ -91,7 +91,10 @@ target_include_directories(libframework INTERFACE framework/)
 target_compile_definitions(libframework PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_definitions(libframework PRIVATE GL_SILENCE_DEPRECATION)
 
-add_library(libsolver_fw solver.cpp)
+add_library(libsolver_fw
+    solver.cpp
+    simulator.cpp
+)
 target_link_libraries(libsolver_fw
     PUBLIC project_options
     PRIVATE project_warnings

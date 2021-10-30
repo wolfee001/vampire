@@ -3,8 +3,6 @@ name: BuildServer
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   build:
@@ -57,6 +55,7 @@ jobs:
     - name: Copy source
       run: |
         cd routing_all_stars
+        rm -rf *
         cp  -f ${{github.workspace}}/*.h ./
         cp  -f ${{github.workspace}}/*.cpp ./
 

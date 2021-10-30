@@ -70,17 +70,19 @@ void Framework::Render()
         ImGui::Checkbox("Record game", &mRecordGame);
 
         if (ImGui::Button("GO", ImVec2(-1.F, 0.F))) {
-            static std::string selectedMap = std::to_string(mMapSelector);
-            static std::string programName = "fake_program_name";
+            std::thread t([&mMapSelector = mMapSelector]() {
+                std::string selectedMap = std::to_string(mMapSelector);
+                std::string programName = "fake_program_name";
 #if defined(__GNUC__) && !defined(__llvm__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
-            char* params[2] = { const_cast<char*>(programName.data()), const_cast<char*>(selectedMap.data()) };
+                char* params[2] = { const_cast<char*>(programName.data()), const_cast<char*>(selectedMap.data()) };
 #if defined(__GNUC__) && !defined(__llvm__)
 #pragma GCC diagnostic pop
 #endif
-            std::thread t([&params]() { __main(2, params); });
+                __main(2, params);
+            });
             t.detach();
         }
 

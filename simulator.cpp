@@ -61,6 +61,8 @@ TickDescription Simulator::Tick()
     BlowUpGrenades(retVal);
     // 5) (e) plant grenades
     PlantGrenades(retVal);
+    // 6) (f) move
+    Move(retVal);
 
     mState = TickDescription();
     mVampireMoves.clear();
@@ -270,6 +272,61 @@ void Simulator::PlantGrenades(TickDescription& state)
                 }
                 if (placedGrenades < vampire->mPlacableGrenades) {
                     state.mGrenades.push_back({ vampire->mId, vampire->mX, vampire->mY, 5, vampire->mGrenadeRange });
+                }
+            }
+        }
+    }
+}
+
+void Simulator::Move(TickDescription& state)
+{
+    std::set<std::pair<int, int>> restricted;
+
+    for (int x = 0; x < mGameDescription.mMapSize; ++x) {
+        for (int y = 0; y < mGameDescription.mMapSize; ++y) {
+            if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
+                restricted.emplace(x, y);
+            }
+        }
+    }
+    for (const auto& grenade : state.mGrenades) {
+        restricted.emplace(grenade.mX, grenade.mY);
+    }
+    for (const auto& bat : state.mAllBats) {
+        restricted.emplace(bat.mX, bat.mY);
+    }
+
+    std::vector<Vampire*> vampRefs;
+    vampRefs.push_back(&state.mMe);
+    for (auto& element : state.mEnemyVampires) {
+        vampRefs.push_back(&element);
+    }
+
+    for (const auto& vampire : vampRefs) {
+        if (const auto it = mVampireMoves.find(vampire->mId); it != mVampireMoves.end()) {
+            for (const auto& d : it->second.mSteps) {
+                if (d == 'U') {
+                    if (restricted.find({ vampire->mX, vampire->mY - 1 }) != restricted.end()) {
+                        break;
+                    }
+                    vampire->mY--;
+                } else if (d == 'R') {
+                    if (restricted.find({ vampire->mX + 1, vampire->mY }) != restricted.end()) {
+                        break;
+                    }
+                    vampire->mX++;
+                } else if (d == 'D') {
+                    if (restricted.find({ vampire->mX, vampire->mY + 1 }) != restricted.end()) {
+                        break;
+                    }
+                    vampire->mY++;
+                } else if (d == 'L') {
+                    if (restricted.find({ vampire->mX - 1, vampire->mY }) != restricted.end()) {
+                        break;
+                    }
+                    vampire->mX--;
+                } else {
+                    throw std::runtime_error("Invalid direction!");
                 }
             }
         }

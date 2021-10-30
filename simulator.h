@@ -16,6 +16,7 @@ private:
     void PowerupPickUp(TickDescription& state);
     void BlowUpGrenades(TickDescription& state);
     void PlantGrenades(TickDescription& state);
+    void Move(TickDescription& state);
 
 private:
     GameDescription mGameDescription;

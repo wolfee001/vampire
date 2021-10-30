@@ -2,6 +2,7 @@
 #include "models.h"
 #include <algorithm>
 #include <cstddef>
+#include <exception>
 #include <set>
 #include <stdexcept>
 
@@ -331,4 +332,69 @@ void Simulator::Move(TickDescription& state)
             }
         }
     }
+}
+
+bool Simulator::IsValidMove(int id, const Answer& move)
+{
+    const Vampire* vampire = nullptr;
+
+    if (mState.mMe.mId == id) {
+        vampire = &mState.mMe;
+    } else {
+        for (auto& element : mState.mEnemyVampires) {
+            if (element.mId == id) {
+                vampire = &element;
+                break;
+            }
+        }
+    }
+
+    if (vampire == nullptr) {
+        throw std::runtime_error("Invalid id!");
+    }
+
+    if (move.mPlaceGrenade) {
+        if (vampire->mGhostModeTick != 0) {
+            return false;
+        }
+        int placedGrenades = 0;
+        for (const auto& grenade : mState.mGrenades) {
+            if (grenade.mId == vampire->mId) {
+                placedGrenades++;
+            }
+        }
+        if (placedGrenades >= vampire->mPlacableGrenades) {
+            return false;
+        }
+    }
+
+    if (move.mSteps.size() > 3) {
+        return false;
+    }
+
+    if (move.mSteps.size() > 2 && vampire->mRunningShoesTick == 0) {
+        return false;
+    }
+
+    int x = vampire->mX;
+    int y = vampire->mY;
+    for (const auto& d : move.mSteps) {
+        if (d == 'U') {
+            y--;
+        } else if (d == 'R') {
+            x++;
+        } else if (d == 'D') {
+            y++;
+        } else if (d == 'L') {
+            x--;
+        } else {
+            throw std::runtime_error("Invalid direction!");
+        }
+
+        if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
+            return false;
+        }
+    }
+
+    return true;
 }

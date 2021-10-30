@@ -9,6 +9,7 @@ public:
     void SetState(const TickDescription& state);
     void SetVampireMove(int id, const Answer& move);
     TickDescription Tick();
+    bool IsValidMove(int id, const Answer& move);
 
 private:
     void RecalculateTicks(TickDescription& state);

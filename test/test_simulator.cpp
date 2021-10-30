@@ -592,3 +592,61 @@ TEST_F(SimulateTest, StepBackToGrenade)
     ASSERT_EQ(newState.mMe.mX, 2);
     ASSERT_EQ(newState.mMe.mY, 1);
 }
+
+TEST_F(SimulateTest, TrivialBadBombPlant)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    ASSERT_TRUE(mSimulator->IsValidMove(1, { true, {} }));
+    mSimulator->SetVampireMove(1, { true, {} });
+    const TickDescription newState = mSimulator->Tick();
+    mSimulator->SetState(newState);
+    ASSERT_FALSE(mSimulator->IsValidMove(1, { true, {} }));
+}
+
+TEST_F(SimulateTest, TrivialTooManySteps)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    ASSERT_FALSE(mSimulator->IsValidMove(1, { true, { 'D', 'U', 'D' } }));
+}
+
+TEST_F(SimulateTest, TrivialTooManySteps2)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 1 2 5"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    ASSERT_TRUE(mSimulator->IsValidMove(1, { false, { 'D', 'U', 'D' } }));
+}
+
+TEST_F(SimulateTest, TrivialWall)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    ASSERT_FALSE(mSimulator->IsValidMove(1, { false, { 'R', 'D' } }));
+    ASSERT_FALSE(mSimulator->IsValidMove(1, { false, { 'L', 'L' } }));
+    ASSERT_TRUE(mSimulator->IsValidMove(1, { false, { 'R', 'R' } }));
+}

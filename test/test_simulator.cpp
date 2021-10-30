@@ -470,6 +470,31 @@ TEST_F(SimulateTest, GhostModeProtection)
     ASSERT_EQ(finalState.mMe.mHealth, 1);
 }
 
+TEST_F(SimulateTest, Plantgrenade)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 1 2 0",
+        "VAMPIRE 2 1 3 2 1 2 0",
+        "VAMPIRE 3 1 5 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { true, {} });
+    mSimulator->SetVampireMove(2, { true, {} });
+    mSimulator->SetVampireMove(3, { false, {} });
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 2);
+    ASSERT_EQ(newState.mGrenades[0].mX, 1);
+    ASSERT_EQ(newState.mGrenades[0].mY, 1);
+    ASSERT_EQ(newState.mGrenades[0].mTick, 5);
+    ASSERT_EQ(newState.mGrenades[1].mX, 1);
+    ASSERT_EQ(newState.mGrenades[1].mY, 3);
+    ASSERT_EQ(newState.mGrenades[1].mTick, 5);
+}
+
 // TEST_F(SimulateTest, NONONONONOOOOOOO)
 // {
 //     // clang-format off

@@ -59,6 +59,8 @@ TickDescription Simulator::Tick()
     PowerupPickUp(retVal);
     // 4) (c) blow up grenades recursively and calculate grenade damage
     BlowUpGrenades(retVal);
+    // 5) (e) plant grenades
+    PlantGrenades(retVal);
 
     mState = TickDescription();
     mVampireMoves.clear();
@@ -244,4 +246,32 @@ void Simulator::BlowUpGrenades(TickDescription& state)
         }
     }
     state.mEnemyVampires = survivorVampires;
+}
+
+void Simulator::PlantGrenades(TickDescription& state)
+{
+    std::vector<Vampire*> vampRefs;
+    vampRefs.push_back(&state.mMe);
+    for (auto& element : state.mEnemyVampires) {
+        vampRefs.push_back(&element);
+    }
+
+    for (const auto& vampire : vampRefs) {
+        if (const auto it = mVampireMoves.find(vampire->mId); it != mVampireMoves.end()) {
+            if (it->second.mPlaceGrenade) {
+                if (vampire->mGhostModeTick != 0) {
+                    continue;
+                }
+                int placedGrenades = 0;
+                for (const auto& grenade : state.mGrenades) {
+                    if (grenade.mId == vampire->mId) {
+                        placedGrenades++;
+                    }
+                }
+                if (placedGrenades < vampire->mPlacableGrenades) {
+                    state.mGrenades.push_back({ vampire->mId, vampire->mX, vampire->mY, 5, vampire->mGrenadeRange });
+                }
+            }
+        }
+    }
 }

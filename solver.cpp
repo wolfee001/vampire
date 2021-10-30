@@ -211,7 +211,21 @@ void solver::startMessage(const std::vector<std::string>& startInfos)
 
 std::vector<std::string> solver::processTick(const std::vector<std::string>& infos)
 {
-    mTickDescription = parseTickDescription(infos);
+    auto tick = parseTickDescription(infos);
+    if (mTickDescription.mMe.mHealth > tick.mMe.mHealth) {
+        tick.mMe.mGhostModeTick = 3;
+    }
+    for (auto& vampire : tick.mEnemyVampires) {
+        for (const auto& element : mTickDescription.mEnemyVampires) {
+            if (element.mId == vampire.mId) {
+                if (element.mHealth > vampire.mHealth) {
+                    vampire.mGhostModeTick = 3;
+                    break;
+                }
+            }
+        }
+    }
+    mTickDescription = tick;
 
 #ifdef GAME_WITH_FRAMEWORK
     Framework::GetInstance().Update(mTickDescription, infos);

@@ -38,6 +38,8 @@ struct Vampire {
     int mGrenadeRange = -1;
     int mRunningShoesTick = 0;
 
+    int mGhostModeTick = 0;
+
     bool operator==(const Vampire& other) const
     {
         return mId == other.mId && mX == other.mX && mY == other.mY && mHealth == other.mHealth && mPlacableGrenades == other.mPlacableGrenades

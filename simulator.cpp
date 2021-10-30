@@ -85,8 +85,10 @@ void Simulator::RecalculateTicks(TickDescription& state)
     }
 
     state.mMe.mRunningShoesTick = std::max(state.mMe.mRunningShoesTick - 1, 0);
+    state.mMe.mGhostModeTick = std::max(state.mMe.mGhostModeTick - 1, 0);
     for (auto& vampire : state.mEnemyVampires) {
         vampire.mRunningShoesTick = std::max(vampire.mRunningShoesTick - 1, 0);
+        vampire.mGhostModeTick = std::max(vampire.mGhostModeTick - 1, 0);
     }
 }
 
@@ -224,15 +226,18 @@ void Simulator::BlowUpGrenades(TickDescription& state)
         }
     }
 
-    if (affectedCells.find({ state.mMe.mX, state.mMe.mY }) != affectedCells.end()) {
+    if (state.mMe.mGhostModeTick == 0 && affectedCells.find({ state.mMe.mX, state.mMe.mY }) != affectedCells.end()) {
         state.mMe.mHealth--;
+        state.mMe.mGhostModeTick = 3;
     }
 
     std::vector<Vampire> survivorVampires;
     for (const auto& vampire : state.mEnemyVampires) {
-        if (affectedCells.find({ vampire.mX, vampire.mY }) != affectedCells.end()) {
+        if (vampire.mGhostModeTick == 0 && affectedCells.find({ vampire.mX, vampire.mY }) != affectedCells.end()) {
             if (vampire.mHealth > 1) {
-                survivorVampires.emplace_back(vampire).mHealth--;
+                auto& v = survivorVampires.emplace_back(vampire);
+                v.mHealth--;
+                v.mGhostModeTick = 3;
             }
         } else {
             survivorVampires.push_back(vampire);

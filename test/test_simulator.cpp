@@ -281,6 +281,22 @@ TEST_F(SimulateTest, BlowUpSingleGrenade)
     ASSERT_EQ(newState.mGrenades.size(), 0);
 }
 
+TEST_F(SimulateTest, BlowUpTwoGrenadeNoReaction)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 2 1 1 2"
+        "GRENADE 1 1 2 2 2"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    ASSERT_EQ(newState.mGrenades[0].mTick, 1);
+}
+
 TEST_F(SimulateTest, BlowUpChainReaction)
 {
     // clang-format off
@@ -407,6 +423,51 @@ TEST_F(SimulateTest, BlowUpGrenadeKillVampiresFinally)
     ASSERT_EQ(newState.mGrenades.size(), 0);
     ASSERT_EQ(newState.mMe.mHealth, 2);
     ASSERT_EQ(newState.mEnemyVampires.size(), 0);
+}
+
+TEST_F(SimulateTest, GhostMode)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 3 2 2 1 2 0",
+        "VAMPIRE 2 3 1 2 1 2 0",
+        "GRENADE 1 3 3 1 2"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+    ASSERT_EQ(newState.mMe.mGhostModeTick, 3);
+    ASSERT_EQ(newState.mEnemyVampires[0].mGhostModeTick, 3);
+    mSimulator->SetState(newState);
+    const TickDescription finalState = mSimulator->Tick();
+    ASSERT_EQ(finalState.mMe.mGhostModeTick, 2);
+    ASSERT_EQ(finalState.mEnemyVampires[0].mGhostModeTick, 2);
+}
+
+TEST_F(SimulateTest, GhostModeProtection)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 1 2 0",
+        "GRENADE 1 1 2 1 2"
+        "GRENADE 1 2 1 2 2"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    ASSERT_EQ(newState.mMe.mGhostModeTick, 3);
+    ASSERT_EQ(newState.mMe.mHealth, 1);
+    mSimulator->SetState(newState);
+    const TickDescription finalState = mSimulator->Tick();
+    ASSERT_EQ(finalState.mGrenades.size(), 0);
+    ASSERT_EQ(finalState.mMe.mGhostModeTick, 2);
+    ASSERT_EQ(finalState.mMe.mHealth, 1);
 }
 
 // TEST_F(SimulateTest, NONONONONOOOOOOO)

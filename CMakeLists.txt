@@ -6,6 +6,8 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+set(CMAKE_OSX_ARCHITECTURES "x86_64")
+
 #-------------- SETUPS
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)

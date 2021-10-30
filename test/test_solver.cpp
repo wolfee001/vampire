@@ -3,7 +3,7 @@
 
 #include "../solver.h"
 
-TEST(ParseGameStart, Parsing)
+TEST(Parsing, ParseGameStart)
 {
     std::vector<std::string> startInfo = {
         "MESSAGE OK",
@@ -25,7 +25,7 @@ TEST(ParseGameStart, Parsing)
     EXPECT_EQ(description.mMapSize, 11);
 }
 
-TEST(ParseTick, Parsing)
+TEST(Parsing, ParseTick)
 {
     std::vector<std::string> info;
     TickDescription desc;

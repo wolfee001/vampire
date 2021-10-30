@@ -93,7 +93,7 @@ target_link_libraries(libsolver_fw
 target_compile_definitions(libsolver_fw PRIVATE GAME_WITH_FRAMEWORK)
 
 add_library(libimguibindings
-    ${CMAKE_BINARY_DIR}/bindings/imgui_impl_opengl3.cpp
+    ${CMAKE_BINARY_DIR}/bindings/imgui_impl_opengl2.cpp
     ${CMAKE_BINARY_DIR}/bindings/imgui_impl_glfw.cpp
 )
 target_include_directories(libimguibindings INTERFACE ${CMAKE_BINARY_DIR}/bindings/)

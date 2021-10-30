@@ -217,13 +217,19 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
     Framework::GetInstance().Update(mTickDescription, infos);
 #endif
 
-    UsualMagic::Answer answer = mMagic->Tick(mTickDescription);
+    Answer answer = mMagic->Tick(mTickDescription);
 
     std::vector<std::string> commands { infos[0] };
     if (answer.mPlaceGrenade) {
         commands.emplace_back("GRENADE");
     }
-    commands.insert(commands.end(), answer.mSteps.begin(), answer.mSteps.end());
+    if (!answer.mSteps.empty()) {
+        std::string moveCommand = "MOVE";
+        for (const auto& step : answer.mSteps) {
+            moveCommand += std::string(" ") + step;
+        }
+        commands.emplace_back(moveCommand);
+    }
 
     return commands;
 }

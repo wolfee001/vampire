@@ -7,7 +7,7 @@ UsualMagic::UsualMagic(const GameDescription& gameDescription)
     // Maybe some constructor magic? :)
 }
 
-UsualMagic::Answer UsualMagic::Tick(const TickDescription& tickDescription)
+Answer UsualMagic::Tick(const TickDescription& tickDescription)
 {
     Answer answer;
 

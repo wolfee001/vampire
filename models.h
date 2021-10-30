@@ -69,3 +69,8 @@ struct TickDescription {
     std::vector<BatSquad> mAllBats;
     EndMessage mEndMessage;
 };
+
+struct Answer {
+    bool mPlaceGrenade = false;
+    std::vector<char> mSteps;
+};

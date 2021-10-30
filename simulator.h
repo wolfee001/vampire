@@ -14,6 +14,7 @@ private:
     void RecalculateTicks(TickDescription& state);
     void RemoveDisappearedPowerups(TickDescription& state);
     void PowerupPickUp(TickDescription& state);
+    void BlowUpGrenades(TickDescription& state);
 
 private:
     GameDescription mGameDescription;

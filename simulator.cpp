@@ -1,5 +1,8 @@
 #include "simulator.h"
+#include "models.h"
 #include <algorithm>
+#include <cstddef>
+#include <set>
 #include <stdexcept>
 
 Simulator::Simulator(const GameDescription& gameDescription)
@@ -42,11 +45,10 @@ TickDescription Simulator::Tick()
     // Rule:
     // a) powerup show up - not simulated, comes as state
     // b) powerup pick up
-    // c) blow up grenades recursively
-    // d) calculate grenade damage
-    // e) calculate light damage - NOT SIMULATED! (maybe later. i didn't understand the rule.)
-    // f) plant grenades
-    // g) move
+    // c) blow up grenades recursively and calculate grenade damage
+    // d) calculate light damage - NOT SIMULATED! (maybe later. i didn't understand the rule.)
+    // e) plant grenades
+    // f) move
 
     // Implementation:
     // 1) recalculate ticks
@@ -55,6 +57,8 @@ TickDescription Simulator::Tick()
     RemoveDisappearedPowerups(retVal);
     // 3) (b) powerup pick up
     PowerupPickUp(retVal);
+    // 4) (c) blow up grenades recursively and calculate grenade damage
+    BlowUpGrenades(retVal);
 
     mState = TickDescription();
     mVampireMoves.clear();
@@ -135,4 +139,104 @@ void Simulator::PowerupPickUp(TickDescription& state)
     }
 
     state.mPowerUps = survivors;
+}
+
+void Simulator::BlowUpGrenades(TickDescription& state)
+{
+    std::set<std::pair<int, int>> affectedCells;
+
+    while (true) {
+        size_t affectedCount = affectedCells.size();
+
+        for (const auto& grenade : state.mGrenades) {
+            if (grenade.mTick == 0) {
+                const auto checkExplosion = [&state, &mGameDescription = mGameDescription, &affectedCells](const int px, const int py) {
+                    if (px == 0 || py == 0 || px == mGameDescription.mMapSize - 1 || py == mGameDescription.mMapSize - 1 || (!(px % 2) && !(py % 2))) {
+                        return false;
+                    }
+                    affectedCells.emplace(px, py);
+                    for (const auto& bat : state.mAllBats) {
+                        if (bat.mX == px && bat.mY == py) {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+                for (int x = 0; x < grenade.mRange + 1; ++x) {
+                    if (!checkExplosion(grenade.mX + x, grenade.mY)) {
+                        break;
+                    }
+                }
+                for (int x = 0; x < grenade.mRange + 1; ++x) {
+                    if (!checkExplosion(grenade.mX - x, grenade.mY)) {
+                        break;
+                    }
+                }
+                for (int y = 0; y < grenade.mRange + 1; ++y) {
+                    if (!checkExplosion(grenade.mX, grenade.mY + y)) {
+                        break;
+                    }
+                }
+                for (int y = 0; y < grenade.mRange + 1; ++y) {
+                    if (!checkExplosion(grenade.mX, grenade.mY - y)) {
+                        break;
+                    }
+                }
+            }
+        }
+        for (auto& grenade : state.mGrenades) {
+            if (affectedCells.find({ grenade.mX, grenade.mY }) != affectedCells.end()) {
+                grenade.mTick = 0;
+            }
+        }
+
+        if (affectedCells.size() == affectedCount) {
+            break;
+        }
+    }
+
+    state.mGrenades.erase(
+        std::remove_if(state.mGrenades.begin(), state.mGrenades.end(), [](const auto& element) { return element.mTick == 0; }), state.mGrenades.end());
+
+    std::vector<BatSquad> survivorBats;
+    for (const auto& bat : state.mAllBats) {
+        if (affectedCells.find({ bat.mX, bat.mY }) != affectedCells.end()) {
+            if (bat.mDensity > 1) {
+                survivorBats.emplace_back(bat).mDensity--;
+            }
+        } else {
+            survivorBats.push_back(bat);
+        }
+    }
+    state.mAllBats = survivorBats;
+    state.mBat1.clear();
+    state.mBat2.clear();
+    state.mBat3.clear();
+    for (const auto& bat : state.mAllBats) {
+        if (bat.mDensity == 1) {
+            state.mBat1.push_back(bat);
+        } else if (bat.mDensity == 2) {
+            state.mBat2.push_back(bat);
+        } else if (bat.mDensity == 3) {
+            state.mBat3.push_back(bat);
+        } else {
+            throw std::runtime_error("Some calculation is wrong...");
+        }
+    }
+
+    if (affectedCells.find({ state.mMe.mX, state.mMe.mY }) != affectedCells.end()) {
+        state.mMe.mHealth--;
+    }
+
+    std::vector<Vampire> survivorVampires;
+    for (const auto& vampire : state.mEnemyVampires) {
+        if (affectedCells.find({ vampire.mX, vampire.mY }) != affectedCells.end()) {
+            if (vampire.mHealth > 1) {
+                survivorVampires.emplace_back(vampire).mHealth--;
+            }
+        } else {
+            survivorVampires.push_back(vampire);
+        }
+    }
+    state.mEnemyVampires = survivorVampires;
 }

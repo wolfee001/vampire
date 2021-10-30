@@ -267,6 +267,148 @@ TEST_F(SimulateTest, PowerupPickupShoeAddition)
     ASSERT_EQ(newState.mMe.mRunningShoesTick, 28);
 }
 
+TEST_F(SimulateTest, BlowUpSingleGrenade)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 3 3 1 2"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+}
+
+TEST_F(SimulateTest, BlowUpChainReaction)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 3 3 1 2",
+        "GRENADE 1 3 5 5 2"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+}
+
+TEST_F(SimulateTest, BlowUpGrenadeKillBats)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 3 3 1 2",
+        "BAT1 3 1 4 1",
+        "BAT2 3 4 3 5",
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+    ASSERT_EQ(newState.mAllBats.size(), 3);
+    ASSERT_EQ(newState.mBat1.size(), 2);
+    ASSERT_EQ(newState.mBat2.size(), 1);
+    ASSERT_EQ(newState.mBat1[0].mX, 4);
+    ASSERT_EQ(newState.mBat1[0].mY, 1);
+    ASSERT_EQ(newState.mBat1[1].mX, 3);
+    ASSERT_EQ(newState.mBat1[1].mY, 4);
+    ASSERT_EQ(newState.mBat2[0].mX, 3);
+    ASSERT_EQ(newState.mBat2[0].mY, 5);
+}
+
+TEST_F(SimulateTest, BlowUpGrenadeKillVampires)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 3 1 2 1 2 0",
+        "GRENADE 1 3 3 1 2"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+    ASSERT_EQ(newState.mMe.mHealth, 1);
+}
+
+TEST_F(SimulateTest, BlowUpGrenadeTreesProtect)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 2 1 2 1 2 0",
+        "GRENADE 1 2 3 1 2",
+        "BAT1 2 5"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+    ASSERT_EQ(newState.mMe.mHealth, 2);
+    ASSERT_EQ(newState.mBat1.size(), 1);
+    ASSERT_EQ(newState.mBat1[0].mX, 2);
+    ASSERT_EQ(newState.mBat1[0].mY, 5);
+}
+
+TEST_F(SimulateTest, BlowUpGrenadeChainReactionKills)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 5 2 1 2 0",
+        "GRENADE 1 1 1 1 2",
+        "GRENADE 1 1 3 5 2"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+    ASSERT_EQ(newState.mMe.mHealth, 1);
+}
+
+TEST_F(SimulateTest, BlowUpGrenadeInterfereChainReactionKills)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 2 2 1 2 0",
+        "GRENADE 1 1 1 1 2",
+        "GRENADE 1 1 3 5 2"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+    ASSERT_EQ(newState.mMe.mHealth, 1);
+}
+
+TEST_F(SimulateTest, BlowUpGrenadeKillVampiresFinally)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 3 1 1 1 2 0",
+        "GRENADE 1 3 3 1 2"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const TickDescription newState = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+    ASSERT_EQ(newState.mMe.mHealth, 2);
+    ASSERT_EQ(newState.mEnemyVampires.size(), 0);
+}
+
 // TEST_F(SimulateTest, NONONONONOOOOOOO)
 // {
 //     // clang-format off

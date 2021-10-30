@@ -34,7 +34,10 @@ target_link_libraries(libmagic
     PRIVATE CONAN_PKG::boost
 )
 
-add_library(libsolver solver.cpp)
+add_library(libsolver
+    solver.cpp
+    simulator.cpp
+)
 target_link_libraries(libsolver
     PUBLIC project_options
     PRIVATE project_warnings
@@ -54,8 +57,11 @@ enable_testing()
 add_executable(unittest
     test/main.cpp
     test/test_solver.cpp
+    test/test_simulator.cpp
 )
 target_link_libraries(unittest
+    PUBLIC project_options
+    PRIVATE project_warnings
     PRIVATE libsolver
     PRIVATE CONAN_PKG::gtest
 )

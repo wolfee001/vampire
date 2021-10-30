@@ -11,7 +11,7 @@
 #include <string>
 
 #ifdef GAME_WITH_FRAMEWORK
-#include <framework.h>
+#include "framework/framework.h"
 #endif
 
 std::vector<std::pair<int, int>> solver::line2d(std::pair<int, int> from, const std::pair<int, int>& to)

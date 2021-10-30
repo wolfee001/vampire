@@ -286,7 +286,7 @@ TEST_F(SimulateTest, BlowUpTwoGrenadeNoReaction)
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "GRENADE 1 2 1 1 2"
+        "GRENADE 1 2 1 1 2",
         "GRENADE 1 1 2 2 2"
     };
     // clang-format on
@@ -453,7 +453,7 @@ TEST_F(SimulateTest, GhostModeProtection)
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 2 1 2 0",
-        "GRENADE 1 1 2 1 2"
+        "GRENADE 1 1 2 1 2",
         "GRENADE 1 2 1 2 2"
     };
     // clang-format on

@@ -1,4 +1,5 @@
 #include "simulator.h"
+#include <algorithm>
 #include <stdexcept>
 
 Simulator::Simulator(const GameDescription& gameDescription)

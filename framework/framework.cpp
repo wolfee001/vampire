@@ -1,5 +1,6 @@
 #include "framework.h"
 #include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <fmt/core.h>
 #include <imgui.h>
@@ -20,6 +21,9 @@
 #endif
 
 #include "model_wrapper.h"
+
+#include "../simulator.h"
+#include "../solver.h"
 
 int __main(int, char**);
 
@@ -62,6 +66,51 @@ void Framework::Render()
     ImGui::NewFrame();
 
     // ImGui::ShowDemoWindow();
+
+    {
+        ImGui::Begin("Dummy");
+
+        if (ImGui::Button("GO", ImVec2(-1.F, 0.F))) {
+            std::thread t([]() {
+                std::srand(static_cast<unsigned int>(std::time(nullptr)));
+                std::vector<std::string> startInfo = {
+                    "MESSAGE OK",
+                    "LEVEL 1",
+                    "GAMEID 775",
+                    "TEST 1",
+                    "MAXTICK 500",
+                    "GRENADERADIUS 2",
+                    "SIZE 11",
+                };
+                GameDescription gd = solver::parseGameDescription(startInfo);
+                Framework::GetInstance().SetGameDescription(gd, startInfo);
+
+                std::vector<std::string> info = { "REQ 775 0 1", "VAMPIRE 1 1 1 3 1 2 0", "VAMPIRE 3 9 9 3 1 2 0", "VAMPIRE 4 1 9 3 1 2 0",
+                    "VAMPIRE 2 9 1 3 1 2 0", "BAT1 4 1 5 1 6 1 3 2 7 2 2 3 3 3 7 3 8 3 1 4 9 4 1 5 9 5 1 6 9 6 2 7 3 7 7 7 8 7 3 8 7 8 4 9 5 9 6 9",
+                    "BAT2 5 2 4 3 6 3 3 4 7 4 2 5 8 5 3 6 7 6 4 7 6 7 5 8", "BAT3 5 3 5 4 3 5 4 5 5 5 6 5 7 5 5 6 5 7" };
+                TickDescription tick = solver::parseTickDescription(info);
+                Framework::GetInstance().Update(tick, info);
+
+                Simulator simulator(gd);
+
+                for (size_t i = 0; i < 500; ++i) {
+                    simulator.SetState(tick);
+                    Answer ans;
+                    std::vector<char> dirs = { 'U', 'R', 'D', 'L' };
+                    ans.mPlaceGrenade = rand() % 5 == 0;
+                    ans.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
+                    ans.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
+                    simulator.SetVampireMove(1, ans);
+                    tick = simulator.Tick();
+                    Framework::GetInstance().Update(tick, {});
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+            });
+            t.detach();
+        }
+
+        ImGui::End();
+    }
 
     {
         ImGui::Begin("Game handler");

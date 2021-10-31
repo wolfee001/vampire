@@ -2,6 +2,7 @@
 .vscode
 .vs
 build
+data
 target
 
 compile_commands.json

@@ -372,11 +372,12 @@ bool Simulator::IsValidMove(int id, const Answer& move)
 std::vector<Simulator::BlowArea> Simulator::GetBlowAreas()
 {
     std::vector<Simulator::BlowArea> retVal;
-    std::map<std::pair<int, int>, std::pair<const Grenade*, bool>> grenadesByPos;
-    for (const auto& grenade : mState.mGrenades) {
-        grenadesByPos[{ grenade.mX, grenade.mY }] = { &grenade, false };
+    if (mGrenadesByPos.empty()) {
+        for (const auto& grenade : mState.mGrenades) {
+            mGrenadesByPos[{ grenade.mX, grenade.mY }] = { &grenade, false };
+        }
     }
-    for (const auto& [_, grenadeDesc] : grenadesByPos) {
+    for (const auto& [_, grenadeDesc] : mGrenadesByPos) {
         if (grenadeDesc.second) {
             continue;
         }
@@ -388,13 +389,13 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas()
             const Grenade& grenade = *grenadesToProcess.back();
             grenadesToProcess.pop_back();
 
-            grenadesByPos[{ grenade.mX, grenade.mY }].second = true;
+            mGrenadesByPos[{ grenade.mX, grenade.mY }].second = true;
             Simulator::Area area = GetBlowArea(grenade, mState);
             for (const auto& position : area) {
                 if (position == std::pair<int, int> { grenade.mX, grenade.mY }) {
                     continue;
                 }
-                if (auto it = grenadesByPos.find(position); it != grenadesByPos.end()) {
+                if (auto it = mGrenadesByPos.find(position); it != mGrenadesByPos.end()) {
                     if (!it->second.second) {
                         grenadesToProcess.push_back(it->second.first);
                     }

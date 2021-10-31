@@ -3,6 +3,7 @@
 #include "action_sequence.h"
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <memory>
 #include <random>
 

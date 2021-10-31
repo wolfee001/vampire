@@ -376,7 +376,7 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas()
     for (const auto& grenade : mState.mGrenades) {
         grenadesByPos[{ grenade.mX, grenade.mY }] = { &grenade, false };
     }
-    for (const auto& [position, grenadeDesc] : grenadesByPos) {
+    for (const auto& [_, grenadeDesc] : grenadesByPos) {
         if (grenadeDesc.second) {
             continue;
         }

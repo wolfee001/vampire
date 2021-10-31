@@ -29,6 +29,7 @@ enable_testing()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 file(MAKE_DIRECTORY target)
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/data)
 #--------------
 
 #-------------- NORMAL BUILD

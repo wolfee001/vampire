@@ -28,7 +28,7 @@ private:
     TickDescription mTickDescription;
 
     int mMapSelector = 0;
-    bool mRecordGame = false;
+    bool mRecordGame = true;
 
     std::map<std::string, void*> mAssets;
 

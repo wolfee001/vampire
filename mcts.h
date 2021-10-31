@@ -27,7 +27,7 @@ private:
 
         [[nodiscard]] bool IsLeaf() const
         {
-            return mActions || std::any_of(std::cbegin(*mActions), std::cbegin(*mActions), [](const auto& action) { return action.mSimulations == 0; });
+            return mActions || std::any_of(std::cbegin(*mActions), std::cend(*mActions), [](const auto& action) { return action.mSimulations == 0; });
         }
 
         [[nodiscard]] ActionSequence GetBestAction() const;

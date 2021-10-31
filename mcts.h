@@ -13,7 +13,8 @@ public:
     void Run();
 
     MonteCarloTreeSearch()
-        : mEngine(static_cast<unsigned long long>(0xDEADBEEF))
+        // : mEngine(static_cast<unsigned long long>(0xDEADBEEF))
+        : mEngine(55544)
     {
     }
 

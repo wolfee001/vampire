@@ -1,6 +1,7 @@
 .cache
 .vscode
 .vs
+.clangd
 build
 data
 target

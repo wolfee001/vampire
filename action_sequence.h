@@ -3,7 +3,6 @@
 #include "models.h"
 #include <cmath>
 #include <functional>
-#include <netinet/in.h>
 #include <stdexcept>
 
 class ActionSequence {

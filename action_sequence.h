@@ -50,7 +50,7 @@ public:
             mSequence = static_cast<ActionSequence_t>(mSequence + getMoveIndex(answer.mSteps[i]) * std::pow(4, i));
         }
 
-        mSequence = static_cast<ActionSequence_t>((mSequence << 1) | answer.mPlaceGrenade);
+        mSequence = static_cast<ActionSequence_t>((!!(mSequence << 1)) | answer.mPlaceGrenade);
     }
 
     bool operator==(const ActionSequence& other) const

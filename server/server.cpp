@@ -5,7 +5,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <sys/_types/_in_port_t.h>
 
 #include "../parser.h"
 #include "../simulator.h"

@@ -1,6 +1,8 @@
 // clang-format off
 #include "usual_magic.h"
 
+#include <ctime>
+
 UsualMagic::UsualMagic(const GameDescription& gameDescription)
     : mGameDescription(gameDescription)
 {

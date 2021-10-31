@@ -5,7 +5,7 @@ UsualMagic::UsualMagic(const GameDescription& gameDescription)
     : mGameDescription(gameDescription)
 {
     // Maybe some constructor magic? :)
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    std::srand(static_cast<unsigned int>(time(nullptr)));
 }
 
 Answer UsualMagic::Tick(const TickDescription& tickDescription)

@@ -34,5 +34,4 @@ private:
     GameDescription mGameDescription;
     TickDescription mState;
     std::map<int, Answer> mVampireMoves;
-    std::map<std::pair<int, int>, std::pair<const Grenade*, bool>> mGrenadesByPos;
 };

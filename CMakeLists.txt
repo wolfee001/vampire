@@ -6,7 +6,9 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_OSX_ARCHITECTURES "x86_64")
+if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+    add_compile_options(-fstandalone-debug)
+endif()
 
 #-------------- SETUPS
 add_library(project_options INTERFACE)

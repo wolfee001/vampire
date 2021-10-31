@@ -37,6 +37,7 @@ target_link_libraries(libmagic
 add_library(libsolver
     solver.cpp
     simulator.cpp
+    mcts.cpp
 )
 target_link_libraries(libsolver
     PUBLIC project_options
@@ -58,6 +59,7 @@ add_executable(unittest
     test/main.cpp
     test/test_solver.cpp
     test/test_simulator.cpp
+    test/test_action_sequence.cpp
 )
 target_link_libraries(unittest
     PUBLIC project_options

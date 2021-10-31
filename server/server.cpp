@@ -157,6 +157,7 @@ std::vector<std::string> CreateInfo(const TickDescription& tick, int player)
             case PowerUp::Type::Tomato:
                 return "TOMATO";
             }
+            throw std::runtime_error("unhandled type!");
         }(powerup.mType);
         retVal.push_back(fmt::format("POWERUP {} {} {} {}", type, powerup.mRemainingTick, powerup.mX, powerup.mY));
     }

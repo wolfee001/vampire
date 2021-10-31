@@ -1,3 +1,4 @@
+#include <gmock/gmock-matchers.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <memory>
@@ -649,4 +650,78 @@ TEST_F(SimulateTest, TrivialWall)
     ASSERT_FALSE(mSimulator->IsValidMove(1, { false, { 'R', 'D' } }));
     ASSERT_FALSE(mSimulator->IsValidMove(1, { false, { 'L', 'L' } }));
     ASSERT_TRUE(mSimulator->IsValidMove(1, { false, { 'R', 'R' } }));
+}
+
+TEST_F(SimulateTest, GetBlowAreasDisjunct)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 1 2 2",
+        "GRENADE 2 5 5 4 3"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const std::vector<Simulator::BlowArea> areas = mSimulator->GetBlowAreas();
+    ASSERT_EQ(areas.size(), 2);
+    ASSERT_EQ(areas[0].mTickCount, 2);
+    ASSERT_EQ(areas[0].mVampireIds.size(), 1);
+    ASSERT_THAT(areas[0].mVampireIds, testing::ElementsAre(1));
+    ASSERT_EQ(areas[0].mArea, (std::set<std::pair<int, int>> { { 1, 1 }, { 1, 2 }, { 1, 3 }, { 2, 1 }, { 3, 1 } }));
+    ASSERT_EQ(areas[1].mTickCount, 4);
+    ASSERT_EQ(areas[1].mVampireIds.size(), 1);
+    ASSERT_THAT(areas[1].mVampireIds, testing::ElementsAre(2));
+    ASSERT_EQ(areas[1].mArea,
+        (std::set<std::pair<int, int>> {
+            { 5, 5 },
+            { 4, 5 },
+            { 3, 5 },
+            { 2, 5 },
+            { 6, 5 },
+            { 7, 5 },
+            { 8, 5 },
+            { 5, 4 },
+            { 5, 3 },
+            { 5, 2 },
+            { 5, 6 },
+            { 5, 7 },
+            { 5, 8 },
+        }));
+}
+
+TEST_F(SimulateTest, GetBlowAreasJoint)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 3 2 2",
+        "GRENADE 2 3 3 4 3"
+    };
+    // clang-format on
+    const TickDescription tick = solver::parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const std::vector<Simulator::BlowArea> areas = mSimulator->GetBlowAreas();
+    ASSERT_EQ(areas.size(), 1);
+    ASSERT_EQ(areas[0].mTickCount, 2);
+    ASSERT_EQ(areas[0].mVampireIds.size(), 2);
+    ASSERT_THAT(areas[0].mVampireIds, testing::ElementsAre(1, 2));
+    ASSERT_EQ(areas[0].mArea,
+        (std::set<std::pair<int, int>> {
+            { 1, 1 },
+            { 1, 2 },
+            { 1, 3 },
+            { 1, 4 },
+            { 1, 5 },
+            { 2, 3 },
+            { 3, 1 },
+            { 3, 2 },
+            { 3, 3 },
+            { 3, 4 },
+            { 3, 5 },
+            { 3, 6 },
+            { 4, 3 },
+            { 5, 3 },
+            { 6, 3 },
+        }));
 }

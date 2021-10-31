@@ -157,38 +157,8 @@ void Simulator::BlowUpGrenades(TickDescription& state)
 
         for (const auto& grenade : state.mGrenades) {
             if (grenade.mTick == 0) {
-                const auto checkExplosion = [&state, &mGameDescription = mGameDescription, &affectedCells](const int px, const int py) {
-                    if (px == 0 || py == 0 || px == mGameDescription.mMapSize - 1 || py == mGameDescription.mMapSize - 1 || (!(px % 2) && !(py % 2))) {
-                        return false;
-                    }
-                    affectedCells.emplace(px, py);
-                    for (const auto& bat : state.mAllBats) {
-                        if (bat.mX == px && bat.mY == py) {
-                            return false;
-                        }
-                    }
-                    return true;
-                };
-                for (int x = 0; x < grenade.mRange + 1; ++x) {
-                    if (!checkExplosion(grenade.mX + x, grenade.mY)) {
-                        break;
-                    }
-                }
-                for (int x = 0; x < grenade.mRange + 1; ++x) {
-                    if (!checkExplosion(grenade.mX - x, grenade.mY)) {
-                        break;
-                    }
-                }
-                for (int y = 0; y < grenade.mRange + 1; ++y) {
-                    if (!checkExplosion(grenade.mX, grenade.mY + y)) {
-                        break;
-                    }
-                }
-                for (int y = 0; y < grenade.mRange + 1; ++y) {
-                    if (!checkExplosion(grenade.mX, grenade.mY - y)) {
-                        break;
-                    }
-                }
+                Area area = GetBlowArea(grenade, state);
+                affectedCells.insert(area.begin(), area.end());
             }
         }
         for (auto& grenade : state.mGrenades) {
@@ -397,4 +367,82 @@ bool Simulator::IsValidMove(int id, const Answer& move)
     }
 
     return true;
+}
+
+std::vector<Simulator::BlowArea> Simulator::GetBlowAreas()
+{
+    std::vector<Simulator::BlowArea> retVal;
+    std::map<std::pair<int, int>, std::pair<const Grenade*, bool>> grenadesByPos;
+    for (const auto& grenade : mState.mGrenades) {
+        grenadesByPos[{ grenade.mX, grenade.mY }] = { &grenade, false };
+    }
+    for (const auto& [position, grenadeDesc] : grenadesByPos) {
+        if (grenadeDesc.second) {
+            continue;
+        }
+
+        std::vector<const Grenade*> grenadesToProcess;
+        grenadesToProcess.push_back(grenadeDesc.first);
+        Simulator::BlowArea ba;
+        while (!grenadesToProcess.empty()) {
+            const Grenade& grenade = *grenadesToProcess.back();
+            grenadesToProcess.pop_back();
+
+            grenadesByPos[{ grenade.mX, grenade.mY }].second = true;
+            Simulator::Area area = GetBlowArea(grenade, mState);
+            for (const auto& position : area) {
+                if (position == std::pair<int, int> { grenade.mX, grenade.mY }) {
+                    continue;
+                }
+                if (auto it = grenadesByPos.find(position); it != grenadesByPos.end()) {
+                    if (!it->second.second) {
+                        grenadesToProcess.push_back(it->second.first);
+                    }
+                }
+            }
+            ba.mArea.insert(area.begin(), area.end());
+            ba.mTickCount = ba.mTickCount == -1 ? grenade.mTick : std::min(ba.mTickCount, grenade.mTick);
+            ba.mVampireIds.insert(grenade.mId);
+        }
+        retVal.push_back(ba);
+    }
+    return retVal;
+}
+
+Simulator::Area Simulator::GetBlowArea(const Grenade& grenade, const TickDescription& state)
+{
+    Area area;
+    const auto checkExplosion = [&state, &mGameDescription = mGameDescription, &area](const int px, const int py) {
+        if (px == 0 || py == 0 || px == mGameDescription.mMapSize - 1 || py == mGameDescription.mMapSize - 1 || (!(px % 2) && !(py % 2))) {
+            return false;
+        }
+        area.insert({ px, py });
+        for (const auto& bat : state.mAllBats) {
+            if (bat.mX == px && bat.mY == py) {
+                return false;
+            }
+        }
+        return true;
+    };
+    for (int x = 0; x < grenade.mRange + 1; ++x) {
+        if (!checkExplosion(grenade.mX + x, grenade.mY)) {
+            break;
+        }
+    }
+    for (int x = 0; x < grenade.mRange + 1; ++x) {
+        if (!checkExplosion(grenade.mX - x, grenade.mY)) {
+            break;
+        }
+    }
+    for (int y = 0; y < grenade.mRange + 1; ++y) {
+        if (!checkExplosion(grenade.mX, grenade.mY + y)) {
+            break;
+        }
+    }
+    for (int y = 0; y < grenade.mRange + 1; ++y) {
+        if (!checkExplosion(grenade.mX, grenade.mY - y)) {
+            break;
+        }
+    }
+    return area;
 }

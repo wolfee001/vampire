@@ -40,6 +40,7 @@ target_link_libraries(libmagic
 )
 
 add_library(libsolver
+    parser.cpp
     solver.cpp
     simulator.cpp
     mcts.cpp
@@ -99,6 +100,7 @@ add_executable(framework
     framework/main.cpp
     main.cpp
     simulator.cpp
+    parser.cpp
     solver.cpp
     usual_magic.cpp
 )
@@ -114,3 +116,5 @@ target_include_directories(framework INTERFACE framework/)
 target_compile_definitions(framework PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_definitions(framework PRIVATE GL_SILENCE_DEPRECATION)
 #--------------
+
+add_subdirectory(server)

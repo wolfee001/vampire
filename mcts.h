@@ -13,7 +13,7 @@ class MonteCarloTreeSearch {
 public:
     // first id in playerIds must be our own
     explicit MonteCarloTreeSearch(const TickDescription& tickDescription, const GameDescription& gameDescription, const std::vector<int>& playerIds)
-        : mEngine(0xDEADBEEF)
+        : mEngine(static_cast<unsigned long long>(0xDEADBEEF))
         , mRoot(tickDescription)
         , mGameDescription(gameDescription)
         , mPlayerIds(playerIds)

@@ -8,7 +8,7 @@
 class ActionSequence {
 public:
     ActionSequence() = default;
-    using ActionSequence_t = uint8_t;
+    using ActionSequence_t = unsigned short;
 
     explicit ActionSequence(const ActionSequence_t sequence)
         : mSequence(sequence)
@@ -54,7 +54,7 @@ public:
             mSequence = static_cast<ActionSequence_t>(mSequence + getMoveIndex(answer.mSteps[i]) * std::pow(4, i));
         }
 
-        mSequence = static_cast<ActionSequence_t>((mSequence << 1) | answer.mPlaceGrenade);
+        mSequence = static_cast<ActionSequence_t>((mSequence << 1) | (answer.mPlaceGrenade ? 1 : 0));
     }
 
     bool operator==(const ActionSequence& other) const

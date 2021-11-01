@@ -37,10 +37,10 @@ public:
             login_messages.push_back(std::string("LOGOUT ") + token);
         } else {
             std::string str = "LOGIN ";
-            if (level) {
-                str += std::to_string(level) + " ";
-            }
-            login_messages.push_back(str + token);
+            str += token;
+            if (level)
+                str += " " + std::to_string(level);
+            login_messages.push_back(str);
         }
 
         send_messages(login_messages);

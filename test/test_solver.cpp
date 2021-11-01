@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "../solver.h"
+#include "../parser.h"
 
 TEST(Parsing, ParseGameStart)
 {
@@ -15,7 +15,7 @@ TEST(Parsing, ParseGameStart)
         "SIZE 11",
     };
 
-    const GameDescription description = solver::parseGameDescription(startInfo);
+    const GameDescription description = parseGameDescription(startInfo);
 
     EXPECT_EQ(description.mLevelId, 1);
     EXPECT_EQ(description.mGameId, 775);
@@ -47,14 +47,14 @@ TEST(Parsing, ParseTick)
         "POWERUP SHOE -10 8 1"
     };
     // clang-format on
-    desc = solver::parseTickDescription(info);
+    desc = parseTickDescription(info);
 
     // clang-format off
     info = { 
         "REQ 775 0 1"
     };
     // clang-format on
-    desc = solver::parseTickDescription(info);
+    desc = parseTickDescription(info);
     EXPECT_EQ(desc.mRequest.mGameId, 775);
     EXPECT_EQ(desc.mRequest.mTick, 0);
     EXPECT_EQ(desc.mRequest.mVampireId, 1);
@@ -65,7 +65,7 @@ TEST(Parsing, ParseTick)
         "VAMPIRE 1 1 1 3 1 2 0"
     };
     // clang-format on
-    desc = solver::parseTickDescription(info);
+    desc = parseTickDescription(info);
     EXPECT_EQ(desc.mEnemyVampires.size(), 0);
     EXPECT_EQ(desc.mMe.mId, 1);
     EXPECT_EQ(desc.mMe.mX, 1);
@@ -82,7 +82,7 @@ TEST(Parsing, ParseTick)
         "VAMPIRE 3 9 9 3 1 2 0",
     };
     // clang-format on
-    desc = solver::parseTickDescription(info);
+    desc = parseTickDescription(info);
     EXPECT_EQ(desc.mEnemyVampires.size(), 1);
     EXPECT_EQ(desc.mMe.mId, 1);
     EXPECT_EQ(desc.mEnemyVampires[0].mId, 3);
@@ -100,7 +100,7 @@ TEST(Parsing, ParseTick)
         "BAT3 5 3 5 4",
     };
     // clang-format on
-    desc = solver::parseTickDescription(info);
+    desc = parseTickDescription(info);
     EXPECT_EQ(desc.mBat1.size(), 2);
     EXPECT_EQ(desc.mBat2.size(), 2);
     EXPECT_EQ(desc.mBat3.size(), 2);
@@ -116,7 +116,7 @@ TEST(Parsing, ParseTick)
         "GRENADE 1 9 3 0 2",
     };
     // clang-format on
-    desc = solver::parseTickDescription(info);
+    desc = parseTickDescription(info);
     EXPECT_EQ(desc.mGrenades.size(), 2);
     EXPECT_EQ(desc.mGrenades[0].mId, 1);
     EXPECT_EQ(desc.mGrenades[0].mX, 1);
@@ -132,7 +132,7 @@ TEST(Parsing, ParseTick)
         "POWERUP SHOE -10 8 1"
     };
     // clang-format on
-    desc = solver::parseTickDescription(info);
+    desc = parseTickDescription(info);
     EXPECT_EQ(desc.mPowerUps.size(), 4);
     EXPECT_EQ(desc.mPowerUps[0].mType, PowerUp::Type::Tomato);
     EXPECT_EQ(desc.mPowerUps[1].mType, PowerUp::Type::Grenade);

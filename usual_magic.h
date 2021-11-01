@@ -12,7 +12,7 @@ struct event_t {
 	int turn;
 	int variable; // 1 r, 2 stepcnt, 3 bombcnt
 	int change = 1;
-	event_t(int turn, int variable, int change): turn(turn), variable(variable), change(change) {}
+	event_t(int _turn, int _variable, int _change): turn(_turn), variable(_variable), change(_change) {}
 };
 
 map_t sim(map_t& m);

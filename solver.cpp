@@ -83,7 +83,8 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
 
     Answer answer = mMagic->Tick(mTickDescription);
 
-    std::vector<std::string> commands { infos[0] };
+    std::vector<std::string> commands { "RES " + std::to_string(tick.mRequest.mGameId) + " " + std::to_string(tick.mRequest.mTick) + " "
+        + std::to_string(tick.mRequest.mVampireId) };
     if (answer.mPlaceGrenade) {
         commands.emplace_back("GRENADE");
     }

@@ -15,8 +15,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
     Answer answer;
 
     std::vector<char> dirs = { 'U', 'R', 'D', 'L' };
-    answer.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
-    answer.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
+    // answer.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
+    // answer.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
+    answer.mSteps = {'R', 'L'};
 
     return answer;
 }

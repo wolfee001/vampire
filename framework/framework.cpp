@@ -59,6 +59,13 @@ void Framework::Update(const TickDescription& description, const std::vector<std
     mRenderLock.unlock();
 }
 
+void Framework::Step(const std::vector<std::string>& infos)
+{
+    if (mRecordGame) {
+        mGameRecorder.Step(infos);
+    }
+}
+
 void Framework::Render()
 {
     mRenderLock.lock();

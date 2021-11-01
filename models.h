@@ -86,7 +86,7 @@ struct BatSquad {
 };
 
 struct EndMessage {
-    int mPoint = -1;
+    float mPoint = 0.f;
     std::string mReason;
 
     bool operator==(const EndMessage& other) const

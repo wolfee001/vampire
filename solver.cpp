@@ -81,6 +81,10 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
     Framework::GetInstance().Update(mTickDescription, infos);
 #endif
 
+    if (!mTickDescription.mEndMessage.mReason.empty()) {
+        return {};
+    }
+
     Answer answer = mMagic->Tick(mTickDescription);
 
     std::vector<std::string> commands { "RES " + std::to_string(tick.mRequest.mGameId) + " " + std::to_string(tick.mRequest.mTick) + " "
@@ -95,6 +99,10 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
         }
         commands.emplace_back(moveCommand);
     }
+
+#ifdef GAME_WITH_FRAMEWORK
+    Framework::GetInstance().Step(commands);
+#endif
 
     return commands;
 }

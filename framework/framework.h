@@ -14,6 +14,7 @@ public:
 
     void SetGameDescription(const GameDescription& description, const std::vector<std::string>& infos);
     void Update(const TickDescription& description, const std::vector<std::string>& infos);
+    void Step(const std::vector<std::string>& infos);
 
     void Render();
 

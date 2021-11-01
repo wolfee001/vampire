@@ -147,7 +147,6 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
         } else if (msg == "END") {
             stream >> newDescription.mEndMessage.mPoint;
             stream >> newDescription.mEndMessage.mReason;
-            return {};
         } else {
             std::cerr << "Unhandled message: " << msg << std::endl;
             throw std::runtime_error("Unhandled message: " + msg);

@@ -29,7 +29,7 @@ TEST(ActionSequence, EmptyWithBomb)
     EXPECT_EQ(as.GetId(), 1);
 }
 
-TEST(DISABLED_ActionSequence, UpWithoutBomb)
+TEST(ActionSequence, UpWithoutBomb)
 {
     Answer answer;
     answer.mPlaceGrenade = false;
@@ -40,7 +40,7 @@ TEST(DISABLED_ActionSequence, UpWithoutBomb)
     EXPECT_EQ(as.GetId(), 2);
 }
 
-TEST(DISABLED_ActionSequence, UpWithBomb)
+TEST(ActionSequence, UpWithBomb)
 {
     Answer answer;
     answer.mPlaceGrenade = true;
@@ -51,7 +51,7 @@ TEST(DISABLED_ActionSequence, UpWithBomb)
     EXPECT_EQ(as.GetId(), 3);
 }
 
-TEST(DISABLED_ActionSequence, UpLeftRightWithBomb)
+TEST(ActionSequence, UpLeftRightWithBomb)
 {
     Answer answer;
     answer.mPlaceGrenade = true;
@@ -61,7 +61,7 @@ TEST(DISABLED_ActionSequence, UpLeftRightWithBomb)
     EXPECT_EQ(as.GetAnswer(), answer);
 }
 
-TEST(DISABLED_ActionSequence, AllFromAnswer)
+TEST(ActionSequence, AllFromAnswer)
 {
     Answer answer;
 

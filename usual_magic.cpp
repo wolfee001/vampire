@@ -89,8 +89,9 @@ struct pos_t {
 	}
 };
 
-pos_t dir[4] = { { -1,0 },{ 0,1 },{ 1,0 },{ 0,-1 } };
+pos_t dir[5] = { { -1,0 },{ 0,1 },{ 1,0 },{ 0,-1 }, {0, 0} };
 char dirc[5] = "^>V<";
+char dirc2[5] = "URDL";
 
 pos_t pos_t::GetPos(int d) const
 {
@@ -156,7 +157,7 @@ map_t sim(map_t& m)
 	return res;
 }
 
-static const int MAXTURN = 50;
+static const int MAXTURN = 100;
 
 struct reach_t {
 	int turn = MAXTURN + 1;
@@ -208,17 +209,20 @@ void show(map_t& m)
 }
 
 reach_t reaches[23][23];
+vector<int> steps;
 
 void show(map_t& m, pos_t start, pos_t target)
 {
 	map_t res = m;
 	int cnt = 0;
+	steps.clear();
 	while(target != start) {
 		auto r = reaches[target.y][target.x];
 		if (r.dirfrom == -1)
 			break;
 		target = target.GetPos((r.dirfrom + 2) % 4);
 		res[target.y][target.x] = dirc[r.dirfrom];
+		steps.push_back(r.dirfrom);
 		if (++cnt > 100) {
 			cerr << "maxstep error (loop?)" << endl;
 			break;
@@ -251,7 +255,7 @@ int getdist(map_t& m, pos_t start, vector<pos_t> targets, int r, int stepcnt, in
 		q.pop_front();
 		if (!targets.empty()) {
 			FOR0(i, SZ(targets)) {
-				if (reaches[targets[i].y][targets[i].x].turn < 100) {
+				if (reaches[targets[i].y][targets[i].x].turn < MAXTURN) {
 					if (!firsttargetreached.isvalid())
 						firsttargetreached = targets[i];
 					swap(targets[i], targets.back());
@@ -442,8 +446,10 @@ int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescript
 Answer UsualMagic::Tick(const TickDescription& tickDescription)
 {
     Answer answer;
+	cerr << "turn " << tickDescription.mRequest.mTick << endl;
 
 	auto& me = tickDescription.mMe;
+	pos_t mypos = pos_t(me.mY, me.mX);
 	map_t m = genempty(mGameDescription.mMapSize);
 	m.bombrange = m;
 	for (const auto& bat : tickDescription.mAllBats)
@@ -452,7 +458,73 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 		m[grenade.mY][grenade.mX] = grenade.mTick + '0';
 		m.bombrange[grenade.mY][grenade.mX] = grenade.mRange + '0';
 	}
+	auto nextmap = sim(m);
 	if (tickDescription.mPowerUps.empty()) {
+		vector<pos_t> targets;
+		vector<int> closestenemy;
+		FOR0(y, SZ(m)) {
+			FOR0(x, SZ(m)) {
+				if (m[y][x] == ' ' && m[SZ(m) - 1 - y][SZ(m) - 1 - x] == ' ') {
+					targets.push_back(pos_t(y, x));
+					closestenemy.push_back(MAXTURN + 1);
+				}
+			}
+		}
+		for (const auto& enemy : tickDescription.mEnemyVampires) {
+			getdist(m, vector<pos_t>(), tickDescription, enemy);
+			FOR0(i, SZ(targets))
+				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
+		}
+		vector<char> dirs(4);
+		vector<char> bestdirs;
+		int best = 0;
+		FOR0(d1, 5) {
+			pos_t p1 = mypos.GetPos(d1);
+			if (m[p1.y][p1.x] != ' ')
+				continue;
+			dirs.clear();
+			if (d1 != 4)
+				dirs.push_back(dirc2[d1]);
+			FOR0(d2, 5) {
+				if (d1 == 4)
+					d2 = 4;
+				else if (d2 == (d1 + 2) % 4)
+					continue;
+				pos_t p2 = p1.GetPos(d2);
+				if (m[p2.y][p2.x] != ' ')
+					continue;
+				if (d2 != 4)
+					dirs.push_back(dirc2[d2]);
+				FOR0(d3, 4) {
+					if (me.mRunningShoesTick == 0 && d3 == 0 || d2 == 4)
+						d3 = 4;
+					pos_t p3 = p2.GetPos(d3);
+					if (m[p3.y][p3.x] != ' ' || nextmap[p3.y][p3.x] == '.')
+						continue;
+					if (d3 != 4)
+						dirs.push_back(dirc2[d3]);
+					Vampire me2 = me;
+					me2.mY = p3.y;
+					me2.mX = p3.x;
+					getdist(m, vector<pos_t>(), tickDescription, me2);
+					int cnt = 0;
+					FOR0(i, SZ(targets)) {
+						if (closestenemy[i] > reaches[targets[i].y][targets[i].x].turn) // has to be further
+							++cnt;
+					}
+					MAXA2(best, cnt, bestdirs, dirs);
+				}
+			}
+		}
+		if (best > 0) {
+			answer.mPlaceGrenade = false; // SZ(bestdirs) < (me.mRunningShoesTick > 0 ? 3 : 2) && me.mPlacableGrenades > 0;
+			answer.mSteps = bestdirs;
+			cerr << "go closer";
+			for(auto c : answer.mSteps)
+				cerr << c;
+			cerr << endl;
+			return answer;
+		}
 
 	} else {
 		vector<pos_t> targets;
@@ -478,11 +550,30 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 
 		if (best == -1)
 			cerr << "no target" << endl;
-		else
+		else {
 			cerr << "closest target: " << targets[best] << endl;
+			show(m, mypos, targets[best]);
 
-		// todo tactical
+			if (SZ(steps) == best - 1) {
+				answer.mPlaceGrenade = false; // TBD
+				int stepcnt = me.mRunningShoesTick > 0 ? 3 : 2;
+				pos_t p = mypos;
+				int last = max(0, SZ(steps) - stepcnt);
+				FORD(i, SZ(steps) - 1, last) {
+					p = p.GetPos(steps[i]);
+					if (m[p.y][p.x] != ' ' || i == last && nextmap[p.y][p.x] == '.')
+						break;
+					char c = dirc2[steps[i]];
+					answer.mSteps.push_back(c);
+				}
+				for(auto c : answer.mSteps)
+					cerr << c;
+				cerr << endl;
+				return answer;
+			}
+		}
 
+		// todo detailed tactical, use/avoid bomb etc
 	}
 
 // todo: handle multi bomb on same position?

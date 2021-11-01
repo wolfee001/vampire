@@ -1,7 +1,7 @@
 // clang-format off
 #pragma once
 
-#include "models.h"
+#include "i_magic.h"
 
 struct map_t : std::vector<std::string> 
 {
@@ -18,13 +18,10 @@ struct event_t {
 map_t sim(map_t& m);
 int getdist(map_t m, int r, int stepcnt, int bombcnt, std::vector<event_t> events);
 
-class UsualMagic {
+class UsualMagic : public IMagic {
 public:
     explicit UsualMagic(const GameDescription& gameDescription);
 
     Answer Tick(const TickDescription& tickDescription);
-
-private:
-    GameDescription mGameDescription;
 };
 // clang-format on

@@ -26,6 +26,7 @@
 #include "game_loader.h"
 #include "model_wrapper.h"
 
+#include "../check.h"
 #include "../parser.h"
 #include "../simulator.h"
 
@@ -88,7 +89,16 @@ void Framework::Render()
                 mTickDescription = TickDescription();
                 mGameDescription = GameDescription();
                 mPlayBook.mGameLoader = GameLoader(result[0]);
-                std::thread t([&mPlayBook = mPlayBook]() { mPlayBook.mSolver.startMessage(mPlayBook.mGameLoader.GetDescription().mMessage); });
+
+                std::thread t([&mPlayBook = mPlayBook]() {
+                    mPlayBook.mSolver.startMessage(mPlayBook.mGameLoader.GetDescription().mMessage);
+                    GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
+                    const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                    if (resp != step.mAnswerMessage) {
+                        mPlayBook.mIsCorrupted = true;
+                        return;
+                    }
+                });
                 t.detach();
             }
         }
@@ -298,6 +308,19 @@ void Framework::Render()
             }
         }
 
+        Simulator simulator(mGameDescription);
+        simulator.SetState(mTickDescription);
+        std::vector<Simulator::BlowArea> blowAreas = simulator.GetBlowAreas();
+
+        for (const auto& area : blowAreas) {
+            for (const auto& position : area.mArea) {
+                ImVec2 tl = ImGui::GetCursorScreenPos();
+                tl.x += static_cast<float>(position.first) * 34.f + 1.f;
+                tl.y += static_cast<float>(position.second) * 34.f + 1.f;
+                draw_list->AddRectFilled(tl, ImVec2(tl.x + 32, tl.y + 32), IM_COL32(255, 0, 127, 255));
+            }
+        }
+
         {
             ImVec2 myPos = ImVec2(p.x + static_cast<float>(mTickDescription.mMe.mX) * 34 + 1, p.y + static_cast<float>(mTickDescription.mMe.mY) * 34 + 1);
             draw_list->AddImage(mAssets["vampire1"], myPos, ImVec2(myPos.x + 32, myPos.y + 32));
@@ -369,7 +392,7 @@ void Framework::Render()
                     case PowerUp::Type::Tomato:
                         return "tomato";
                     default:
-                        throw std::runtime_error("Unhandled type!");
+                        CHECK(false, "Unhandled type!");
                     }
                 }(pu.mType);
                 ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
@@ -483,6 +506,12 @@ void* Framework::LoadAsset(const std::filesystem::path& path)
     unsigned char* image_data = stbi_load(path.string().c_str(), &image_width, &image_height, NULL, 4);
     if (image_data == NULL)
         return 0;
+
+    for (int i = 0; i < image_width * image_height * 4; i += 4) {
+        if (image_data[i] == 96 && image_data[i + 1] == 163 && image_data[i + 2] == 98) {
+            image_data[i + 3] = 0;
+        }
+    }
 
     // Create a OpenGL texture identifier
     GLuint image_texture;

@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "check.h"
+
 GameDescription parseGameDescription(const std::vector<std::string>& startInfos)
 {
     GameDescription description;
@@ -41,8 +43,7 @@ GameDescription parseGameDescription(const std::vector<std::string>& startInfos)
         } else if (msg == "SIZE") {
             stream >> description.mMapSize;
         } else {
-            std::cerr << "Unhandled message: " << msg << std::endl;
-            throw std::runtime_error("Unhandled message: " + msg);
+            CHECK(false, "Unhandled message: " + msg);
         }
     }
     return description;
@@ -102,8 +103,7 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
                 if (type == "SHOE") {
                     return PowerUp::Type::Shoe;
                 }
-                std::cerr << "Unhandled type: " << type << std::endl;
-                throw std::runtime_error("Unhandled type: " + type);
+                CHECK(false, "Unhandled type: " + type);
             }(t);
             stream >> powerUp.mRemainingTick;
             stream >> powerUp.mX;
@@ -148,8 +148,7 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
             stream >> newDescription.mEndMessage.mPoint;
             stream >> newDescription.mEndMessage.mReason;
         } else {
-            std::cerr << "Unhandled message: " << msg << std::endl;
-            throw std::runtime_error("Unhandled message: " + msg);
+            CHECK(false, "Unhandled message: " + msg);
         }
     }
     return newDescription;

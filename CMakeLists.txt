@@ -10,6 +10,8 @@ if(CMAKE_BUILD_TYPE MATCHES DEBUG)
     add_compile_options(-fstandalone-debug)
 endif()
 
+add_compile_definitions(CHECK_ENABLED)
+
 #-------------- SETUPS
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)
@@ -33,7 +35,7 @@ file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/data)
 #--------------
 
 #-------------- NORMAL BUILD
-add_library(libmagic usual_magic.cpp)
+add_library(libmagic usual_magic.cpp gabor_magic.cpp)
 target_link_libraries(libmagic
     PUBLIC project_options
     PRIVATE CONAN_PKG::boost
@@ -105,6 +107,7 @@ add_executable(framework
     parser.cpp
     solver.cpp
     usual_magic.cpp
+    gabor_magic.cpp
 )
 target_link_libraries(framework
     PRIVATE project_options

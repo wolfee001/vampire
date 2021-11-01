@@ -5,10 +5,12 @@
 #include <stdexcept>
 #include <string>
 
+#include "../check.h"
+
 void GameRecorder::StartRecording(const std::vector<std::string>& startInfos)
 {
     if (mOutput) {
-        throw std::runtime_error("A recording is already running. Something is fucked up.");
+        CHECK(false, "A recording is already running. Something is fucked up.");
     }
 
     int gameId = 0;

@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "../check.h"
 #include "../parser.h"
 #include "../simulator.h"
 
@@ -20,7 +21,7 @@ public:
     {
         sockpp::tcp_acceptor acc(mPort);
         if (!acc) {
-            throw std::runtime_error("Error creating the acceptor: " + acc.last_error_str());
+            CHECK(false, "Error creating the acceptor: " + acc.last_error_str());
         }
         std::cout << "Acceptor bound to address: " << acc.address() << std::endl;
         for (size_t conn = 0; conn < count; ++conn) {
@@ -28,7 +29,7 @@ public:
             sockpp::tcp_socket sock = acc.accept(&peer);
             std::cout << "Received a connection request from " << peer << std::endl;
             if (!sock) {
-                throw std::runtime_error("Error accepting incoming connection: " + acc.last_error_str());
+                CHECK(false, "Error accepting incoming connection: " + acc.last_error_str());
             }
             mClients.push_back(std::move(sock));
         }
@@ -94,7 +95,7 @@ std::vector<std::string> ParseMessage(const std::string& message)
     while (std::getline(consumer, line)) {
         if (line == ".") {
             // if (!consumer.eof()) {
-            //     throw std::runtime_error("huha...");
+            //     CHECK(false, "huha...");
             // }
             return result;
         }
@@ -130,7 +131,7 @@ std::vector<std::string> CreateInfo(const TickDescription& tick, int player)
             case PowerUp::Type::Tomato:
                 return "TOMATO";
             }
-            throw std::runtime_error("unhandled type!");
+            CHECK(false, "unhandled type!");
         }(powerup.mType);
         retVal.push_back(fmt::format("POWERUP {} {} {} {}", type, powerup.mRemainingTick, powerup.mX, powerup.mY));
     }

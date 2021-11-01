@@ -8,7 +8,7 @@
 class ActionSequence {
 public:
     ActionSequence() = default;
-    using ActionSequence_t = uint8_t;
+    using ActionSequence_t = unsigned short;
 
     explicit ActionSequence(const ActionSequence_t sequence)
         : mSequence(sequence)

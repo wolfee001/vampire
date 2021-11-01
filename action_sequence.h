@@ -8,12 +8,16 @@
 class ActionSequence {
 public:
     ActionSequence() = default;
-    using ActionSequence_t = unsigned short;
+    using ActionSequence_t = uint8_t;
 
     explicit ActionSequence(const ActionSequence_t sequence)
         : mSequence(sequence)
     {
+        if (mSequence > MaxSequenceId) {
+            throw std::runtime_error("Too big ActionSequenceId");
+        }
     }
+
     explicit ActionSequence(const Answer& answer)
     {
         const auto getMoveIndex = [](const char step) -> ActionSequence_t {
@@ -50,7 +54,7 @@ public:
             mSequence = static_cast<ActionSequence_t>(mSequence + getMoveIndex(answer.mSteps[i]) * std::pow(4, i));
         }
 
-        mSequence = static_cast<ActionSequence_t>(((mSequence << 1) != 0) | answer.mPlaceGrenade);
+        mSequence = static_cast<ActionSequence_t>((mSequence << 1) | (answer.mPlaceGrenade ? 1 : 0));
     }
 
     bool operator==(const ActionSequence& other) const

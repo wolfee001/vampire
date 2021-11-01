@@ -18,7 +18,7 @@ public:
     void SetState(const TickDescription& state);
     void SetVampireMove(int id, const Answer& move);
     TickDescription Tick();
-    bool IsValidMove(int id, const Answer& move);
+    bool IsValidMove(int id, const Answer& move) const;
     std::vector<BlowArea> GetBlowAreas();
 
 private:

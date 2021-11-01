@@ -304,7 +304,7 @@ void Simulator::Move(TickDescription& state)
     }
 }
 
-bool Simulator::IsValidMove(int id, const Answer& move)
+bool Simulator::IsValidMove(int id, const Answer& move) const
 {
     const Vampire* vampire = nullptr;
 

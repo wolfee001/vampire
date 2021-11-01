@@ -156,8 +156,10 @@ map_t sim(map_t& m)
 	return res;
 }
 
+static const int MAXTURN = 50;
+
 struct reach_t {
-	int turn = 1000;
+	int turn = MAXTURN + 1;
 	int step = 0;
 	int dirfrom = -1;
 	int mode = 0;
@@ -230,8 +232,7 @@ int getdist(map_t& m, pos_t start, vector<pos_t> targets, int r, int stepcnt, in
 {
 	vector<map_t> maps;
 	maps.push_back(m);
-	int MAXTURN = 50;
-	FOR0(i, MAXTURN) // turn ahead
+	FOR0(i, MAXTURN + 1) // one turn ahead
 		maps.push_back(sim(maps.back()));
 	deque<que_item_t> q;
 	que_item_t qi;
@@ -427,6 +428,17 @@ UsualMagic::UsualMagic(const GameDescription& gameDescription)
     std::srand(static_cast<unsigned int>(time(nullptr)));
 }
 
+int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescription, const Vampire& vampire)
+{
+	vector<event_t> events;
+	if (vampire.mRunningShoesTick > 0)
+		events.push_back(event_t(vampire.mRunningShoesTick, 2, -1));
+	for (const auto& grenade : tickDescription.mGrenades)
+		if (grenade.mId == vampire.mId)
+			events.push_back(event_t(grenade.mTick, 3, 1));
+    return getdist(m, pos_t(vampire.mY, vampire.mX), targets, vampire.mGrenadeRange, vampire.mRunningShoesTick > 0 ? 3 : 2, vampire.mPlacableGrenades, events);
+}
+
 Answer UsualMagic::Tick(const TickDescription& tickDescription)
 {
     Answer answer;
@@ -436,19 +448,42 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 	m.bombrange = m;
 	for (const auto& bat : tickDescription.mAllBats)
 		m[bat.mY][bat.mX] = bat.mDensity == 1 ? '-' : bat.mDensity == 2 ? '+' : '*';
-	vector<pos_t> targets;
-	for (const auto& powerup : tickDescription.mPowerUps)
-		targets.push_back(pos_t(powerup.mY, powerup.mX));
-	vector<event_t> events;
-	if (me.mRunningShoesTick > 0)
-		events.push_back(event_t(me.mRunningShoesTick, 2, -1));
 	for (const auto& grenade : tickDescription.mGrenades) {
 		m[grenade.mY][grenade.mX] = grenade.mTick + '0';
 		m.bombrange[grenade.mY][grenade.mX] = grenade.mRange + '0';
-		if (grenade.mId == me.mId)
-			events.push_back(event_t(grenade.mTick, 3, 1));
 	}
-	getdist(m, pos_t(me.mY, me.mX), targets, me.mGrenadeRange, me.mRunningShoesTick > 0 ? 3 : 2, me.mPlacableGrenades, events);
+	if (tickDescription.mPowerUps.empty()) {
+
+	} else {
+		vector<pos_t> targets;
+		vector<int> closestenemy;
+		for (const auto& powerup : tickDescription.mPowerUps) {
+			targets.push_back(pos_t(powerup.mY, powerup.mX));
+			closestenemy.push_back(MAXTURN + 1);
+		}
+		for (const auto& enemy : tickDescription.mEnemyVampires) {
+			getdist(m, targets, tickDescription, enemy);
+			FOR0(i, SZ(targets))
+				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
+		}
+		getdist(m, targets, tickDescription, me);
+
+		int best = -1;
+		int closest = MAXTURN + 1;
+		FOR0(i, SZ(targets)) {
+			int reach = reaches[targets[i].y][targets[i].x].turn;
+			if (closestenemy[i] >= reach)
+				MINA2(closest, reach, best, i);
+		}
+
+		if (best == -1)
+			cerr << "no target" << endl;
+		else
+			cerr << "closest target: " << targets[best] << endl;
+
+		// todo tactical
+
+	}
 
 // todo: handle multi bomb on same position?
 // todo: handle ghost mode

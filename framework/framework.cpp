@@ -26,6 +26,7 @@
 #include "game_loader.h"
 #include "model_wrapper.h"
 
+#include "../check.h"
 #include "../parser.h"
 #include "../simulator.h"
 
@@ -382,7 +383,7 @@ void Framework::Render()
                     case PowerUp::Type::Tomato:
                         return "tomato";
                     default:
-                        throw std::runtime_error("Unhandled type!");
+                        CHECK(false, "Unhandled type!");
                     }
                 }(pu.mType);
                 ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);

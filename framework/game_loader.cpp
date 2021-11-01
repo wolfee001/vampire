@@ -1,5 +1,6 @@
 #include "game_loader.h"
 
+#include "../check.h"
 #include "../parser.h"
 
 #include <exception>
@@ -12,7 +13,7 @@ GameLoader::GameLoader(const std::string& fileName)
 {
     std::ifstream file(fileName.c_str());
     if (!file.is_open()) {
-        throw std::runtime_error("Failed to open file!");
+        CHECK(false, "Failed to open file!");
     }
 
     std::vector<std::string> startInfos;
@@ -70,7 +71,7 @@ GameLoader::GameDescriptionWithInfo GameLoader::GetDescription()
 std::vector<GameLoader::Step> GameLoader::GetStepUntil(size_t frame)
 {
     if (frame > mSteps.size()) {
-        throw std::runtime_error("Invalid frame!");
+        CHECK(false, "Invalid frame!");
     }
 
     return { mSteps.begin(), mSteps.begin() + frame };
@@ -79,7 +80,7 @@ std::vector<GameLoader::Step> GameLoader::GetStepUntil(size_t frame)
 GameLoader::Step GameLoader::GetFrame(size_t frame)
 {
     if (frame > mSteps.size()) {
-        throw std::runtime_error("Invalid frame!");
+        CHECK(false, "Invalid frame!");
     }
 
     return mSteps[frame];

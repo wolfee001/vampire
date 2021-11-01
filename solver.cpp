@@ -20,6 +20,8 @@
 #include "gabor_magic.h"
 #include "usual_magic.h"
 
+#include "check.h"
+
 std::vector<std::pair<int, int>> solver::line2d(std::pair<int, int> from, const std::pair<int, int>& to)
 {
     std::vector<std::pair<int, int>> result;

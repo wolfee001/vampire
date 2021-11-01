@@ -464,7 +464,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 		vector<int> closestenemy;
 		FOR0(y, SZ(m)) {
 			FOR0(x, SZ(m)) {
-				if (m[y][x] == ' ' && m[SZ(m) - 1 - y][SZ(m) - 1 - x] == ' ') {
+				if (m[y][x] == ' ' && (m[SZ(m) - 1 - y][SZ(m) - 1 - x] == ' ' || SZ(tickDescription.mEnemyVampires) == 1)) {
 					targets.push_back(pos_t(y, x));
 					closestenemy.push_back(MAXTURN + 1);
 				}
@@ -478,14 +478,16 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 		vector<char> dirs(4);
 		vector<char> bestdirs;
 		int best = 0;
-		FOR0(d1, 5) {
+		FOR(d11, -1, 3) {
+			int d1 = (d11 + 5) % 5;
 			pos_t p1 = mypos.GetPos(d1);
 			if (m[p1.y][p1.x] != ' ')
 				continue;
 			dirs.clear();
 			if (d1 != 4)
 				dirs.push_back(dirc2[d1]);
-			FOR0(d2, 5) {
+			FOR(d21, -1, 3) {
+				int d2 = (d21 + 5) % 5;
 				if (d1 == 4)
 					d2 = 4;
 				else if (d2 == (d1 + 2) % 4)

@@ -50,7 +50,7 @@ private:
         {
             std::uniform_int_distribution<size_t> dist(0, mPossibleMoves.size() - 1);
             auto it = std::cbegin(mPossibleMoves);
-            std::advance(it, dist(engine));
+            std::advance(it, static_cast<long>(dist(engine)));
             const auto ret = *it;
             mPossibleMoves.erase(it);
             return ret;

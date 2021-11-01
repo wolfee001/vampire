@@ -117,11 +117,13 @@ void Framework::Render()
             ImGui::SameLine();
             ImGui::Text("MAX STEP: %zu", mPlayBook.mGameLoader.GetStepCount() - 1);
 
-            if (mPlayBook.mIsCorrupted) {
-                ImGui::Text("THE GAME IS CORRUPTED. GOOD DAY SIR!");
-            } else {
-                ImGui::Checkbox("Solver is stateful", &mPlayBook.mSolverIsStateful);
-
+            {
+                if (mPlayBook.mIsCorrupted) {
+                    ImGui::Text("THE GAME IS CORRUPTED. STATELESS REPLAY FOR DISPLAY!");
+                    mPlayBook.mSolverIsStateful = false;
+                } else
+                    ImGui::Checkbox("Solver is stateful", &mPlayBook.mSolverIsStateful);
+    
                 ImGui::BeginDisabled(mPlayBook.mIsPlaying);
                 static int jumpTo = 0;
                 ImGui::InputInt("Next step", &jumpTo);

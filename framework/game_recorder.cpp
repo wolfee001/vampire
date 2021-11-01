@@ -22,6 +22,10 @@ void GameRecorder::StartRecording(const std::vector<std::string>& startInfos)
         }
     }
 
+    if (std::filesystem::exists(std::filesystem::path(PROJECT_DIR) / "data" / std::to_string(gameId))) {
+        return;
+    }
+
     mOutput.reset(new std::ofstream(std::filesystem::path(PROJECT_DIR) / "data" / std::to_string(gameId)));
     for (const auto& info : startInfos) {
         *mOutput << "> " << info << std::endl;
@@ -31,6 +35,10 @@ void GameRecorder::StartRecording(const std::vector<std::string>& startInfos)
 
 void GameRecorder::AddTick(const std::vector<std::string>& infos)
 {
+    if (!mOutput) {
+        return;
+    }
+
     for (const auto& info : infos) {
         *mOutput << "> " << info << std::endl;
     }
@@ -49,6 +57,10 @@ void GameRecorder::AddTick(const std::vector<std::string>& infos)
 
 void GameRecorder::Step(const std::vector<std::string>& infos)
 {
+    if (!mOutput) {
+        return;
+    }
+
     for (const auto& info : infos) {
         *mOutput << "< " << info << std::endl;
     }

@@ -105,33 +105,6 @@ std::vector<std::string> ParseMessage(const std::string& message)
     return {};
 }
 
-Answer CreateAnswer(const std::vector<std::string>& message)
-{
-    Answer retVal;
-
-    for (const auto& element : message) {
-        std::stringstream stream(element);
-        std::string id;
-        stream >> id;
-        if (id == "RES") {
-            continue;
-        } else if (id == "GRENADE") {
-            retVal.mPlaceGrenade = true;
-        } else if (id == "MOVE") {
-            while (true) {
-                char c = 0;
-                stream >> c;
-                if (c == 0) {
-                    break;
-                }
-                retVal.mSteps.push_back(c);
-            }
-        }
-    }
-
-    return retVal;
-}
-
 std::vector<std::string> CreateInfo(const TickDescription& tick, int player)
 {
     std::vector<std::string> retVal;
@@ -214,7 +187,7 @@ int main()
             ms.SendToConnection(p, CreateMessage(CreateInfo(tick, p + 1)));
         }
         for (int p = 0; p < playerCount; ++p) {
-            Answer ans = CreateAnswer(ParseMessage(ms.ReadFromConnection(p)));
+            Answer ans = parseAnswer(ParseMessage(ms.ReadFromConnection(p)));
             simulator.SetVampireMove(p + 1, ans);
         }
         tick = simulator.Tick();

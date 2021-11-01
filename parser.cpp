@@ -154,3 +154,30 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
     }
     return newDescription;
 }
+
+Answer parseAnswer(const std::vector<std::string>& message)
+{
+    Answer retVal;
+
+    for (const auto& element : message) {
+        std::stringstream stream(element);
+        std::string id;
+        stream >> id;
+        if (id == "RES") {
+            continue;
+        } else if (id == "GRENADE") {
+            retVal.mPlaceGrenade = true;
+        } else if (id == "MOVE") {
+            while (true) {
+                char c = 0;
+                stream >> c;
+                if (c == 0) {
+                    break;
+                }
+                retVal.mSteps.push_back(c);
+            }
+        }
+    }
+
+    return retVal;
+}

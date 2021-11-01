@@ -6,6 +6,7 @@ glew/2.1.0
 stb/cci.20210713
 fmt/8.0.1
 gtest/1.11.0
+portable-file-dialogs/0.1.0
 
 [options]
 boost:header_only=True

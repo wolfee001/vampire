@@ -20,6 +20,9 @@
 #include <GL/gl.h>
 #endif
 
+#include <portable-file-dialogs.h>
+
+#include "game_loader.h"
 #include "model_wrapper.h"
 
 #include "../parser.h"
@@ -75,48 +78,152 @@ void Framework::Render()
     // ImGui::ShowDemoWindow();
 
     {
-        ImGui::Begin("Dummy");
+        ImGui::Begin("Playback");
 
-        if (ImGui::Button("GO", ImVec2(-1.F, 0.F))) {
-            std::thread t([]() {
-                std::srand(static_cast<unsigned int>(std::time(nullptr)));
-                std::vector<std::string> startInfo = {
-                    "MESSAGE OK",
-                    "LEVEL 1",
-                    "GAMEID 775",
-                    "TEST 1",
-                    "MAXTICK 500",
-                    "GRENADERADIUS 2",
-                    "SIZE 11",
-                };
-                GameDescription gd = parseGameDescription(startInfo);
-                Framework::GetInstance().SetGameDescription(gd, startInfo);
+        if (ImGui::Button("LOAD")) {
+            auto result = pfd::open_file("Open recorded game", PROJECT_DIR "/data").result();
+            if (!result.empty()) {
+                mPlayBook = PlayBook();
+                mTickDescription = TickDescription();
+                mGameDescription = GameDescription();
+                mPlayBook.mGameLoader = GameLoader(result[0]);
+                std::thread t([&mPlayBook = mPlayBook]() { mPlayBook.mSolver.startMessage(mPlayBook.mGameLoader.GetDescription().mMessage); });
+                t.detach();
+            }
+        }
 
-                std::vector<std::string> info = { "REQ 775 0 1", "VAMPIRE 1 1 1 3 1 2 0", "VAMPIRE 3 9 9 3 1 2 0", "VAMPIRE 4 1 9 3 1 2 0",
-                    "VAMPIRE 2 9 1 3 1 2 0", "BAT1 4 1 5 1 6 1 3 2 7 2 2 3 3 3 7 3 8 3 1 4 9 4 1 5 9 5 1 6 9 6 2 7 3 7 7 7 8 7 3 8 7 8 4 9 5 9 6 9",
-                    "BAT2 5 2 4 3 6 3 3 4 7 4 2 5 8 5 3 6 7 6 4 7 6 7 5 8", "BAT3 5 3 5 4 3 5 4 5 5 5 6 5 7 5 5 6 5 7" };
-                TickDescription tick = parseTickDescription(info);
-                Framework::GetInstance().Update(tick, info);
+        if (mPlayBook.mGameLoader.GetDescription().mGameDescription.mGameId != -1) {
+            ImGui::SameLine();
+            if (ImGui::Button("CLEAR")) {
+                mPlayBook = PlayBook();
+                mTickDescription = TickDescription();
+                mGameDescription = GameDescription();
+            }
 
-                Simulator simulator(gd);
+            ImGui::Text("LOADED: %d", mPlayBook.mGameLoader.GetDescription().mGameDescription.mGameId);
+            ImGui::SameLine();
+            ImGui::Text("STEP: %zu", mPlayBook.mStep);
+            ImGui::SameLine();
+            ImGui::Text("MAX STEP: %zu", mPlayBook.mGameLoader.GetStepCount() - 1);
 
-                for (size_t i = 0; i < 500; ++i) {
-                    simulator.SetState(tick);
-                    Answer ans;
-                    std::vector<char> dirs = { 'U', 'R', 'D', 'L' };
-                    ans.mPlaceGrenade = rand() % 5 == 0;
-                    ans.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
-                    ans.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
-                    simulator.SetVampireMove(1, ans);
-                    tick = simulator.Tick();
-                    Framework::GetInstance().Update(tick, {});
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            if (mPlayBook.mIsCorrupted) {
+                ImGui::Text("THE GAME IS CORRUPTED. GOOD DAY SIR!");
+            } else {
+                ImGui::Checkbox("Solver is stateful", &mPlayBook.mSolverIsStateful);
+
+                ImGui::BeginDisabled(mPlayBook.mIsPlaying);
+                static int jumpTo = 0;
+                ImGui::InputInt("Next step", &jumpTo);
+                ImGui::SameLine();
+                if (ImGui::Button("Jump")) {
+                    mPlayBook.mStep = std::max(int(0), std::min(jumpTo, static_cast<int>(mPlayBook.mGameLoader.GetStepCount())));
+                    if (mPlayBook.mSolverIsStateful) {
+                        std::vector<GameLoader::Step> steps = mPlayBook.mGameLoader.GetStepUntil(mPlayBook.mStep);
+                        std::thread t([steps, &mPlayBook = mPlayBook]() {
+                            for (const auto& element : steps) {
+                                const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
+                                if (resp != element.mAnswerMessage) {
+                                    mPlayBook.mIsCorrupted = true;
+                                    mPlayBook.mIsPlaying = false;
+                                    return;
+                                }
+                            }
+                        });
+                        t.detach();
+                    } else {
+                        GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
+                        std::thread t([step, &mPlayBook = mPlayBook]() {
+                            const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                            if (resp != step.mAnswerMessage) {
+                                mPlayBook.mIsCorrupted = true;
+                                return;
+                            }
+                        });
+                        t.detach();
+                    }
                 }
-            });
-            t.detach();
+                ImGui::EndDisabled();
+
+                ImGui::BeginDisabled(mPlayBook.mIsPlaying);
+                if (ImGui::Button("|< ")) {
+                    if (mPlayBook.mStep > 0) {
+                        mPlayBook.mStep--;
+                        if (mPlayBook.mSolverIsStateful) {
+                            std::vector<GameLoader::Step> steps = mPlayBook.mGameLoader.GetStepUntil(mPlayBook.mStep);
+                            std::thread t([steps, &mPlayBook = mPlayBook]() {
+                                for (const auto& element : steps) {
+                                    const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
+                                    if (resp != element.mAnswerMessage) {
+                                        mPlayBook.mIsCorrupted = true;
+                                        mPlayBook.mIsPlaying = false;
+                                        return;
+                                    }
+                                }
+                            });
+                            t.detach();
+                        } else {
+                            GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
+                            std::thread t([step, &mPlayBook = mPlayBook]() {
+                                const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                                if (resp != step.mAnswerMessage) {
+                                    mPlayBook.mIsCorrupted = true;
+                                    return;
+                                }
+                            });
+                            t.detach();
+                        }
+                    }
+                }
+                ImGui::EndDisabled();
+                ImGui::SameLine();
+                if (ImGui::Button(mPlayBook.mIsPlaying ? " || " : " > ")) {
+                    mPlayBook.mIsPlaying = !mPlayBook.mIsPlaying;
+                }
+                ImGui::SameLine();
+                ImGui::BeginDisabled(mPlayBook.mIsPlaying);
+                if (ImGui::Button(" >|")) {
+                    if (mPlayBook.mStep < mPlayBook.mGameLoader.GetStepCount() - 1) {
+                        mPlayBook.mStep++;
+                        GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
+                        std::thread t([step, &mPlayBook = mPlayBook]() {
+                            const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                            if (resp != step.mAnswerMessage) {
+                                mPlayBook.mIsCorrupted = true;
+                                return;
+                            }
+                        });
+                        t.detach();
+                    }
+                }
+                ImGui::EndDisabled();
+
+                ImGui::SliderInt("Playback speed", &mPlayBook.mStepSpeed, 50, 1000);
+            }
         }
 
         ImGui::End();
+    }
+
+    {
+        if (mPlayBook.mIsPlaying) {
+            std::chrono::milliseconds time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+            std::chrono::milliseconds delta = time - mPlayBook.mLastStepTime;
+            if (delta.count() > mPlayBook.mStepSpeed) {
+                mPlayBook.mLastStepTime = time;
+                if (mPlayBook.mStep < mPlayBook.mGameLoader.GetStepCount() - 1) {
+                    mPlayBook.mStep++;
+                    GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
+                    std::thread t([step, &mPlayBook = mPlayBook]() {
+                        const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                        if (resp != step.mAnswerMessage) {
+                            mPlayBook.mIsCorrupted = true;
+                            return;
+                        }
+                    });
+                    t.detach();
+                }
+            }
+        }
     }
 
     {

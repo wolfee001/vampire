@@ -5,7 +5,7 @@
 
 struct map_t : std::vector<std::string> 
 {
-	std::vector<std::string> bombrange;
+	std::vector<std::string> bombrange = {};
 };
 
 struct event_t {

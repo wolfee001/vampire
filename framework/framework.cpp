@@ -108,7 +108,7 @@ void Framework::Render()
                     ans.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
                     ans.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
                     simulator.SetVampireMove(1, ans);
-                    tick = simulator.Tick();
+                    tick = simulator.Tick().first;
                     Framework::GetInstance().Update(tick, {});
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }

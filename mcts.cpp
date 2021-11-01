@@ -94,7 +94,7 @@ MonteCarloTreeSearch::TreeNode& MonteCarloTreeSearch::Expand(TreeNode& node)
         parent = parent->mParent;
         simulator.SetVampireMove(parent->mPlayerId, ActionSequence(current->mActionDoneByParent).GetAnswer());
 
-        newNode->mTickDescription = simulator.Tick(); // we moved the all players, lets tick()!
+        newNode->mTickDescription = simulator.Tick().first; // we moved the all players, lets tick()!
     }
 
     return *newNode;
@@ -130,7 +130,7 @@ MonteCarloTreeSearch::GameState MonteCarloTreeSearch::Simulate(TreeNode& node)
     for (size_t i = 0, max = numberOfTurnsToSimulate * 4 - alreadyMadeMoves; i < max; ++i) {
         if (i != 0 && currentMove.mPlayerId == mPlayerIds.front()) {
             simulator.SetState(currentTick);
-            currentTick = simulator.Tick();
+            currentTick = simulator.Tick().first;
             currentMove.mTickDescription = currentTick;
         }
 

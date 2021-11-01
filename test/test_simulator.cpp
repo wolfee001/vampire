@@ -45,9 +45,13 @@ TEST_F(SimulateTest, TickNoEffect)
     // clang-format on
     TickDescription state = parseTickDescription(info);
     mSimulator->SetState(state);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     state.mRequest.mTick++;
     ASSERT_EQ(state, newState);
+    ASSERT_EQ(newPoints.at(1), 0);
+    ASSERT_EQ(newPoints.at(3), 0);
+    ASSERT_EQ(newPoints.at(4), 0);
+    ASSERT_EQ(newPoints.at(2), 0);
 }
 
 TEST_F(SimulateTest, TickDecreases)
@@ -66,7 +70,7 @@ TEST_F(SimulateTest, TickDecreases)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades[0].mTick, 4);
     ASSERT_EQ(newState.mGrenades[1].mTick, 2);
     ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, -2);
@@ -88,7 +92,7 @@ TEST_F(SimulateTest, PowerupDisappear)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 2);
     ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, -2);
     ASSERT_EQ(newState.mPowerUps[1].mRemainingTick, 10);
@@ -107,11 +111,12 @@ TEST_F(SimulateTest, PowerupPickupSingleMeTomatoNoEffect)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 2);
     ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, 2);
     ASSERT_EQ(newState.mPowerUps[1].mRemainingTick, 4);
     ASSERT_EQ(newState.mMe.mHealth, 3);
+    ASSERT_EQ(newPoints.at(1), 48);
 }
 
 TEST_F(SimulateTest, PowerupPickupSingleMeTomato)
@@ -127,11 +132,12 @@ TEST_F(SimulateTest, PowerupPickupSingleMeTomato)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 2);
     ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, 2);
     ASSERT_EQ(newState.mPowerUps[1].mRemainingTick, 4);
     ASSERT_EQ(newState.mMe.mHealth, 2);
+    ASSERT_EQ(newPoints.at(1), 48);
 }
 
 TEST_F(SimulateTest, PowerupPickupMeWithOtherTomato)
@@ -148,12 +154,14 @@ TEST_F(SimulateTest, PowerupPickupMeWithOtherTomato)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 2);
     ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, 2);
     ASSERT_EQ(newState.mPowerUps[1].mRemainingTick, 4);
     ASSERT_EQ(newState.mMe.mHealth, 2);
     ASSERT_EQ(newState.mEnemyVampires[0].mHealth, 3);
+    ASSERT_EQ(newPoints.at(1), 48);
+    ASSERT_EQ(newPoints.at(2), 48);
 }
 
 TEST_F(SimulateTest, PowerupPickupOthersTomato)
@@ -171,13 +179,16 @@ TEST_F(SimulateTest, PowerupPickupOthersTomato)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 2);
     ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, 2);
     ASSERT_EQ(newState.mPowerUps[1].mRemainingTick, 4);
     ASSERT_EQ(newState.mMe.mHealth, 1);
     ASSERT_EQ(newState.mEnemyVampires[0].mHealth, 3);
     ASSERT_EQ(newState.mEnemyVampires[1].mHealth, 2);
+    ASSERT_EQ(newPoints.at(1), 0);
+    ASSERT_EQ(newPoints.at(2), 48);
+    ASSERT_EQ(newPoints.at(3), 48);
 }
 
 TEST_F(SimulateTest, PowerupPickupOthersTomato2)
@@ -195,13 +206,16 @@ TEST_F(SimulateTest, PowerupPickupOthersTomato2)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 2);
     ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, 2);
     ASSERT_EQ(newState.mPowerUps[1].mRemainingTick, 4);
     ASSERT_EQ(newState.mMe.mHealth, 1);
     ASSERT_EQ(newState.mEnemyVampires[0].mHealth, 3);
     ASSERT_EQ(newState.mEnemyVampires[1].mHealth, 3);
+    ASSERT_EQ(newPoints.at(1), 0);
+    ASSERT_EQ(newPoints.at(2), 48);
+    ASSERT_EQ(newPoints.at(3), 48);
 }
 
 TEST_F(SimulateTest, PowerupPickupGrenade)
@@ -215,9 +229,10 @@ TEST_F(SimulateTest, PowerupPickupGrenade)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 0);
     ASSERT_EQ(newState.mMe.mPlacableGrenades, 2);
+    ASSERT_EQ(newPoints.at(1), 48);
 }
 
 TEST_F(SimulateTest, PowerupPickupBattery)
@@ -231,9 +246,10 @@ TEST_F(SimulateTest, PowerupPickupBattery)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 0);
     ASSERT_EQ(newState.mMe.mGrenadeRange, 3);
+    ASSERT_EQ(newPoints.at(1), 48);
 }
 
 TEST_F(SimulateTest, PowerupPickupShoe)
@@ -247,9 +263,10 @@ TEST_F(SimulateTest, PowerupPickupShoe)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 0);
     ASSERT_EQ(newState.mMe.mRunningShoesTick, 22);
+    ASSERT_EQ(newPoints.at(1), 48);
 }
 
 TEST_F(SimulateTest, PowerupPickupShoeAddition)
@@ -263,9 +280,10 @@ TEST_F(SimulateTest, PowerupPickupShoeAddition)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mPowerUps.size(), 0);
     ASSERT_EQ(newState.mMe.mRunningShoesTick, 28);
+    ASSERT_EQ(newPoints.at(1), 48);
 }
 
 TEST_F(SimulateTest, BlowUpSingleGrenade)
@@ -278,7 +296,7 @@ TEST_F(SimulateTest, BlowUpSingleGrenade)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 0);
 }
 
@@ -293,7 +311,7 @@ TEST_F(SimulateTest, BlowUpTwoGrenadeNoReaction)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 1);
     ASSERT_EQ(newState.mGrenades[0].mTick, 1);
 }
@@ -309,7 +327,7 @@ TEST_F(SimulateTest, BlowUpChainReaction)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 0);
 }
 
@@ -325,7 +343,7 @@ TEST_F(SimulateTest, BlowUpGrenadeKillBats)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 0);
     ASSERT_EQ(newState.mAllBats.size(), 3);
     ASSERT_EQ(newState.mBat1.size(), 2);
@@ -349,9 +367,10 @@ TEST_F(SimulateTest, BlowUpGrenadeKillVampires)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 0);
     ASSERT_EQ(newState.mMe.mHealth, 1);
+    ASSERT_EQ(newPoints.at(1), -48);
 }
 
 TEST_F(SimulateTest, BlowUpGrenadeTreesProtect)
@@ -366,12 +385,13 @@ TEST_F(SimulateTest, BlowUpGrenadeTreesProtect)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 0);
     ASSERT_EQ(newState.mMe.mHealth, 2);
     ASSERT_EQ(newState.mBat1.size(), 1);
     ASSERT_EQ(newState.mBat1[0].mX, 2);
     ASSERT_EQ(newState.mBat1[0].mY, 5);
+    ASSERT_EQ(newPoints.at(1), 0);
 }
 
 TEST_F(SimulateTest, BlowUpGrenadeChainReactionKills)
@@ -386,9 +406,10 @@ TEST_F(SimulateTest, BlowUpGrenadeChainReactionKills)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 0);
     ASSERT_EQ(newState.mMe.mHealth, 1);
+    ASSERT_EQ(newPoints.at(1), -48);
 }
 
 TEST_F(SimulateTest, BlowUpGrenadeInterfereChainReactionKills)
@@ -403,9 +424,107 @@ TEST_F(SimulateTest, BlowUpGrenadeInterfereChainReactionKills)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 0);
     ASSERT_EQ(newState.mMe.mHealth, 1);
+    ASSERT_EQ(newPoints.at(1), -48);
+}
+
+TEST_F(SimulateTest, OneBatTwoGrenade)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "BAT1 1 1",
+        "GRENADE 1 1 2 1 2",
+        "GRENADE 2 2 1 1 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), 12);
+    ASSERT_EQ(newPoints.at(2), 12);
+}
+
+TEST_F(SimulateTest, InjureOneVampireTwoGrenade)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "VAMPIRE 3 1 1 2 1 2 0",
+        "GRENADE 1 1 2 1 2",
+        "GRENADE 2 2 1 1 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), 48 / 2);
+    ASSERT_EQ(newPoints.at(2), 48 / 2);
+    ASSERT_EQ(newPoints.at(3), 0);
+}
+
+TEST_F(SimulateTest, KillOneVampireTwoGrenade)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "VAMPIRE 3 1 1 1 1 2 0",
+        "GRENADE 1 1 2 1 2",
+        "GRENADE 2 2 1 1 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), (48 + 96) / 2);
+    ASSERT_EQ(newPoints.at(2), (48 + 96) / 2);
+    ASSERT_EQ(newPoints.at(3), 0);
+}
+TEST_F(SimulateTest, OneBatTwoGrenadeChain)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "BAT1 1 1",
+        "GRENADE 1 1 2 1 2",
+        "GRENADE 2 1 3 1 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), 12 / 2);
+    ASSERT_EQ(newPoints.at(2), 12 / 2);
+}
+
+TEST_F(SimulateTest, OneBatTwoGrenadeChainMultiplePoints)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "BAT1 1 1",
+        "GRENADE 1 1 2 1 2",
+        "GRENADE 2 1 3 1 2",
+        "GRENADE 1 2 1 1 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), 12 + 12 / 2);
+    ASSERT_EQ(newPoints.at(2), 12 / 2);
 }
 
 TEST_F(SimulateTest, BlowUpGrenadeKillVampiresFinally)
@@ -420,12 +539,13 @@ TEST_F(SimulateTest, BlowUpGrenadeKillVampiresFinally)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 0);
     ASSERT_EQ(newState.mMe.mHealth, 2);
     ASSERT_EQ(newState.mEnemyVampires.size(), 0);
+    ASSERT_EQ(newPoints.at(1), 48 + 96);
+    ASSERT_EQ(newPoints.at(2), 0);
 }
-
 TEST_F(SimulateTest, GhostMode)
 {
     // clang-format off
@@ -438,14 +558,20 @@ TEST_F(SimulateTest, GhostMode)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 0);
     ASSERT_EQ(newState.mMe.mGhostModeTick, 3);
     ASSERT_EQ(newState.mEnemyVampires[0].mGhostModeTick, 3);
+    ASSERT_EQ(newPoints.at(1), 0); // -48 +48
+    ASSERT_EQ(newPoints.at(2), 0);
+
     mSimulator->SetState(newState);
-    const TickDescription finalState = mSimulator->Tick();
+    const auto [finalState, finalPoints] = mSimulator->Tick();
     ASSERT_EQ(finalState.mMe.mGhostModeTick, 2);
     ASSERT_EQ(finalState.mEnemyVampires[0].mGhostModeTick, 2);
+
+    ASSERT_EQ(finalPoints.at(1), 0);
+    ASSERT_EQ(finalPoints.at(2), 0);
 }
 
 TEST_F(SimulateTest, GhostModeProtection)
@@ -460,15 +586,18 @@ TEST_F(SimulateTest, GhostModeProtection)
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 1);
     ASSERT_EQ(newState.mMe.mGhostModeTick, 3);
     ASSERT_EQ(newState.mMe.mHealth, 1);
     mSimulator->SetState(newState);
-    const TickDescription finalState = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), -48);
+
+    const auto [finalState, finalPoints] = mSimulator->Tick();
     ASSERT_EQ(finalState.mGrenades.size(), 0);
     ASSERT_EQ(finalState.mMe.mGhostModeTick, 2);
     ASSERT_EQ(finalState.mMe.mHealth, 1);
+    ASSERT_EQ(finalPoints.at(1), 0);
 }
 
 TEST_F(SimulateTest, Plantgrenade)
@@ -486,7 +615,7 @@ TEST_F(SimulateTest, Plantgrenade)
     mSimulator->SetVampireMove(1, { true, {} });
     mSimulator->SetVampireMove(2, { true, {} });
     mSimulator->SetVampireMove(3, { false, {} });
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mGrenades.size(), 2);
     ASSERT_EQ(newState.mGrenades[0].mX, 1);
     ASSERT_EQ(newState.mGrenades[0].mY, 1);
@@ -494,6 +623,10 @@ TEST_F(SimulateTest, Plantgrenade)
     ASSERT_EQ(newState.mGrenades[1].mX, 1);
     ASSERT_EQ(newState.mGrenades[1].mY, 3);
     ASSERT_EQ(newState.mGrenades[1].mTick, 5);
+
+    ASSERT_EQ(newPoints.at(1), 0);
+    ASSERT_EQ(newPoints.at(2), 0);
+    ASSERT_EQ(newPoints.at(3), 0);
 }
 
 TEST_F(SimulateTest, StepSimple)
@@ -507,9 +640,10 @@ TEST_F(SimulateTest, StepSimple)
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
     mSimulator->SetVampireMove(1, { true, { 'R', 'R' } });
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mMe.mX, 3);
     ASSERT_EQ(newState.mMe.mY, 1);
+    ASSERT_EQ(newPoints.at(1), 0);
 }
 
 TEST_F(SimulateTest, StepExtra)
@@ -523,9 +657,10 @@ TEST_F(SimulateTest, StepExtra)
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
     mSimulator->SetVampireMove(1, { false, { 'R', 'R', 'R' } });
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mMe.mX, 4);
     ASSERT_EQ(newState.mMe.mY, 1);
+    ASSERT_EQ(newPoints.at(1), 0);
 }
 
 TEST_F(SimulateTest, StepToTree)
@@ -539,9 +674,10 @@ TEST_F(SimulateTest, StepToTree)
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
     mSimulator->SetVampireMove(1, { false, { 'R', 'D' } });
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mMe.mX, 2);
     ASSERT_EQ(newState.mMe.mY, 1);
+    ASSERT_EQ(newPoints.at(1), 0);
 }
 
 TEST_F(SimulateTest, StepToGrenade)
@@ -556,9 +692,10 @@ TEST_F(SimulateTest, StepToGrenade)
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
     mSimulator->SetVampireMove(1, { false, { 'R', 'R' } });
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mMe.mX, 2);
     ASSERT_EQ(newState.mMe.mY, 1);
+    ASSERT_EQ(newPoints.at(1), 0);
 }
 
 TEST_F(SimulateTest, StepToBat)
@@ -573,9 +710,10 @@ TEST_F(SimulateTest, StepToBat)
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
     mSimulator->SetVampireMove(1, { false, { 'R', 'R' } });
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mMe.mX, 2);
     ASSERT_EQ(newState.mMe.mY, 1);
+    ASSERT_EQ(newPoints.at(1), 0);
 }
 
 TEST_F(SimulateTest, StepBackToGrenade)
@@ -589,9 +727,10 @@ TEST_F(SimulateTest, StepBackToGrenade)
     const TickDescription tick = parseTickDescription(info);
     mSimulator->SetState(tick);
     mSimulator->SetVampireMove(1, { true, { 'R', 'L' } });
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mMe.mX, 2);
     ASSERT_EQ(newState.mMe.mY, 1);
+    ASSERT_EQ(newPoints.at(1), 0);
 }
 
 TEST_F(SimulateTest, TrivialBadBombPlant)
@@ -606,9 +745,10 @@ TEST_F(SimulateTest, TrivialBadBombPlant)
     mSimulator->SetState(tick);
     ASSERT_TRUE(mSimulator->IsValidMove(1, { true, {} }));
     mSimulator->SetVampireMove(1, { true, {} });
-    const TickDescription newState = mSimulator->Tick();
+    const auto [newState, newPoints] = mSimulator->Tick();
     mSimulator->SetState(newState);
     ASSERT_FALSE(mSimulator->IsValidMove(1, { true, {} }));
+    ASSERT_EQ(newPoints.at(1), 0);
 }
 
 TEST_F(SimulateTest, TrivialTooManySteps)

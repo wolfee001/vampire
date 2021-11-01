@@ -43,9 +43,9 @@ std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
 
     TickDescription retVal = mState;
     mNewPoints = {};
-    mNewPoints.emplace(mState.mMe.mId, 0);
+    mNewPoints.emplace(mState.mMe.mId, 0.F);
     for (const auto& v : mState.mEnemyVampires) {
-        mNewPoints.emplace(v.mId, 0);
+        mNewPoints.emplace(v.mId, 0.F);
     }
 
     // Rule:
@@ -191,7 +191,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
                 if (bat.mDensity <= injured) {
                     // itt robban fel egy bat.
                     for (const auto& vId : area.mVampireIds) {
-                        mNewPoints[vId] += 12.f / static_cast<float>(area.mVampireIds.size());
+                        mNewPoints[vId] += 12.F / static_cast<float>(area.mVampireIds.size());
                     }
                 }
             }
@@ -231,9 +231,9 @@ void Simulator::BlowUpGrenades(TickDescription& state)
             for (const auto& vId : areaIt->mVampireIds) {
                 if (vId == state.mMe.mId) {
                     // i don't get penalized for injuring myself
-                    mNewPoints[vId] -= 48.f / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                    mNewPoints[vId] -= 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
                 } else {
-                    mNewPoints[vId] += 48.f / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                    mNewPoints[vId] += 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
                 }
             }
         }
@@ -265,12 +265,12 @@ void Simulator::BlowUpGrenades(TickDescription& state)
 
             if (isDead) {
                 for (const auto& vId : vampiresDamaging) {
-                    mNewPoints[vId] += 96.f / static_cast<float>(vampiresDamaging.size());
+                    mNewPoints[vId] += 96.F / static_cast<float>(vampiresDamaging.size());
                 }
             }
 
             for (const auto& vId : vampiresDamaging) {
-                mNewPoints[vId] += 48.f / static_cast<float>(vampiresDamaging.size());
+                mNewPoints[vId] += 48.F / static_cast<float>(vampiresDamaging.size());
             }
         } else {
             survivorVampires.push_back(vampire);

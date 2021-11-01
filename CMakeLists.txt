@@ -96,6 +96,7 @@ target_link_libraries(libimguibindings
 
 add_executable(framework
     framework/framework.cpp
+    framework/game_loader.cpp
     framework/game_recorder.cpp
     framework/gui_element.cpp
     framework/main.cpp
@@ -111,6 +112,7 @@ target_link_libraries(framework
     PRIVATE CONAN_PKG::imgui
     PRIVATE CONAN_PKG::stb
     PRIVATE CONAN_PKG::fmt
+    PRIVATE CONAN_PKG::portable-file-dialogs
 )
 target_compile_definitions(framework PRIVATE GAME_WITH_FRAMEWORK)
 target_include_directories(framework INTERFACE framework/)

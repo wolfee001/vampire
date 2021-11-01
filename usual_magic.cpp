@@ -22,13 +22,13 @@
 
 #include <ctime>
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#define __builtin_popcount __popcnt
-#define __builtin_popcountl _mm_popcnt_u64
-#else
-#include <x86intrin.h>
-#endif
+// #ifdef _MSC_VER
+// #include <intrin.h>
+// #define __builtin_popcount __popcnt
+// #define __builtin_popcountl _mm_popcnt_u64
+// #else
+// #include <x86intrin.h>
+// #endif
 
 #define FOR(i, b, e)    for(int i = (b); i <= (e); i++)
 #define FORL(i, b, e)    for(int i = (b); i < (e); i++)

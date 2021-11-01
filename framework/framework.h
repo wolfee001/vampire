@@ -1,14 +1,28 @@
 #pragma once
 
 #include "../models.h"
+#include "../solver.h"
+#include <chrono>
 #include <filesystem>
 #include <imgui.h>
 #include <map>
 #include <mutex>
 
+#include "game_loader.h"
 #include "game_recorder.h"
 
 class Framework {
+    struct PlayBook {
+        GameLoader mGameLoader;
+        bool mSolverIsStateful = false;
+        size_t mStep = 0;
+        solver mSolver;
+        bool mIsCorrupted = false;
+        bool mIsPlaying = false;
+        std::chrono::milliseconds mLastStepTime = std::chrono::milliseconds(0);
+        int mStepSpeed = 200;
+    };
+
 public:
     static Framework& GetInstance();
 
@@ -36,4 +50,6 @@ private:
     GameRecorder mGameRecorder;
 
     std::map<int, std::string> mVampireAvatarMapping;
+
+    PlayBook mPlayBook;
 };

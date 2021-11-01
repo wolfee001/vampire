@@ -15,6 +15,11 @@
 #include "framework/framework.h"
 #endif
 
+#include "magic_selector.h"
+
+#include "gabor_magic.h"
+#include "usual_magic.h"
+
 std::vector<std::pair<int, int>> solver::line2d(std::pair<int, int> from, const std::pair<int, int>& to)
 {
     std::vector<std::pair<int, int>> result;
@@ -56,7 +61,13 @@ void solver::startMessage(const std::vector<std::string>& startInfos)
     Framework::GetInstance().SetGameDescription(mGameDescription, startInfos);
 #endif
 
+#if defined(USUAL_MAGIC)
     mMagic = std::make_unique<UsualMagic>(mGameDescription);
+#elif defined(GABOR_MAGIC)
+    mMagic = std::make_unique<GaborMagic>(mGameDescription);
+#else
+#pragma error "No magic defined!"
+#endif
 }
 
 std::vector<std::string> solver::processTick(const std::vector<std::string>& infos)

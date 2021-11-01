@@ -421,7 +421,7 @@ map_t gen(int n)
 // item: range first, than number, than speed
 
 UsualMagic::UsualMagic(const GameDescription& gameDescription)
-    : mGameDescription(gameDescription)
+    : IMagic(gameDescription)
 {
     // Maybe some constructor magic? :)
     std::srand(static_cast<unsigned int>(time(nullptr)));

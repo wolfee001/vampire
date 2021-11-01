@@ -7,8 +7,8 @@
 void MonteCarloTreeSearch::Step()
 {
     TreeNode& node = Select();
-    Expand(node);
-    Simulate(node);
+    TreeNode& expandedNode = Expand(node);
+    Simulate(expandedNode);
     Update();
 }
 
@@ -39,38 +39,37 @@ ActionSequence MonteCarloTreeSearch::TreeNode::GetBestAction() const
     return ActionSequence(static_cast<uint8_t>(std::distance(std::cbegin(mActions), it)));
 }
 
+void MonteCarloTreeSearch::TreeNode::CalculatePossibleMoves(const GameDescription& gameDescription)
+{
+    Simulator simulator(gameDescription);
+    simulator.SetState(mTickDescription);
+
+    for (ActionSequence::ActionSequence_t i = 0; i <= ActionSequence::MaxSequenceId; ++i) {
+        const ActionSequence action(i);
+        if (simulator.IsValidMove(mPlayerId, action.GetAnswer())) {
+            mPossibleMoves.insert(i);
+        }
+    }
+}
+
 MonteCarloTreeSearch::TreeNode& MonteCarloTreeSearch::Expand(TreeNode& node)
 {
     if (node.IsGameEnded()) {
         return node;
     }
 
-    const auto IsValidAction = [&node, &mGameDescription = mGameDescription](const ActionSequence::ActionSequence_t actionId) {
-        // action was not taken before and it is a valid move
-        if (node.mActions[actionId]) {
-            return false;
-        }
-
-        const ActionSequence action(actionId);
-        Simulator s(mGameDescription);
-        s.SetState(node.mTickDescription);
-        return s.IsValidMove(node.mPlayerId, action.GetAnswer());
-    };
-
-    static std::uniform_int_distribution<unsigned short> dist(0, ActionSequence::MaxSequenceId);
-    ActionSequence::ActionSequence_t actionSequenceId = static_cast<ActionSequence::ActionSequence_t>(dist(mEngine));
-    while (!IsValidAction(actionSequenceId)) {
-        actionSequenceId = static_cast<ActionSequence::ActionSequence_t>(dist(mEngine));
-    }
+    const ActionSequence::ActionSequence_t actionSequenceId = node.GetRandomMove(mEngine);
 
     const auto playerIt = std::find(std::cbegin(mPlayerIds), std::cend(mPlayerIds), node.mPlayerId);
 
     auto& newNode = node.mActions[actionSequenceId];
     newNode = std::make_unique<TreeNode>(node.mTickDescription);
-    newNode->mPlayerId = playerIt == std::cend(mPlayerIds) ? mPlayerIds.front() : *(playerIt + 1);
+    newNode->mPlayerId = playerIt == std::cend(mPlayerIds) - 1 ? mPlayerIds.front() : *(playerIt + 1);
     newNode->mActionDoneByParent = actionSequenceId;
+    newNode->CalculatePossibleMoves(mGameDescription);
+    newNode->mParent = &node;
 
-    if (playerIt == std::cend(mPlayerIds)) {
+    if (node.mParent != nullptr && playerIt == std::begin(mPlayerIds)) {
         Simulator simulator(mGameDescription);
         simulator.SetState(node.mTickDescription);
 
@@ -101,7 +100,46 @@ MonteCarloTreeSearch::TreeNode& MonteCarloTreeSearch::Expand(TreeNode& node)
     return *newNode;
 }
 
-void MonteCarloTreeSearch::Simulate(TreeNode& node)
+MonteCarloTreeSearch::GameState MonteCarloTreeSearch::Simulate(TreeNode& node)
 {
-    (void)node;
+    Simulator simulator(mGameDescription);
+    simulator.SetState(node.mTickDescription);
+
+    TreeNode* current = &node;
+    TreeNode* parent = node.mParent;
+
+    size_t alreadyMadeMoves = 0;
+
+    while (current->mPlayerId != mPlayerIds.front()) {
+        simulator.SetVampireMove(parent->mPlayerId, ActionSequence(current->mActionDoneByParent).GetAnswer());
+        current = parent;
+        parent = parent->mParent;
+        ++alreadyMadeMoves;
+    }
+
+    const auto getNextPlayerId = [&mPlayerIds = mPlayerIds](int playerId) -> int {
+        const auto playerIt = std::find(std::cbegin(mPlayerIds), std::cend(mPlayerIds), playerId);
+        return mPlayerIds[(static_cast<size_t>(std::distance(std::cbegin(mPlayerIds), playerIt)) + 1) % mPlayerIds.size()];
+    };
+
+    TickDescription currentTick = node.mTickDescription;
+    TreeNode currentMove = node;
+
+    constexpr size_t numberOfTurnsToSimulate = 5;
+
+    for (size_t i = 0, max = numberOfTurnsToSimulate * 4 - alreadyMadeMoves; i < max; ++i) {
+        if (i != 0 && currentMove.mPlayerId == mPlayerIds.front()) {
+            simulator.SetState(currentTick);
+            currentTick = simulator.Tick();
+            currentMove.mTickDescription = currentTick;
+        }
+
+        currentMove.mPossibleMoves.clear();
+        currentMove.CalculatePossibleMoves(mGameDescription);
+        const auto actionSequenceId = currentMove.GetRandomMove(mEngine);
+        simulator.SetVampireMove(currentMove.mPlayerId, ActionSequence(actionSequenceId).GetAnswer());
+        currentMove.mPlayerId = getNextPlayerId(currentMove.mPlayerId);
+    }
+
+    return GameState::WIN;
 }

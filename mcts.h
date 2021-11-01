@@ -19,6 +19,8 @@ public:
         , mPlayerIds(playerIds)
     {
         mRoot.mPlayerId = mPlayerIds.front();
+        mRoot.mTickDescription = tickDescription;
+        mRoot.CalculatePossibleMoves(gameDescription);
     }
 
     void Step();
@@ -30,6 +32,30 @@ private:
         {
         }
 
+        TreeNode(const TreeNode& tn)
+            : mPlayerId(tn.mPlayerId)
+            , mParent(tn.mParent)
+            , mTickDescription(tn.mTickDescription)
+            , mSimulations(tn.mSimulations)
+            , mWins(tn.mWins)
+            , mActionDoneByParent(tn.mActionDoneByParent)
+            , mPossibleMoves(tn.mPossibleMoves)
+        {
+            // mActions are not copied!
+        }
+
+        void CalculatePossibleMoves(const GameDescription& gameDescription);
+
+        ActionSequence::ActionSequence_t GetRandomMove(std::mt19937& engine)
+        {
+            std::uniform_int_distribution<size_t> dist(0, mPossibleMoves.size() - 1);
+            auto it = std::cbegin(mPossibleMoves);
+            std::advance(it, dist(engine));
+            const auto ret = *it;
+            mPossibleMoves.erase(it);
+            return ret;
+        }
+
         int mPlayerId = -1;
         TreeNode* mParent = nullptr;
         TickDescription mTickDescription;
@@ -38,10 +64,11 @@ private:
         ActionSequence::ActionSequence_t mActionDoneByParent = std::numeric_limits<ActionSequence::ActionSequence_t>::max();
 
         std::array<std::unique_ptr<TreeNode>, ActionSequence::MaxSequenceId> mActions;
+        std::set<ActionSequence::ActionSequence_t> mPossibleMoves;
 
         [[nodiscard]] bool IsLeaf() const
         {
-            return std::any_of(std::cbegin(mActions), std::cend(mActions), [](const auto& action) -> bool { return action.get() == nullptr; });
+            return !mPossibleMoves.empty();
         }
 
         [[nodiscard]] ActionSequence GetBestAction() const;
@@ -52,9 +79,11 @@ private:
         }
     };
 
+    enum GameState { WIN, DRAW, LOSE };
+
     TreeNode& Select();
     TreeNode& Expand(TreeNode& node);
-    void Simulate(TreeNode& node);
+    GameState Simulate(TreeNode& node);
     void Update() {};
 
     std::mt19937 mEngine;

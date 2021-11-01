@@ -17,6 +17,16 @@ TEST(MCTS, Basic)
     td.mMe.mX = 1;
     td.mMe.mY = 1;
 
+    td.mEnemyVampires.resize(3);
+    td.mEnemyVampires[0].mId = 1;
+    td.mEnemyVampires[1].mId = 2;
+    td.mEnemyVampires[2].mId = 3;
+
+    td.mRequest.mTick = 1;
+
     MonteCarloTreeSearch mcts(td, gd, { 8, 1, 2, 3 });
-    mcts.Step();
+
+    for (size_t i = 0; i < 100; ++i) {
+        mcts.Step();
+    }
 }

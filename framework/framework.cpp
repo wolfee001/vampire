@@ -89,7 +89,16 @@ void Framework::Render()
                 mTickDescription = TickDescription();
                 mGameDescription = GameDescription();
                 mPlayBook.mGameLoader = GameLoader(result[0]);
-                std::thread t([&mPlayBook = mPlayBook]() { mPlayBook.mSolver.startMessage(mPlayBook.mGameLoader.GetDescription().mMessage); });
+
+                std::thread t([&mPlayBook = mPlayBook]() {
+                    mPlayBook.mSolver.startMessage(mPlayBook.mGameLoader.GetDescription().mMessage);
+                    GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
+                    const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                    if (resp != step.mAnswerMessage) {
+                        mPlayBook.mIsCorrupted = true;
+                        return;
+                    }
+                });
                 t.detach();
             }
         }

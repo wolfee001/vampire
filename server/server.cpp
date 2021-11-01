@@ -113,7 +113,7 @@ std::vector<std::string> CreateInfo(const TickDescription& tick, int player)
     retVal.push_back(fmt::format("VAMPIRE 1 {} {} {} {} {} {}", tick.mMe.mX, tick.mMe.mY, tick.mMe.mHealth, tick.mMe.mPlacableGrenades, tick.mMe.mGrenadeRange,
         tick.mMe.mRunningShoesTick));
     for (const auto& vampire : tick.mEnemyVampires) {
-        retVal.push_back(fmt::format("VAMPIRE {} {} {} {} {} {} {}", vampire.mId + 2, vampire.mX, vampire.mY, vampire.mHealth, vampire.mPlacableGrenades,
+        retVal.push_back(fmt::format("VAMPIRE {} {} {} {} {} {} {}", vampire.mId, vampire.mX, vampire.mY, vampire.mHealth, vampire.mPlacableGrenades,
             vampire.mGrenadeRange, vampire.mRunningShoesTick));
     }
     for (const auto& grenade : tick.mGrenades) {
@@ -165,9 +165,16 @@ int main()
         "GRENADERADIUS 2",
         "SIZE 11",
     };
-    std::vector<std::string> info
-        = { "REQ 775 0 1", "VAMPIRE 1 1 1 3 1 2 0", "BAT1 4 1 5 1 6 1 3 2 7 2 2 3 3 3 7 3 8 3 1 4 9 4 1 5 9 5 1 6 9 6 2 7 3 7 7 7 8 7 3 8 7 8 4 9 5 9 6 9",
-              "BAT2 5 2 4 3 6 3 3 4 7 4 2 5 8 5 3 6 7 6 4 7 6 7 5 8", "BAT3 5 3 5 4 3 5 4 5 5 5 6 5 7 5 5 6 5 7" };
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 3 1 2 0",
+        "VAMPIRE 3 9 9 3 1 2 0",
+        "VAMPIRE 4 1 9 3 1 2 0",
+        "VAMPIRE 2 9 1 3 1 2 0",
+        "BAT1 4 1 5 1 6 1 3 2 7 2 2 3 3 3 7 3 8 3 1 4 9 4 1 5 9 5 1 6 9 6 2 7 3 7 7 7 8 7 3 8 7 8 4 9 5 9 6 9",
+        "BAT2 5 2 4 3 6 3 3 4 7 4 2 5 8 5 3 6 7 6 4 7 6 7 5 8",
+        "BAT3 5 3 5 4 3 5 4 5 5 5 6 5 7 5 5 6 5 7",
+    };
 
     GameDescription gd = parseGameDescription(startInfo);
     TickDescription tick = parseTickDescription(info);
@@ -175,7 +182,7 @@ int main()
     Simulator simulator(gd);
     simulator.SetState(tick);
 
-    const int playerCount = 1;
+    const int playerCount = 4;
     MultiServer ms(6789);
     ms.WaitForConnections(playerCount);
     for (int i = 0; i < playerCount; ++i) {

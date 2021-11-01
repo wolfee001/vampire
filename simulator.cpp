@@ -21,7 +21,7 @@ void Simulator::SetVampireMove(int id, const Answer& move)
     mVampireMoves[id] = move;
 }
 
-TickDescription Simulator::Tick()
+std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
 {
     if (mState.mRequest.mTick == -1) {
         throw std::runtime_error("Calling tick without setting state!");
@@ -42,6 +42,11 @@ TickDescription Simulator::Tick()
     }
 
     TickDescription retVal = mState;
+    mNewPoints = {};
+    mNewPoints.emplace(mState.mMe.mId, 0.F);
+    for (const auto& v : mState.mEnemyVampires) {
+        mNewPoints.emplace(v.mId, 0.F);
+    }
 
     // Rule:
     // a) powerup show up - not simulated, comes as state
@@ -68,13 +73,24 @@ TickDescription Simulator::Tick()
     mState = TickDescription();
     mVampireMoves.clear();
 
-    return retVal;
+    return std::make_pair(retVal, mNewPoints);
 }
 
 void Simulator::RecalculateTicks(TickDescription& state)
 {
     state.mRequest.mTick++;
-
+    /*
+        if (state.mRequest.mTick == mGameDescription.mMaxTick) {
+            if (state.mMe.mHealth > 0) {
+                mNewPoints[state.mMe.mId] += 144.;
+            }
+            for (const auto& v : state.mEnemyVampires) {
+                if (v.mHealth > 0) {
+                    mNewPoints[v.mId] += 144.;
+                }
+            }
+        }
+    */
     for (auto& grenade : state.mGrenades) {
         grenade.mTick--;
     }
@@ -117,6 +133,7 @@ void Simulator::PowerupPickUp(TickDescription& state)
         bool shouldDelete = false;
         for (auto* vampire : vampRefs) {
             if (vampire->mX == pu.mX && vampire->mY == pu.mY) {
+                mNewPoints[vampire->mId] += 48;
                 shouldDelete = true;
                 switch (pu.mType) {
                 case PowerUp::Type::Battery: {
@@ -150,39 +167,38 @@ void Simulator::PowerupPickUp(TickDescription& state)
 
 void Simulator::BlowUpGrenades(TickDescription& state)
 {
-    std::set<std::pair<int, int>> affectedCells;
+    const auto areas = GetBlowAreas(true);
 
-    while (true) {
-        size_t affectedCount = affectedCells.size();
-
-        for (const auto& grenade : state.mGrenades) {
-            if (grenade.mTick == 0) {
-                Area area = GetBlowArea(grenade, state);
-                affectedCells.insert(area.begin(), area.end());
-            }
-        }
-        for (auto& grenade : state.mGrenades) {
-            if (affectedCells.find({ grenade.mX, grenade.mY }) != affectedCells.end()) {
-                grenade.mTick = 0;
-            }
-        }
-
-        if (affectedCells.size() == affectedCount) {
-            break;
-        }
-    }
-
-    state.mGrenades.erase(
-        std::remove_if(state.mGrenades.begin(), state.mGrenades.end(), [](const auto& element) { return element.mTick == 0; }), state.mGrenades.end());
+    state.mGrenades.erase(std::remove_if(state.mGrenades.begin(), state.mGrenades.end(),
+                              [&areas](const auto& grenade) {
+                                  for (const auto& area : areas) {
+                                      if (area.mArea.find({ grenade.mX, grenade.mY }) != area.mArea.end()) {
+                                          return true;
+                                      }
+                                  }
+                                  return false;
+                              }),
+        state.mGrenades.end());
 
     std::vector<BatSquad> survivorBats;
+
     for (const auto& bat : state.mAllBats) {
-        if (affectedCells.find({ bat.mX, bat.mY }) != affectedCells.end()) {
-            if (bat.mDensity > 1) {
-                survivorBats.emplace_back(bat).mDensity--;
+        int injured = 0;
+
+        for (const auto& area : areas) {
+            if (area.mArea.find({ bat.mX, bat.mY }) != area.mArea.end()) {
+                injured++;
+                if (bat.mDensity <= injured) {
+                    // itt robban fel egy bat.
+                    for (const auto& vId : area.mVampireIds) {
+                        mNewPoints[vId] += 12.F / static_cast<float>(area.mVampireIds.size());
+                    }
+                }
             }
-        } else {
-            survivorBats.push_back(bat);
+        }
+
+        if (bat.mDensity > injured) {
+            survivorBats.emplace_back(bat).mDensity -= injured;
         }
     }
     state.mAllBats = survivorBats;
@@ -201,18 +217,60 @@ void Simulator::BlowUpGrenades(TickDescription& state)
         }
     }
 
-    if (state.mMe.mGhostModeTick == 0 && affectedCells.find({ state.mMe.mX, state.mMe.mY }) != affectedCells.end()) {
-        state.mMe.mHealth--;
-        state.mMe.mGhostModeTick = 3;
+    if (state.mMe.mGhostModeTick == 0) {
+        const auto areaIt = std::find_if(std::cbegin(areas), std::cend(areas), [&state](const auto& area) {
+            return area.mArea.find({ state.mMe.mX, state.mMe.mY }) != area.mArea.end();
+        });
+        if (areaIt != std::cend(areas)) {
+            state.mMe.mHealth--;
+            state.mMe.mGhostModeTick = 3;
+
+            const auto meIt = std::find(std::cbegin(areaIt->mVampireIds), std::cend(areaIt->mVampireIds), state.mMe.mId);
+            const bool meInTheArea = meIt == std::cend(areaIt->mVampireIds);
+
+            for (const auto& vId : areaIt->mVampireIds) {
+                if (vId == state.mMe.mId) {
+                    // i don't get penalized for injuring myself
+                    mNewPoints[vId] -= 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                } else {
+                    mNewPoints[vId] += 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                }
+            }
+        }
     }
 
     std::vector<Vampire> survivorVampires;
     for (const auto& vampire : state.mEnemyVampires) {
-        if (vampire.mGhostModeTick == 0 && affectedCells.find({ vampire.mX, vampire.mY }) != affectedCells.end()) {
-            if (vampire.mHealth > 1) {
-                auto& v = survivorVampires.emplace_back(vampire);
-                v.mHealth--;
-                v.mGhostModeTick = 3;
+        if (vampire.mGhostModeTick == 0 && vampire.mHealth > 0) {
+
+            bool isDead = false;
+            std::vector<int> vampiresDamaging;
+
+            for (const auto& area : areas) {
+                if (area.mArea.find({ vampire.mX, vampire.mY }) != area.mArea.end()) {
+                    if (vampire.mHealth >= 2 && vampire.mGhostModeTick == 0) {
+                        auto& v = survivorVampires.emplace_back(vampire);
+                        v.mHealth--;
+                        v.mGhostModeTick = 3;
+                    }
+
+                    isDead = vampire.mHealth == 1;
+                    vampiresDamaging.insert(std::end(vampiresDamaging), std::cbegin(area.mVampireIds), std::cend(area.mVampireIds));
+                }
+            }
+
+            if (areas.empty() || vampiresDamaging.empty()) {
+                survivorVampires.emplace_back(vampire);
+            }
+
+            if (isDead) {
+                for (const auto& vId : vampiresDamaging) {
+                    mNewPoints[vId] += 96.F / static_cast<float>(vampiresDamaging.size());
+                }
+            }
+
+            for (const auto& vId : vampiresDamaging) {
+                mNewPoints[vId] += 48.F / static_cast<float>(vampiresDamaging.size());
             }
         } else {
             survivorVampires.push_back(vampire);
@@ -304,7 +362,7 @@ void Simulator::Move(TickDescription& state)
     }
 }
 
-bool Simulator::IsValidMove(int id, const Answer& move)
+bool Simulator::IsValidMove(int id, const Answer& move) const
 {
     const Vampire* vampire = nullptr;
 
@@ -369,7 +427,7 @@ bool Simulator::IsValidMove(int id, const Answer& move)
     return true;
 }
 
-std::vector<Simulator::BlowArea> Simulator::GetBlowAreas()
+std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= false*/)
 {
     std::vector<Simulator::BlowArea> retVal;
     std::map<std::pair<int, int>, std::pair<const Grenade*, bool>> grenadesByPos;
@@ -377,6 +435,10 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas()
         grenadesByPos[{ grenade.mX, grenade.mY }] = { &grenade, false };
     }
     for (const auto& [_, grenadeDesc] : grenadesByPos) {
+        if (blowNow && grenadeDesc.first->mTick != 1) {
+            continue;
+        }
+
         if (grenadeDesc.second) {
             continue;
         }

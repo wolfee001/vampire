@@ -190,7 +190,7 @@ int main()
             Answer ans = parseAnswer(ParseMessage(ms.ReadFromConnection(p)));
             simulator.SetVampireMove(p + 1, ans);
         }
-        tick = simulator.Tick();
+        tick = simulator.Tick().first;
         simulator.SetState(tick);
     }
 

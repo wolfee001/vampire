@@ -66,6 +66,8 @@ add_executable(unittest
     test/test_solver.cpp
     test/test_simulator.cpp
     test/test_action_sequence.cpp
+    test/test_mcts.cpp
+    test/test_usual_magic.cpp
 )
 target_link_libraries(unittest
     PUBLIC project_options

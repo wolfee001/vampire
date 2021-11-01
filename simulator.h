@@ -13,13 +13,15 @@ public:
         std::set<int> mVampireIds;
     };
 
+    using NewPoints = std::map<int, float>; // indexed by player id
+
 public:
     explicit Simulator(const GameDescription& gameDescription);
     void SetState(const TickDescription& state);
     void SetVampireMove(int id, const Answer& move);
-    TickDescription Tick();
-    bool IsValidMove(int id, const Answer& move);
-    std::vector<BlowArea> GetBlowAreas();
+    std::pair<TickDescription, NewPoints> Tick();
+    bool IsValidMove(int id, const Answer& move) const;
+    std::vector<BlowArea> GetBlowAreas(const bool blowNow = false);
 
 private:
     void RecalculateTicks(TickDescription& state);
@@ -34,4 +36,5 @@ private:
     GameDescription mGameDescription;
     TickDescription mState;
     std::map<int, Answer> mVampireMoves;
+    NewPoints mNewPoints;
 };

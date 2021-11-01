@@ -15,6 +15,7 @@
 #include <OpenGL/gl.h>
 #else
 #ifdef _WIN32
+#define NOMINMAX
 #include <Windows.h>
 #endif
 #include <GL/gl.h>

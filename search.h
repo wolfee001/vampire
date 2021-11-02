@@ -39,7 +39,7 @@ public:
         }
 
         uint32_t mNumberOfChildren = 0;
-        uint16_t mParentIndex;
+        uint32_t mParentIndex;
         TickDescription mTickDescription;
         float mScore;
         ActionSequence::ActionSequence_t mAction = std::numeric_limits<ActionSequence::ActionSequence_t>::max();

@@ -13,7 +13,7 @@ void Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
 
     Simulator simulator(mGameDescription);
 
-    for (size_t nodeIndex = 0; nodeIndex < currentLevel.size(); ++nodeIndex) {
+    for (uint32_t nodeIndex = 0; nodeIndex < currentLevel.size(); ++nodeIndex) {
         const TreeNode& node = currentLevel[nodeIndex];
 
         TickDescription tick = node.mTickDescription;

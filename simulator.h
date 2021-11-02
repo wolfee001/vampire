@@ -1,13 +1,33 @@
 #pragma once
 
 #include "models.h"
+#include <bitset>
 #include <map>
 #include <set>
 
 class Simulator {
 public:
-    using Area = std::set<std::pair<int, int>>;
+    struct Area {
+        using AreaVector = std::vector<std::pair<int, int>>;
+        std::bitset<23 * 23> mAreas;
+        size_t mMapSize;
+        bool mVectorIsValid = false;
+        AreaVector mVector;
+
+        Area(int mapSize)
+            : mMapSize(static_cast<size_t>(mapSize))
+        {
+        }
+        bool find(int x, int y) const;
+        void insert(int x, int y);
+        const AreaVector& getAsVector() const;
+    };
     struct BlowArea {
+        BlowArea(int mapSize)
+            : mArea(mapSize)
+        {
+        }
+
         Area mArea;
         int mTickCount = -1;
         std::set<int> mVampireIds;

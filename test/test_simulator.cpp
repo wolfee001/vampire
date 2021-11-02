@@ -807,27 +807,18 @@ TEST_F(SimulateTest, GetBlowAreasDisjunct)
     ASSERT_EQ(areas.size(), 2);
     ASSERT_EQ(areas[0].mTickCount, 2);
     ASSERT_EQ(areas[0].mVampireIds.size(), 1);
-    ASSERT_THAT(areas[0].mVampireIds, testing::ElementsAre(1));
-    ASSERT_EQ(areas[0].mArea, (std::set<std::pair<int, int>> { { 1, 1 }, { 1, 2 }, { 1, 3 }, { 2, 1 }, { 3, 1 } }));
+    ASSERT_THAT(areas[0].mVampireIds, testing::UnorderedElementsAre(1));
+    ASSERT_THAT(areas[0].mArea.getAsVector(),
+        testing::UnorderedElementsAre(std::pair<int, int> { 1, 1 }, std::pair<int, int> { 1, 2 }, std::pair<int, int> { 1, 3 }, std::pair<int, int> { 2, 1 },
+            std::pair<int, int> { 3, 1 }));
     ASSERT_EQ(areas[1].mTickCount, 4);
     ASSERT_EQ(areas[1].mVampireIds.size(), 1);
-    ASSERT_THAT(areas[1].mVampireIds, testing::ElementsAre(2));
-    ASSERT_EQ(areas[1].mArea,
-        (std::set<std::pair<int, int>> {
-            { 5, 5 },
-            { 4, 5 },
-            { 3, 5 },
-            { 2, 5 },
-            { 6, 5 },
-            { 7, 5 },
-            { 8, 5 },
-            { 5, 4 },
-            { 5, 3 },
-            { 5, 2 },
-            { 5, 6 },
-            { 5, 7 },
-            { 5, 8 },
-        }));
+    ASSERT_THAT(areas[1].mVampireIds, testing::UnorderedElementsAre(2));
+    ASSERT_THAT(areas[1].mArea.getAsVector(),
+        testing::UnorderedElementsAre(std::pair<int, int> { 5, 5 }, std::pair<int, int> { 4, 5 }, std::pair<int, int> { 3, 5 }, std::pair<int, int> { 2, 5 },
+            std::pair<int, int> { 6, 5 }, std::pair<int, int> { 7, 5 }, std::pair<int, int> { 8, 5 }, std::pair<int, int> { 5, 4 },
+            std::pair<int, int> { 5, 3 }, std::pair<int, int> { 5, 2 }, std::pair<int, int> { 5, 6 }, std::pair<int, int> { 5, 7 },
+            std::pair<int, int> { 5, 8 }));
 }
 
 TEST_F(SimulateTest, GetBlowAreasJoint)
@@ -845,23 +836,10 @@ TEST_F(SimulateTest, GetBlowAreasJoint)
     ASSERT_EQ(areas.size(), 1);
     ASSERT_EQ(areas[0].mTickCount, 2);
     ASSERT_EQ(areas[0].mVampireIds.size(), 2);
-    ASSERT_THAT(areas[0].mVampireIds, testing::ElementsAre(1, 2));
-    ASSERT_EQ(areas[0].mArea,
-        (std::set<std::pair<int, int>> {
-            { 1, 1 },
-            { 1, 2 },
-            { 1, 3 },
-            { 1, 4 },
-            { 1, 5 },
-            { 2, 3 },
-            { 3, 1 },
-            { 3, 2 },
-            { 3, 3 },
-            { 3, 4 },
-            { 3, 5 },
-            { 3, 6 },
-            { 4, 3 },
-            { 5, 3 },
-            { 6, 3 },
-        }));
+    ASSERT_THAT(areas[0].mVampireIds, testing::UnorderedElementsAre(1, 2));
+    ASSERT_THAT(areas[0].mArea.getAsVector(),
+        testing::UnorderedElementsAre(std::pair<int, int> { 1, 1 }, std::pair<int, int> { 1, 2 }, std::pair<int, int> { 1, 3 }, std::pair<int, int> { 1, 4 },
+            std::pair<int, int> { 1, 5 }, std::pair<int, int> { 2, 3 }, std::pair<int, int> { 3, 1 }, std::pair<int, int> { 3, 2 },
+            std::pair<int, int> { 3, 3 }, std::pair<int, int> { 3, 4 }, std::pair<int, int> { 3, 5 }, std::pair<int, int> { 3, 6 },
+            std::pair<int, int> { 4, 3 }, std::pair<int, int> { 5, 3 }, std::pair<int, int> { 6, 3 }));
 }

@@ -1,6 +1,7 @@
 #include "simulator.h"
 #include "models.h"
 #include <algorithm>
+#include <bitset>
 #include <cstddef>
 #include <exception>
 #include <set>
@@ -174,7 +175,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
     state.mGrenades.erase(std::remove_if(state.mGrenades.begin(), state.mGrenades.end(),
                               [&areas](const auto& grenade) {
                                   for (const auto& area : areas) {
-                                      if (area.mArea.find({ grenade.mX, grenade.mY }) != area.mArea.end()) {
+                                      if (area.mArea.find(grenade.mX, grenade.mY)) {
                                           return true;
                                       }
                                   }
@@ -188,10 +189,9 @@ void Simulator::BlowUpGrenades(TickDescription& state)
         int injured = 0;
 
         for (const auto& area : areas) {
-            if (area.mArea.find({ bat.mX, bat.mY }) != area.mArea.end()) {
+            if (area.mArea.find(bat.mX, bat.mY)) {
                 injured++;
                 if (bat.mDensity <= injured) {
-                    // itt robban fel egy bat.
                     for (const auto& vId : area.mVampireIds) {
                         mNewPoints[vId] += 12.F / static_cast<float>(area.mVampireIds.size());
                     }
@@ -218,64 +218,90 @@ void Simulator::BlowUpGrenades(TickDescription& state)
             CHECK(false, "Some calculation is wrong...");
         }
     }
+    /*
+        if (state.mMe.mGhostModeTick == 0) {
+            const auto areaIt = std::find_if(std::cbegin(areas), std::cend(areas), [&state](const auto& area) {
+                return area.mArea.find({ state.mMe.mX, state.mMe.mY }) != area.mArea.end();
+            });
+            if (areaIt != std::cend(areas)) {
+                state.mMe.mHealth--;
+                state.mMe.mGhostModeTick = 3;
 
-    if (state.mMe.mGhostModeTick == 0) {
-        const auto areaIt = std::find_if(std::cbegin(areas), std::cend(areas), [&state](const auto& area) {
-            return area.mArea.find({ state.mMe.mX, state.mMe.mY }) != area.mArea.end();
-        });
-        if (areaIt != std::cend(areas)) {
-            state.mMe.mHealth--;
-            state.mMe.mGhostModeTick = 3;
+                const auto meIt = std::find(std::cbegin(areaIt->mVampireIds), std::cend(areaIt->mVampireIds), state.mMe.mId);
+                const bool meInTheArea = meIt == std::cend(areaIt->mVampireIds);
 
-            const auto meIt = std::find(std::cbegin(areaIt->mVampireIds), std::cend(areaIt->mVampireIds), state.mMe.mId);
-            const bool meInTheArea = meIt == std::cend(areaIt->mVampireIds);
-
-            for (const auto& vId : areaIt->mVampireIds) {
-                if (vId == state.mMe.mId) {
-                    // i don't get penalized for injuring myself
-                    mNewPoints[vId] -= 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
-                } else {
-                    mNewPoints[vId] += 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                for (const auto& vId : areaIt->mVampireIds) {
+                    if (vId == state.mMe.mId) {
+                        // i get penalized for injuring myself
+                        mNewPoints[vId] -= 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                    } else {
+                        mNewPoints[vId] += 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                    }
                 }
             }
         }
+    */
+    std::vector<Vampire> survivorVampires;
+
+    std::vector<Vampire*> vampires = { &state.mMe };
+    for (auto& vampire : state.mEnemyVampires) {
+        vampires.push_back(&vampire);
     }
 
-    std::vector<Vampire> survivorVampires;
-    for (const auto& vampire : state.mEnemyVampires) {
+    for (const auto& vampirePtr : vampires) {
+        auto& vampire = *vampirePtr;
+
         if (vampire.mGhostModeTick == 0 && vampire.mHealth > 0) {
 
             bool isDead = false;
+            bool alreadyDamaged = false;
             std::vector<int> vampiresDamaging;
 
             for (const auto& area : areas) {
-                if (area.mArea.find({ vampire.mX, vampire.mY }) != area.mArea.end()) {
-                    if (vampire.mHealth >= 2 && vampire.mGhostModeTick == 0) {
-                        auto& v = survivorVampires.emplace_back(vampire);
-                        v.mHealth--;
-                        v.mGhostModeTick = 3;
+                if (area.mArea.find(vampire.mX, vampire.mY)) {
+                    isDead = vampire.mHealth == 1;
+
+                    if (!alreadyDamaged && vampire.mHealth >= 2 && vampire.mGhostModeTick == 0) {
+                        if (vampire.mId != state.mMe.mId) {
+                            auto& v = survivorVampires.emplace_back(vampire);
+                            v.mHealth--;
+                            v.mGhostModeTick = 3;
+                        } else {
+                            state.mMe.mHealth--;
+                            state.mMe.mGhostModeTick = 3;
+                        }
+                        alreadyDamaged = true;
                     }
 
-                    isDead = vampire.mHealth == 1;
                     vampiresDamaging.insert(std::end(vampiresDamaging), std::cbegin(area.mVampireIds), std::cend(area.mVampireIds));
                 }
             }
 
-            if (areas.empty() || vampiresDamaging.empty()) {
+            if ((areas.empty() || vampiresDamaging.empty()) && vampire.mId != state.mMe.mId) {
                 survivorVampires.emplace_back(vampire);
             }
 
             if (isDead) {
                 for (const auto& vId : vampiresDamaging) {
-                    mNewPoints[vId] += 96.F / static_cast<float>(vampiresDamaging.size());
+                    if (vId != vampire.mId) {
+                        mNewPoints[vId] += 96.F / static_cast<float>(vampiresDamaging.size());
+                    } else {
+                        mNewPoints[vId] -= 96.F / static_cast<float>(vampiresDamaging.size());
+                    }
                 }
             }
 
             for (const auto& vId : vampiresDamaging) {
-                mNewPoints[vId] += 48.F / static_cast<float>(vampiresDamaging.size());
+                if (vId != vampire.mId) {
+                    mNewPoints[vId] += 48.F / static_cast<float>(vampiresDamaging.size());
+                } else {
+                    mNewPoints[vId] -= 48.F / static_cast<float>(vampiresDamaging.size());
+                }
             }
         } else {
-            survivorVampires.push_back(vampire);
+            if (vampire.mId != state.mMe.mId) {
+                survivorVampires.push_back(vampire);
+            }
         }
     }
     state.mEnemyVampires = survivorVampires;
@@ -311,20 +337,22 @@ void Simulator::PlantGrenades(TickDescription& state)
 
 void Simulator::Move(TickDescription& state)
 {
-    std::set<std::pair<int, int>> restricted;
+    std::bitset<23 * 23> restrictedAreas;
+    restrictedAreas.reset();
+    size_t mapSize = static_cast<size_t>(mGameDescription.mMapSize);
 
-    for (int x = 0; x < mGameDescription.mMapSize; ++x) {
-        for (int y = 0; y < mGameDescription.mMapSize; ++y) {
-            if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
-                restricted.emplace(x, y);
+    for (size_t x = 0; x < mapSize; ++x) {
+        for (size_t y = 0; y < mapSize; ++y) {
+            if (x == 0 || y == 0 || x == mapSize - 1 || y == mapSize - 1 || (!(x % 2) && !(y % 2))) {
+                restrictedAreas.set(y * mapSize + x);
             }
         }
     }
     for (const auto& grenade : state.mGrenades) {
-        restricted.emplace(grenade.mX, grenade.mY);
+        restrictedAreas.set(static_cast<size_t>(grenade.mY) * mapSize + static_cast<size_t>(grenade.mX));
     }
     for (const auto& bat : state.mAllBats) {
-        restricted.emplace(bat.mX, bat.mY);
+        restrictedAreas.set(static_cast<size_t>(bat.mY) * mapSize + static_cast<size_t>(bat.mX));
     }
 
     std::vector<Vampire*> vampRefs;
@@ -336,29 +364,29 @@ void Simulator::Move(TickDescription& state)
     for (const auto& vampire : vampRefs) {
         if (const auto it = mVampireMoves.find(vampire->mId); it != mVampireMoves.end()) {
             for (const auto& d : it->second.mSteps) {
-                if (d == 'U') {
-                    if (restricted.find({ vampire->mX, vampire->mY - 1 }) != restricted.end()) {
-                        break;
-                    }
-                    vampire->mY--;
-                } else if (d == 'R') {
-                    if (restricted.find({ vampire->mX + 1, vampire->mY }) != restricted.end()) {
-                        break;
-                    }
-                    vampire->mX++;
-                } else if (d == 'D') {
-                    if (restricted.find({ vampire->mX, vampire->mY + 1 }) != restricted.end()) {
-                        break;
-                    }
-                    vampire->mY++;
-                } else if (d == 'L') {
-                    if (restricted.find({ vampire->mX - 1, vampire->mY }) != restricted.end()) {
-                        break;
-                    }
-                    vampire->mX--;
-                } else {
+                size_t newX = static_cast<size_t>(vampire->mX);
+                size_t newY = static_cast<size_t>(vampire->mY);
+                switch (d) {
+                case 'U':
+                    --newY;
+                    break;
+                case 'R':
+                    ++newX;
+                    break;
+                case 'D':
+                    ++newY;
+                    break;
+                case 'L':
+                    --newX;
+                    break;
+                default:
                     CHECK(false, "Invalid direction!");
                 }
+                if (restrictedAreas[newY * mapSize + newX]) {
+                    break;
+                }
+                vampire->mX = static_cast<int>(newX);
+                vampire->mY = static_cast<int>(newY);
             }
         }
     }
@@ -447,14 +475,15 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
 
         std::vector<const Grenade*> grenadesToProcess;
         grenadesToProcess.push_back(grenadeDesc.first);
-        Simulator::BlowArea ba;
+        Simulator::BlowArea ba(mGameDescription.mMapSize);
         while (!grenadesToProcess.empty()) {
             const Grenade& grenade = *grenadesToProcess.back();
             grenadesToProcess.pop_back();
 
             grenadesByPos[{ grenade.mX, grenade.mY }].second = true;
             Simulator::Area area = GetBlowArea(grenade, mState);
-            for (const auto& position : area) {
+            for (const auto& position : area.getAsVector()) {
+                ba.mArea.insert(position.first, position.second);
                 if (position == std::pair<int, int> { grenade.mX, grenade.mY }) {
                     continue;
                 }
@@ -464,7 +493,6 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
                     }
                 }
             }
-            ba.mArea.insert(area.begin(), area.end());
             ba.mTickCount = ba.mTickCount == -1 ? grenade.mTick : std::min(ba.mTickCount, grenade.mTick);
             ba.mVampireIds.insert(grenade.mId);
         }
@@ -475,12 +503,12 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
 
 Simulator::Area Simulator::GetBlowArea(const Grenade& grenade, const TickDescription& state)
 {
-    Area area;
+    Area area(mGameDescription.mMapSize);
     const auto checkExplosion = [&state, &mGameDescription = mGameDescription, &area](const int px, const int py) {
         if (px == 0 || py == 0 || px == mGameDescription.mMapSize - 1 || py == mGameDescription.mMapSize - 1 || (!(px % 2) && !(py % 2))) {
             return false;
         }
-        area.insert({ px, py });
+        area.insert(px, py);
         for (const auto& bat : state.mAllBats) {
             if (bat.mX == px && bat.mY == py) {
                 return false;
@@ -509,4 +537,33 @@ Simulator::Area Simulator::GetBlowArea(const Grenade& grenade, const TickDescrip
         }
     }
     return area;
+}
+
+bool Simulator::Area::find(int x, int y) const
+{
+    return mAreas[static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x)];
+}
+
+void Simulator::Area::insert(int x, int y)
+{
+    mAreas.set(static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x));
+    mVectorIsValid = false;
+}
+
+const Simulator::Area::AreaVector& Simulator::Area::getAsVector() const
+{
+    if (!mVectorIsValid) {
+        Simulator::Area& nonConst = const_cast<Simulator::Area&>(*this);
+        nonConst.mVector.reserve(23 * 23);
+        for (int x = 0; x < static_cast<int>(mMapSize); ++x) {
+            for (int y = 0; y < static_cast<int>(mMapSize); ++y) {
+                if (find(x, y)) {
+                    nonConst.mVector.emplace_back(x, y);
+                }
+            }
+        }
+        nonConst.mVectorIsValid = true;
+    }
+
+    return mVector;
 }

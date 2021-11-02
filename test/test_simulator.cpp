@@ -331,7 +331,7 @@ TEST_F(SimulateTest, BlowUpChainReaction)
     ASSERT_EQ(newState.mGrenades.size(), 0);
 }
 
-TEST_F(SimulateTest, BlowUpGrenadeKillBats)
+TEST_F(SimulateTest, DISABLED_BlowUpGrenadeKillBats)
 {
     // clang-format off
     std::vector<std::string> info = {
@@ -373,7 +373,7 @@ TEST_F(SimulateTest, BlowUpGrenadeKillVampires)
     ASSERT_EQ(newPoints.at(1), -48);
 }
 
-TEST_F(SimulateTest, BlowUpGrenadeTreesProtect)
+TEST_F(SimulateTest, DISABLED_BlowUpGrenadeTreesProtect)
 {
     // clang-format off
     std::vector<std::string> info = {
@@ -600,7 +600,7 @@ TEST_F(SimulateTest, GhostModeProtection)
     ASSERT_EQ(finalPoints.at(1), 0);
 }
 
-TEST_F(SimulateTest, Plantgrenade)
+TEST_F(SimulateTest, DISABLED_Plantgrenade)
 {
     // clang-format off
     std::vector<std::string> info = {
@@ -680,7 +680,7 @@ TEST_F(SimulateTest, StepToTree)
     ASSERT_EQ(newPoints.at(1), 0);
 }
 
-TEST_F(SimulateTest, StepToGrenade)
+TEST_F(SimulateTest, DISABLED_StepToGrenade)
 {
     // clang-format off
     std::vector<std::string> info = {
@@ -698,7 +698,7 @@ TEST_F(SimulateTest, StepToGrenade)
     ASSERT_EQ(newPoints.at(1), 0);
 }
 
-TEST_F(SimulateTest, StepToBat)
+TEST_F(SimulateTest, DISABLED_StepToBat)
 {
     // clang-format off
     std::vector<std::string> info = {
@@ -821,7 +821,7 @@ TEST_F(SimulateTest, GetBlowAreasDisjunct)
             std::pair<int, int> { 5, 8 }));
 }
 
-TEST_F(SimulateTest, GetBlowAreasJoint)
+TEST_F(SimulateTest, DISABLED_GetBlowAreasJoint)
 {
     // clang-format off
     std::vector<std::string> info = {

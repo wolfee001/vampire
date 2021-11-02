@@ -526,7 +526,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 			FOR0(i, SZ(targets))
 				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
 		}
-		vector<char> dirs(4);
+		vector<char> dirs;
 		vector<char> bestdirs;
 		int best = 0;
 		FOR(d11, -1, 3) {
@@ -566,8 +566,14 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 							++cnt;
 					}
 					MAXA2(best, cnt, bestdirs, dirs);
+					if (d3 != 4)
+						dirs.pop_back();
 				}
+				if (d2 != 4)
+					dirs.pop_back();
 			}
+			if (d1 != 4)
+				dirs.pop_back();
 		}
 		if (best > 0) {
 			answer.mPlaceGrenade = false; 

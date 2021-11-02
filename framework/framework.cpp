@@ -121,9 +121,10 @@ void Framework::Render()
                 if (mPlayBook.mIsCorrupted) {
                     ImGui::Text("THE GAME IS CORRUPTED. STATELESS REPLAY FOR DISPLAY!");
                     mPlayBook.mSolverIsStateful = false;
-                } else
+                } else {
                     ImGui::Checkbox("Solver is stateful", &mPlayBook.mSolverIsStateful);
-    
+                }
+
                 ImGui::BeginDisabled(mPlayBook.mIsPlaying);
                 static int jumpTo = 0;
                 ImGui::InputInt("Next step", &jumpTo);
@@ -381,26 +382,26 @@ void Framework::Render()
                     }
                 }
             }
+        }
 
-            for (const auto& pu : mTickDescription.mPowerUps) {
-                std::string icon = [](const PowerUp::Type type) {
-                    switch (type) {
-                    case PowerUp::Type::Battery:
-                        return "battery";
-                    case PowerUp::Type::Grenade:
-                        return "grenade_pu";
-                    case PowerUp::Type::Shoe:
-                        return "shoe";
-                    case PowerUp::Type::Tomato:
-                        return "tomato";
-                    default:
-                        CHECK(false, "Unhandled type!");
-                    }
-                }(pu.mType);
-                ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
-                draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32));
-                draw_list->AddText({ pos.x + 12, pos.y + 10 }, IM_COL32(0, 0, 0, 255), fmt::format("{}", pu.mRemainingTick).c_str());
-            }
+        for (const auto& pu : mTickDescription.mPowerUps) {
+            std::string icon = [](const PowerUp::Type type) {
+                switch (type) {
+                case PowerUp::Type::Battery:
+                    return "battery";
+                case PowerUp::Type::Grenade:
+                    return "grenade_pu";
+                case PowerUp::Type::Shoe:
+                    return "shoe";
+                case PowerUp::Type::Tomato:
+                    return "tomato";
+                default:
+                    CHECK(false, "Unhandled type!");
+                }
+            }(pu.mType);
+            ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
+            draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32));
+            draw_list->AddText({ pos.x + 12, pos.y + 10 }, IM_COL32(0, 0, 0, 255), fmt::format("{}", pu.mRemainingTick).c_str());
         }
 
         ImGui::End();

@@ -25,6 +25,19 @@ public:
 
     void Step();
 
+    Answer GetBestMove() const
+    {
+        const auto maxIt = std::max_element(
+            std::cbegin(mRoot.mActions), std::cend(mRoot.mActions), [](const std::unique_ptr<TreeNode>& x, const std::unique_ptr<TreeNode>& y) {
+                if (x && y) {
+                    return x->mSimulations < y->mSimulations;
+                } else {
+                    return x < y;
+                }
+            });
+        return ActionSequence((*maxIt)->mActionDoneByParent).GetAnswer();
+    }
+
 private:
     struct TreeNode {
         explicit TreeNode(TickDescription tickDescription)
@@ -79,12 +92,12 @@ private:
         }
     };
 
-    enum GameState { WIN, DRAW, LOSE };
+    enum GameState { WIN, LOSE };
 
     TreeNode& Select();
     TreeNode& Expand(TreeNode& node);
     GameState Simulate(TreeNode& node);
-    void Update() {};
+    void Update(TreeNode& node, const GameState& state);
 
     std::mt19937 mEngine;
     TreeNode mRoot;

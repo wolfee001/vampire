@@ -8,8 +8,8 @@ void MonteCarloTreeSearch::Step()
 {
     TreeNode& node = Select();
     TreeNode& expandedNode = Expand(node);
-    Simulate(expandedNode);
-    Update();
+    const auto result = Simulate(expandedNode);
+    Update(expandedNode, result);
 }
 
 MonteCarloTreeSearch::TreeNode& MonteCarloTreeSearch::Select()
@@ -122,15 +122,20 @@ MonteCarloTreeSearch::GameState MonteCarloTreeSearch::Simulate(TreeNode& node)
         return mPlayerIds[(static_cast<size_t>(std::distance(std::cbegin(mPlayerIds), playerIt)) + 1) % mPlayerIds.size()];
     };
 
+    Simulator::NewPoints allPoints;
     TickDescription currentTick = node.mTickDescription;
     TreeNode currentMove = node;
 
-    constexpr size_t numberOfTurnsToSimulate = 5;
+    constexpr size_t numberOfTurnsToSimulate = 15;
 
     for (size_t i = 0, max = numberOfTurnsToSimulate * 4 - alreadyMadeMoves; i < max; ++i) {
         if (i != 0 && currentMove.mPlayerId == mPlayerIds.front()) {
             simulator.SetState(currentTick);
-            currentTick = simulator.Tick().first;
+            Simulator::NewPoints newPoints;
+            std::tie(currentTick, newPoints) = simulator.Tick();
+            for (const auto& [vId, point] : newPoints) {
+                allPoints[vId] += point;
+            }
             currentMove.mTickDescription = currentTick;
         }
 
@@ -141,5 +146,29 @@ MonteCarloTreeSearch::GameState MonteCarloTreeSearch::Simulate(TreeNode& node)
         currentMove.mPlayerId = getNextPlayerId(currentMove.mPlayerId);
     }
 
-    return GameState::WIN;
+    const auto maxIt = std::max_element(
+        std::begin(allPoints), std::end(allPoints), [](const std::pair<int, float>& x, const std::pair<int, float>& y) { return x.second < y.second; });
+
+    if (maxIt->second != 0 && (maxIt->first == mPlayerIds.front() || allPoints[mPlayerIds.front()] == maxIt->second)) {
+        return GameState::WIN;
+    } else {
+        return GameState::LOSE;
+    }
+}
+
+void MonteCarloTreeSearch::Update(TreeNode& node, const GameState& state)
+{
+    TreeNode* currentNode = &node;
+    while (currentNode != nullptr) {
+        currentNode->mSimulations++;
+        if (currentNode->mPlayerId == mPlayerIds.front() && state == GameState::WIN) {
+            currentNode->mWins++;
+        }
+
+        if (currentNode->mPlayerId != mPlayerIds.front() && state != GameState::WIN) {
+            currentNode->mWins++;
+        }
+
+        currentNode = currentNode->mParent;
+    }
 }

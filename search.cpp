@@ -99,20 +99,68 @@ void Search::CalculateNextLevel()
 Answer Search::GetBestMove()
 {
     for (size_t level = mLevels.size() - 1; level >= 1; --level) {
+
         for (size_t i = 0; i < mLevels[level].size();) {
             const size_t parentIndex = mLevels[level][i].mParentIndex;
 
-            size_t numberOfChildren = 0;
             mLevels[level - 1][parentIndex].mScore = 0;
 
-            for (; mLevels[level][i].mParentIndex == parentIndex; ++i, ++numberOfChildren) {
+            for (; mLevels[level][i].mParentIndex == parentIndex; ++i) {
                 mLevels[level - 1][parentIndex].mScore += mLevels[level][i].mScore;
+
+                mLevels[level - 1][parentIndex].mNumberOfChildren += mLevels[level][i].mNumberOfChildren + 1;
             }
-            mLevels[level - 1][parentIndex].mScore /= static_cast<float>(numberOfChildren);
+
+            // mLevels[level - 1][parentIndex].mScore /= static_cast<float>(numberOfChildren);
         }
     }
 
-    const auto it = std::max_element(std::cbegin(mLevels[1]), std::cend(mLevels[1]), [](const TreeNode& x, const TreeNode& y) { return x.mScore < y.mScore; });
+    const auto it = std::max_element(std::cbegin(mLevels[1]), std::cend(mLevels[1]), [](const TreeNode& x, const TreeNode& y) {
+        return (x.mScore / static_cast<float>(x.mNumberOfChildren)) < (y.mScore / static_cast<float>(y.mNumberOfChildren));
+    });
 
     return ActionSequence(it->mAction).GetAnswer();
+}
+
+float Search::Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move) const
+{
+    const auto distance2 = [](int x, int y) -> float { return static_cast<float>(std::max(x, y) - std::min(x, y)); };
+
+    const auto distance = [&distance2](int x1, int y1, int x2, int y2) -> float { return distance2(x1, x2) + distance2(y1, y2); };
+
+    float batScore = 0;
+
+    const auto myGrenade = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
+        [&tickDescription](const Grenade& g) { return g.mId == tickDescription.mMe.mId; });
+    if (myGrenade != std::cend(tickDescription.mGrenades)) {
+        for (const auto& bat : tickDescription.mAllBats) {
+            if (distance2(bat.mX, myGrenade->mX) <= static_cast<float>(myGrenade->mRange)
+                && distance2(bat.mY, myGrenade->mY) <= static_cast<float>(myGrenade->mRange)) {
+                batScore += 12 / static_cast<float>(bat.mDensity);
+            }
+        }
+    }
+
+    const auto batIt = std::min_element(
+        std::cbegin(tickDescription.mAllBats), std::cend(tickDescription.mAllBats), [&tickDescription, &distance](const BatSquad& x, const BatSquad& y) {
+            return distance(tickDescription.mMe.mX, tickDescription.mMe.mY, x.mX, x.mY) < distance(tickDescription.mMe.mX, tickDescription.mMe.mY, y.mX, y.mY);
+        });
+
+    if (batIt != std::cend(tickDescription.mAllBats)) {
+        batScore += 12.F / distance(tickDescription.mMe.mX, tickDescription.mMe.mY, batIt->mX, batIt->mY);
+    }
+
+    float grenadePenalty = 0;
+    const auto closeGrenadeIt = std::min_element(
+        std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades), [&tickDescription, &distance](const Grenade& x, const Grenade& y) {
+            return distance(tickDescription.mMe.mX, tickDescription.mMe.mY, x.mX, x.mY) < distance(tickDescription.mMe.mX, tickDescription.mMe.mY, y.mX, y.mY);
+        });
+    if (closeGrenadeIt != std::cend(tickDescription.mGrenades)) {
+        if (distance2(tickDescription.mMe.mX, closeGrenadeIt->mX) < static_cast<float>(closeGrenadeIt->mRange + 2)
+            || distance2(tickDescription.mMe.mY, closeGrenadeIt->mY) < static_cast<float>(closeGrenadeIt->mRange + 2)) {
+            grenadePenalty = 48.F;
+        }
+    }
+
+    return newPoints.at(mPlayerId) + 0.001F * static_cast<float>(move.mSteps.size()) + batScore + grenadePenalty;
 }

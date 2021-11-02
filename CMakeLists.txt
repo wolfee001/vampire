@@ -35,22 +35,36 @@ file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/data)
 #--------------
 
 #-------------- NORMAL BUILD
-add_library(libmagic usual_magic.cpp gabor_magic.cpp mcts.cpp simulator.cpp)
-target_link_libraries(libmagic
+add_library(libhelper
+    parser.cpp
+    simulator.cpp
+    mcts.cpp
+    search.cpp
+)
+target_link_libraries(libhelper
     PUBLIC project_options
+    PRIVATE project_warnings
     PRIVATE CONAN_PKG::boost
 )
 
+add_library(libmagic
+    usual_magic.cpp
+    gabor_magic.cpp
+)
+target_link_libraries(libmagic
+    PUBLIC project_options
+    PRIVATE CONAN_PKG::boost
+    PRIVATE libhelper
+)
+
 add_library(libsolver
-    parser.cpp
     solver.cpp
-    simulator.cpp
-    mcts.cpp
 )
 target_link_libraries(libsolver
     PUBLIC project_options
     PRIVATE project_warnings
     PRIVATE libmagic
+    PRIVATE libhelper
 )
 
 add_executable(vampire main.cpp)
@@ -70,6 +84,7 @@ add_executable(unittest
     test/test_action_sequence.cpp
     test/test_mcts.cpp
     test/test_usual_magic.cpp
+    test/test_search.cpp
 )
 target_link_libraries(unittest
     PUBLIC project_options
@@ -103,12 +118,7 @@ add_executable(framework
     framework/gui_element.cpp
     framework/main.cpp
     main.cpp
-    simulator.cpp
-    parser.cpp
     solver.cpp
-    usual_magic.cpp
-    gabor_magic.cpp
-    mcts.cpp
 )
 target_link_libraries(framework
     PRIVATE project_options
@@ -117,6 +127,8 @@ target_link_libraries(framework
     PRIVATE CONAN_PKG::stb
     PRIVATE CONAN_PKG::fmt
     PRIVATE CONAN_PKG::portable-file-dialogs
+    PRIVATE libmagic
+    PRIVATE libhelper
 )
 target_compile_definitions(framework PRIVATE GAME_WITH_FRAMEWORK)
 target_include_directories(framework INTERFACE framework/)

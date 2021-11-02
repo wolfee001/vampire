@@ -407,7 +407,6 @@ map_t gen(int n)
 
 // todo Kovi
 // phase1 plan
-// handle multi bomb on same position?
 // handle ghost mode
 
 UsualMagic::UsualMagic(const GameDescription& gameDescription)

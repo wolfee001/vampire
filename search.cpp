@@ -72,8 +72,8 @@ void Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
 
             const TreeNode* searchNode = &node;
             bool sameAsPreviousStatus = false;
-            for (int level = currentLevelIndex - 1; level >= 1; --level) {
-                searchNode = &mLevels[static_cast<size_t>(level)][searchNode->mParentIndex];
+            for (int level = currentLevelIndex - 2; level >= 1; --level) {
+                searchNode = &(mLevels[static_cast<size_t>(level)][searchNode->mParentIndex]);
                 if (ActionSequence(searchNode->mAction).IsGrenade()) {
                     break;
                 }

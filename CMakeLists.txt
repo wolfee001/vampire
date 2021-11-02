@@ -35,7 +35,7 @@ file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/data)
 #--------------
 
 #-------------- NORMAL BUILD
-add_library(libmagic usual_magic.cpp gabor_magic.cpp)
+add_library(libmagic usual_magic.cpp gabor_magic.cpp mcts.cpp simulator.cpp)
 target_link_libraries(libmagic
     PUBLIC project_options
     PRIVATE CONAN_PKG::boost
@@ -108,6 +108,7 @@ add_executable(framework
     solver.cpp
     usual_magic.cpp
     gabor_magic.cpp
+    mcts.cpp
 )
 target_link_libraries(framework
     PRIVATE project_options

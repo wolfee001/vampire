@@ -39,6 +39,7 @@ add_library(libhelper
     parser.cpp
     simulator.cpp
     mcts.cpp
+    search.cpp
 )
 target_link_libraries(libhelper
     PUBLIC project_options
@@ -83,6 +84,7 @@ add_executable(unittest
     test/test_action_sequence.cpp
     test/test_mcts.cpp
     test/test_usual_magic.cpp
+    test/test_search.cpp
 )
 target_link_libraries(unittest
     PUBLIC project_options

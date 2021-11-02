@@ -281,7 +281,7 @@ TEST(UsualMagic, UsualMagicSim)
 				"OOOOO"
 			}
 		}
-		); */
+		);
 }
 
 TEST(UsualMagic, UsualMagicGetDist)

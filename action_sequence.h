@@ -62,9 +62,42 @@ public:
         return mSequence == other.mSequence;
     }
 
-    ActionSequence_t GetId() const
+    [[nodiscard]] ActionSequence_t GetId() const
     {
         return mSequence;
+    }
+
+    [[nodiscard]] bool IsGrenade() const
+    {
+        return static_cast<bool>(mSequence & 1);
+    }
+
+    [[nodiscard]] uint8_t GetNumberOfSteps() const
+    {
+        const auto moves = static_cast<ActionSequence_t>(mSequence >> 1);
+
+        if (moves == 0) {
+            return 0;
+        }
+        if (moves < 5) {
+            return 1;
+        }
+        if (moves < 21) {
+            return 2;
+        }
+
+        return 3;
+    }
+
+    [[nodiscard]] uint8_t GetNthStep(int n) const
+    {
+        auto moves = static_cast<ActionSequence_t>(mSequence >> 1);
+
+        while (--n != 0) {
+            moves /= 4;
+        }
+
+        return moves % 4;
     }
 
     Answer GetAnswer() const
@@ -108,6 +141,8 @@ public:
         } else if (size == 3) {
             moves = static_cast<ActionSequence_t>(moves - 21);
         }
+
+        answer.mSteps.reserve(size);
 
         for (size_t i = 0; i < size; ++i) {
             answer.mSteps.push_back(indexToStep(moves % 4));

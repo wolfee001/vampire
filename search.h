@@ -13,7 +13,7 @@ public:
         : mGameDescription(gameDescription)
         , mPlayerId(playerId)
     {
-        const auto score = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0 } }, {});
+        const auto score = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0.F } }, {});
         mLevels.reserve(10);
 
         const auto grenadeIt = std::find_if(

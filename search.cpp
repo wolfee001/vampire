@@ -111,7 +111,7 @@ Answer Search::GetBestMove()
 
             mLevels[level - 1][parentIndex].mScore = 0;
 
-            for (; mLevels[level][i].mParentIndex == parentIndex; ++i) {
+            for (; mLevels[level][i].mParentIndex == parentIndex && i < mLevels[level].size(); ++i) {
                 mLevels[level - 1][parentIndex].mScore += mLevels[level][i].mScore;
 
                 mLevels[level - 1][parentIndex].mNumberOfChildren += mLevels[level][i].mNumberOfChildren + 1;

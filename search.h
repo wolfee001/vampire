@@ -30,7 +30,7 @@ public:
 
     // private:
     struct TreeNode {
-        TreeNode(uint16_t parent, TickDescription td, float score, ActionSequence::ActionSequence_t action)
+        TreeNode(uint32_t parent, TickDescription td, float score, ActionSequence::ActionSequence_t action)
             : mParentIndex(parent)
             , mTickDescription(std::move(td))
             , mScore(score)

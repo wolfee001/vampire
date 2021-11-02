@@ -10,6 +10,8 @@ if(CMAKE_BUILD_TYPE MATCHES DEBUG)
     add_compile_options(-fstandalone-debug)
 endif()
 
+add_compile_definitions(CHECK_ENABLED)
+
 #-------------- SETUPS
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)

@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "check.h"
+
 GameDescription parseGameDescription(const std::vector<std::string>& startInfos)
 {
     GameDescription description;
@@ -41,8 +43,7 @@ GameDescription parseGameDescription(const std::vector<std::string>& startInfos)
         } else if (msg == "SIZE") {
             stream >> description.mMapSize;
         } else {
-            std::cerr << "Unhandled message: " << msg << std::endl;
-            throw std::runtime_error("Unhandled message: " + msg);
+            CHECK(false, "Unhandled message: " + msg);
         }
     }
     return description;
@@ -71,8 +72,8 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
 
             Vampire& vampire = id == newDescription.mRequest.mVampireId ? newDescription.mMe : newDescription.mEnemyVampires.emplace_back();
             vampire.mId = id;
-            stream >> vampire.mX;
             stream >> vampire.mY;
+            stream >> vampire.mX;
             stream >> vampire.mHealth;
             stream >> vampire.mPlacableGrenades;
             stream >> vampire.mGrenadeRange;
@@ -80,8 +81,8 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
         } else if (msg == "GRENADE") {
             Grenade& grenade = newDescription.mGrenades.emplace_back();
             stream >> grenade.mId;
-            stream >> grenade.mX;
             stream >> grenade.mY;
+            stream >> grenade.mX;
             stream >> grenade.mTick;
             stream >> grenade.mRange;
         } else if (msg == "POWERUP") {
@@ -102,18 +103,17 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
                 if (type == "SHOE") {
                     return PowerUp::Type::Shoe;
                 }
-                std::cerr << "Unhandled type: " << type << std::endl;
-                throw std::runtime_error("Unhandled type: " + type);
+                CHECK(false, "Unhandled type: " + type);
             }(t);
             stream >> powerUp.mRemainingTick;
-            stream >> powerUp.mX;
             stream >> powerUp.mY;
+            stream >> powerUp.mX;
         } else if (msg == "BAT1") {
             while (true) {
                 BatSquad squad;
                 squad.mDensity = 1;
-                stream >> squad.mX;
                 stream >> squad.mY;
+                stream >> squad.mX;
                 if (squad.mX == -1) {
                     break;
                 }
@@ -124,8 +124,8 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
             while (true) {
                 BatSquad squad;
                 squad.mDensity = 2;
-                stream >> squad.mX;
                 stream >> squad.mY;
+                stream >> squad.mX;
                 if (squad.mX == -1) {
                     break;
                 }
@@ -136,8 +136,8 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
             while (true) {
                 BatSquad squad;
                 squad.mDensity = 3;
-                stream >> squad.mX;
                 stream >> squad.mY;
+                stream >> squad.mX;
                 if (squad.mX == -1) {
                     break;
                 }
@@ -148,8 +148,7 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
             stream >> newDescription.mEndMessage.mPoint;
             stream >> newDescription.mEndMessage.mReason;
         } else {
-            std::cerr << "Unhandled message: " << msg << std::endl;
-            throw std::runtime_error("Unhandled message: " + msg);
+            CHECK(false, "Unhandled message: " + msg);
         }
     }
     return newDescription;

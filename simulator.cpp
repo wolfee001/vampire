@@ -6,6 +6,8 @@
 #include <set>
 #include <stdexcept>
 
+#include "check.h"
+
 Simulator::Simulator(const GameDescription& gameDescription)
     : mGameDescription(gameDescription)
 {
@@ -24,19 +26,19 @@ void Simulator::SetVampireMove(int id, const Answer& move)
 std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
 {
     if (mState.mRequest.mTick == -1) {
-        throw std::runtime_error("Calling tick without setting state!");
+        CHECK(false, "Calling tick without setting state!");
     }
 
     if (const auto it = mVampireMoves.find(mState.mMe.mId); it != mVampireMoves.end()) {
         if (it->second.mSteps.size() > 2 && mState.mMe.mRunningShoesTick <= 0) {
-            throw std::runtime_error("Stepping more than 2 but there are no running shoes!");
+            CHECK(false, "Stepping more than 2 but there are no running shoes!");
         }
     }
 
     for (const auto& element : mState.mEnemyVampires) {
         if (const auto it = mVampireMoves.find(mState.mMe.mId); it != mVampireMoves.end()) {
             if (it->second.mSteps.size() > 2 && element.mRunningShoesTick <= 0) {
-                throw std::runtime_error("Stepping more than 2 but there are no running shoes!");
+                CHECK(false, "Stepping more than 2 but there are no running shoes!");
             }
         }
     }
@@ -153,7 +155,7 @@ void Simulator::PowerupPickUp(TickDescription& state)
                     break;
                 }
                 default:
-                    throw std::runtime_error("Unhandled powerup type!");
+                    CHECK(false, "Unhandled powerup type!");
                 }
             }
         }
@@ -212,7 +214,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
         } else if (bat.mDensity == 3) {
             state.mBat3.push_back(bat);
         } else {
-            throw std::runtime_error("Some calculation is wrong...");
+            CHECK(false, "Some calculation is wrong...");
         }
     }
     /*
@@ -380,7 +382,7 @@ void Simulator::Move(TickDescription& state)
                     }
                     vampire->mX--;
                 } else {
-                    throw std::runtime_error("Invalid direction!");
+                    CHECK(false, "Invalid direction!");
                 }
             }
         }
@@ -403,7 +405,7 @@ bool Simulator::IsValidMove(int id, const Answer& move) const
     }
 
     if (vampire == nullptr) {
-        throw std::runtime_error("Invalid id!");
+        CHECK(false, "Invalid id!");
     }
 
     if (move.mPlaceGrenade) {
@@ -441,7 +443,7 @@ bool Simulator::IsValidMove(int id, const Answer& move) const
         } else if (d == 'L') {
             x--;
         } else {
-            throw std::runtime_error("Invalid direction!");
+            CHECK(false, "Invalid direction!");
         }
 
         if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {

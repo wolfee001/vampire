@@ -142,7 +142,7 @@ TEST(UsualMagic, UsualMagicSim)
 			}
 		}
 		);
-/*	testsim(
+	testsim(
 		{
 			{
 				"OOOOO",
@@ -255,7 +255,7 @@ TEST(UsualMagic, UsualMagicSim)
 		{
 			{
 				"OOOOO",
-				"O...O",
+				"O+..O",
 				"O.O.O",
 				"O...O",
 				"OOOOO"

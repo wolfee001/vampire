@@ -175,7 +175,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
     state.mGrenades.erase(std::remove_if(state.mGrenades.begin(), state.mGrenades.end(),
                               [&areas](const auto& grenade) {
                                   for (const auto& area : areas) {
-                                      if (area.mArea.find({ grenade.mX, grenade.mY }) != area.mArea.end()) {
+                                      if (area.mArea.find(grenade.mX, grenade.mY)) {
                                           return true;
                                       }
                                   }
@@ -189,7 +189,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
         int injured = 0;
 
         for (const auto& area : areas) {
-            if (area.mArea.find({ bat.mX, bat.mY }) != area.mArea.end()) {
+            if (area.mArea.find(bat.mX, bat.mY)) {
                 injured++;
                 if (bat.mDensity <= injured) {
                     for (const auto& vId : area.mVampireIds) {
@@ -258,7 +258,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
             std::vector<int> vampiresDamaging;
 
             for (const auto& area : areas) {
-                if (area.mArea.find({ vampire.mX, vampire.mY }) != area.mArea.end()) {
+                if (area.mArea.find(vampire.mX, vampire.mY)) {
                     isDead = vampire.mHealth == 1;
 
                     if (!alreadyDamaged && vampire.mHealth >= 2 && vampire.mGhostModeTick == 0) {
@@ -475,14 +475,15 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
 
         std::vector<const Grenade*> grenadesToProcess;
         grenadesToProcess.push_back(grenadeDesc.first);
-        Simulator::BlowArea ba;
+        Simulator::BlowArea ba(mGameDescription.mMapSize);
         while (!grenadesToProcess.empty()) {
             const Grenade& grenade = *grenadesToProcess.back();
             grenadesToProcess.pop_back();
 
             grenadesByPos[{ grenade.mX, grenade.mY }].second = true;
             Simulator::Area area = GetBlowArea(grenade, mState);
-            for (const auto& position : area) {
+            for (const auto& position : area.getAsVector()) {
+                ba.mArea.insert(position.first, position.second);
                 if (position == std::pair<int, int> { grenade.mX, grenade.mY }) {
                     continue;
                 }
@@ -492,7 +493,6 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
                     }
                 }
             }
-            ba.mArea.insert(area.begin(), area.end());
             ba.mTickCount = ba.mTickCount == -1 ? grenade.mTick : std::min(ba.mTickCount, grenade.mTick);
             ba.mVampireIds.insert(grenade.mId);
         }
@@ -503,12 +503,12 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
 
 Simulator::Area Simulator::GetBlowArea(const Grenade& grenade, const TickDescription& state)
 {
-    Area area;
+    Area area(mGameDescription.mMapSize);
     const auto checkExplosion = [&state, &mGameDescription = mGameDescription, &area](const int px, const int py) {
         if (px == 0 || py == 0 || px == mGameDescription.mMapSize - 1 || py == mGameDescription.mMapSize - 1 || (!(px % 2) && !(py % 2))) {
             return false;
         }
-        area.insert({ px, py });
+        area.insert(px, py);
         for (const auto& bat : state.mAllBats) {
             if (bat.mX == px && bat.mY == py) {
                 return false;
@@ -537,4 +537,33 @@ Simulator::Area Simulator::GetBlowArea(const Grenade& grenade, const TickDescrip
         }
     }
     return area;
+}
+
+bool Simulator::Area::find(int x, int y) const
+{
+    return mAreas[static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x)];
+}
+
+void Simulator::Area::insert(int x, int y)
+{
+    mAreas.set(static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x));
+    mVectorIsValid = false;
+}
+
+const Simulator::Area::AreaVector& Simulator::Area::getAsVector() const
+{
+    if (!mVectorIsValid) {
+        Simulator::Area& nonConst = const_cast<Simulator::Area&>(*this);
+        nonConst.mVector.reserve(23 * 23);
+        for (int x = 0; x < static_cast<int>(mMapSize); ++x) {
+            for (int y = 0; y < static_cast<int>(mMapSize); ++y) {
+                if (find(x, y)) {
+                    nonConst.mVector.emplace_back(x, y);
+                }
+            }
+        }
+        nonConst.mVectorIsValid = true;
+    }
+
+    return mVector;
 }

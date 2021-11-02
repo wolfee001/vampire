@@ -313,7 +313,7 @@ void Framework::Render()
         std::vector<Simulator::BlowArea> blowAreas = simulator.GetBlowAreas();
 
         for (const auto& area : blowAreas) {
-            for (const auto& position : area.mArea) {
+            for (const auto& position : area.mArea.getAsVector()) {
                 ImVec2 tl = ImGui::GetCursorScreenPos();
                 tl.x += static_cast<float>(position.first) * 34.f + 1.f;
                 tl.y += static_cast<float>(position.second) * 34.f + 1.f;

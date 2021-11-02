@@ -2,6 +2,7 @@
 .vscode
 .vs
 .clangd
+.devcontainer
 build
 data
 target

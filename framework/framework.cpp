@@ -54,9 +54,9 @@ void Framework::Update(const TickDescription& description, const std::vector<std
     mRenderLock.lock();
     mTickDescription = description;
     if (mVampireAvatarMapping.empty()) {
-        mVampireAvatarMapping[mTickDescription.mEnemyVampires[0].mId] = "vampire2";
-        mVampireAvatarMapping[mTickDescription.mEnemyVampires[1].mId] = "vampire3";
-        mVampireAvatarMapping[mTickDescription.mEnemyVampires[2].mId] = "vampire4";
+        for (size_t i = 0; i < mTickDescription.mEnemyVampires.size(); ++i) {
+            mVampireAvatarMapping[mTickDescription.mEnemyVampires[i].mId] = "vampire" + std::to_string(i + 2);
+        }
     }
     if (mRecordGame) {
         mGameRecorder.AddTick(infos);

@@ -192,7 +192,6 @@ void Simulator::BlowUpGrenades(TickDescription& state)
             if (area.mArea.find({ bat.mX, bat.mY }) != area.mArea.end()) {
                 injured++;
                 if (bat.mDensity <= injured) {
-                    // itt robban fel egy bat.
                     for (const auto& vId : area.mVampireIds) {
                         mNewPoints[vId] += 12.F / static_cast<float>(area.mVampireIds.size());
                     }
@@ -219,64 +218,90 @@ void Simulator::BlowUpGrenades(TickDescription& state)
             CHECK(false, "Some calculation is wrong...");
         }
     }
+    /*
+        if (state.mMe.mGhostModeTick == 0) {
+            const auto areaIt = std::find_if(std::cbegin(areas), std::cend(areas), [&state](const auto& area) {
+                return area.mArea.find({ state.mMe.mX, state.mMe.mY }) != area.mArea.end();
+            });
+            if (areaIt != std::cend(areas)) {
+                state.mMe.mHealth--;
+                state.mMe.mGhostModeTick = 3;
 
-    if (state.mMe.mGhostModeTick == 0) {
-        const auto areaIt = std::find_if(std::cbegin(areas), std::cend(areas), [&state](const auto& area) {
-            return area.mArea.find({ state.mMe.mX, state.mMe.mY }) != area.mArea.end();
-        });
-        if (areaIt != std::cend(areas)) {
-            state.mMe.mHealth--;
-            state.mMe.mGhostModeTick = 3;
+                const auto meIt = std::find(std::cbegin(areaIt->mVampireIds), std::cend(areaIt->mVampireIds), state.mMe.mId);
+                const bool meInTheArea = meIt == std::cend(areaIt->mVampireIds);
 
-            const auto meIt = std::find(std::cbegin(areaIt->mVampireIds), std::cend(areaIt->mVampireIds), state.mMe.mId);
-            const bool meInTheArea = meIt == std::cend(areaIt->mVampireIds);
-
-            for (const auto& vId : areaIt->mVampireIds) {
-                if (vId == state.mMe.mId) {
-                    // i don't get penalized for injuring myself
-                    mNewPoints[vId] -= 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
-                } else {
-                    mNewPoints[vId] += 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                for (const auto& vId : areaIt->mVampireIds) {
+                    if (vId == state.mMe.mId) {
+                        // i get penalized for injuring myself
+                        mNewPoints[vId] -= 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                    } else {
+                        mNewPoints[vId] += 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
+                    }
                 }
             }
         }
+    */
+    std::vector<Vampire> survivorVampires;
+
+    std::vector<Vampire*> vampires = { &state.mMe };
+    for (auto& vampire : state.mEnemyVampires) {
+        vampires.push_back(&vampire);
     }
 
-    std::vector<Vampire> survivorVampires;
-    for (const auto& vampire : state.mEnemyVampires) {
+    for (const auto& vampirePtr : vampires) {
+        auto& vampire = *vampirePtr;
+
         if (vampire.mGhostModeTick == 0 && vampire.mHealth > 0) {
 
             bool isDead = false;
+            bool alreadyDamaged = false;
             std::vector<int> vampiresDamaging;
 
             for (const auto& area : areas) {
                 if (area.mArea.find({ vampire.mX, vampire.mY }) != area.mArea.end()) {
-                    if (vampire.mHealth >= 2 && vampire.mGhostModeTick == 0) {
-                        auto& v = survivorVampires.emplace_back(vampire);
-                        v.mHealth--;
-                        v.mGhostModeTick = 3;
+                    isDead = vampire.mHealth == 1;
+
+                    if (!alreadyDamaged && vampire.mHealth >= 2 && vampire.mGhostModeTick == 0) {
+                        if (vampire.mId != state.mMe.mId) {
+                            auto& v = survivorVampires.emplace_back(vampire);
+                            v.mHealth--;
+                            v.mGhostModeTick = 3;
+                        } else {
+                            state.mMe.mHealth--;
+                            state.mMe.mGhostModeTick = 3;
+                        }
+                        alreadyDamaged = true;
                     }
 
-                    isDead = vampire.mHealth == 1;
                     vampiresDamaging.insert(std::end(vampiresDamaging), std::cbegin(area.mVampireIds), std::cend(area.mVampireIds));
                 }
             }
 
-            if (areas.empty() || vampiresDamaging.empty()) {
+            if ((areas.empty() || vampiresDamaging.empty()) && vampire.mId != state.mMe.mId) {
                 survivorVampires.emplace_back(vampire);
             }
 
             if (isDead) {
                 for (const auto& vId : vampiresDamaging) {
-                    mNewPoints[vId] += 96.F / static_cast<float>(vampiresDamaging.size());
+                    if (vId != vampire.mId) {
+                        mNewPoints[vId] += 96.F / static_cast<float>(vampiresDamaging.size());
+                    } else {
+                        mNewPoints[vId] -= 96.F / static_cast<float>(vampiresDamaging.size());
+                    }
                 }
             }
 
             for (const auto& vId : vampiresDamaging) {
-                mNewPoints[vId] += 48.F / static_cast<float>(vampiresDamaging.size());
+                if (vId != vampire.mId) {
+                    mNewPoints[vId] += 48.F / static_cast<float>(vampiresDamaging.size());
+                } else {
+                    mNewPoints[vId] -= 48.F / static_cast<float>(vampiresDamaging.size());
+                }
             }
         } else {
-            survivorVampires.push_back(vampire);
+            if (vampire.mId != state.mMe.mId) {
+                survivorVampires.push_back(vampire);
+            }
         }
     }
     state.mEnemyVampires = survivorVampires;

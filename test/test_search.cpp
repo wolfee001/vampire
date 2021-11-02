@@ -8,7 +8,7 @@ TEST(Search, Basic)
     GameDescription gd;
     gd.mGameId = 1;
     gd.mGrenadeRadius = 2;
-    gd.mMapSize = 5;
+    gd.mMapSize = 11;
 
     TickDescription td;
     td.mMe.mId = 8;
@@ -17,6 +17,13 @@ TEST(Search, Basic)
     td.mMe.mHealth = 3;
     td.mMe.mX = 1;
     td.mMe.mY = 1;
+
+    td.mBat1.resize(1);
+    td.mBat1[0].mX = 10;
+    td.mBat1[0].mY = 10;
+    td.mBat1[0].mDensity = 1;
+
+    td.mAllBats = td.mBat1;
 
     td.mEnemyVampires.resize(3);
     td.mEnemyVampires[0].mId = 1;
@@ -42,15 +49,60 @@ TEST(Search, Basic)
 
     td.mRequest.mTick = 1;
 
-    Search search(td, gd, 8);
-    for (size_t i = 0; i < 3; ++i) {
-        search.CalculateNextLevel();
+    Simulator simulator(gd);
+
+    for (size_t steps = 0; steps <= 15; ++steps) {
+        Search search(td, gd, 8);
+        for (size_t i = 0; i < 3; ++i) {
+            search.CalculateNextLevel();
+        }
+        const auto move = search.GetBestMove();
+
+        std::cerr << " grenade: " << move.mPlaceGrenade << " moves: ";
+        for (const auto& s : move.mSteps) {
+            std::cerr << s << ", ";
+        }
+        std::cerr << std::endl;
+
+        const auto originalX = td.mMe.mX;
+        const auto originalY = td.mMe.mY;
+
+        simulator.SetState(td);
+        simulator.SetVampireMove(8, move);
+        td = simulator.Tick().first;
+
+        EXPECT_EQ(td.mMe.mHealth, 3);
+
+        std::cerr << "position: " << td.mMe.mX << ", " << td.mMe.mY << std::endl;
+
+        int newX = originalX;
+        int newY = originalY;
+        for (const auto& step : move.mSteps) {
+            switch (step) {
+            case 'U':
+                --newY;
+                break;
+            case 'D':
+                ++newY;
+                break;
+            case 'L':
+                --newX;
+                break;
+            case 'R':
+                ++newX;
+                break;
+            }
+        }
+        EXPECT_EQ(newX, td.mMe.mX);
+        EXPECT_EQ(newY, td.mMe.mY);
+
+        /*
+                std::cerr << search.mLevels.size() << std::endl;
+                for (const auto& l : search.mLevels) {
+                    std::cerr << l.size() << std::endl;
+                }
+                */
     }
-    /*
-    std::cerr << search.mLevels.size() << std::endl;
-    for (const auto& l : search.mLevels) {
-        std::cerr << l.size() << std::endl;
-    }
-    */
-    const auto move = search.GetBestMove();
+
+    // EXPECT_TRUE(move.mPlaceGrenade);
 }

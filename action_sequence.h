@@ -93,11 +93,24 @@ public:
     {
         auto moves = static_cast<ActionSequence_t>(mSequence >> 1);
 
-        while (--n != 0) {
-            moves /= 4;
+        if (moves < 5) {
+            moves = static_cast<ActionSequence_t>(moves - 1);
+        } else if (moves < 21) {
+            moves = static_cast<ActionSequence_t>(moves - 5);
+        } else {
+            moves = static_cast<ActionSequence_t>(moves - 21);
         }
 
-        return moves % 4;
+        switch (n) {
+        case 0:
+            return static_cast<uint8_t>(moves % 4);
+        case 1:
+            return static_cast<uint8_t>((moves / 4) % 4);
+        case 2:
+            return static_cast<uint8_t>((moves / (4 * 4)) % 4);
+        }
+
+        return 255;
     }
 
     Answer GetAnswer() const

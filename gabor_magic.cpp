@@ -1,6 +1,7 @@
 #include "gabor_magic.h"
-#include "mcts.h"
+#include "search.h"
 #include <chrono>
+#include <iostream>
 
 GaborMagic::GaborMagic(const GameDescription& gameDescription)
     : IMagic(gameDescription)
@@ -8,26 +9,21 @@ GaborMagic::GaborMagic(const GameDescription& gameDescription)
     // Maybe some constructor magic? :)
 }
 
-#include <iostream>
 Answer GaborMagic::Tick(const TickDescription& tickDescription)
 {
-    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(1800);
+    Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);
 
-    std::vector<int> playerIds = { tickDescription.mMe.mId };
-    for (const auto& v : tickDescription.mEnemyVampires) {
-        playerIds.push_back(v.mId);
+    const auto t1 = std::chrono::steady_clock::now();
+
+    for (size_t i = 0; i < 6; ++i) {
+        search.CalculateNextLevel();
     }
+    auto move = search.GetBestMove();
 
-    MonteCarloTreeSearch mcts(tickDescription, mGameDescription, playerIds);
+    std::cerr << "Calculation took " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t1).count() << " ms"
+              << std::endl;
 
-    size_t steps = 0;
-    while (std::chrono::steady_clock::now() < deadline) {
-        mcts.Step();
-        ++steps;
-    }
-
-    auto move = mcts.GetBestMove();
-    std::cerr << "steps: " << steps << " grenade: " << move.mPlaceGrenade << " moves: ";
+    std::cerr << " grenade: " << move.mPlaceGrenade << " moves: ";
     for (const auto& s : move.mSteps) {
         std::cerr << s << ", ";
     }

@@ -72,6 +72,28 @@ TEST(ActionSequence, AllFromAnswer)
         EXPECT_EQ(as.GetAnswer(), answer);
         EXPECT_LT(as.GetId(), ids.size());
         EXPECT_FALSE(ids[as.GetId()]);
+
+        EXPECT_EQ(answer.mSteps.size(), as.GetNumberOfSteps());
+
+        for (size_t i = 0; i < answer.mSteps.size(); ++i) {
+            switch (answer.mSteps[i]) {
+            case 'U':
+                EXPECT_EQ(as.GetNthStep(static_cast<int>(i)), 0);
+                break;
+            case 'D':
+                EXPECT_EQ(as.GetNthStep(static_cast<int>(i)), 1);
+                break;
+            case 'L':
+                EXPECT_EQ(as.GetNthStep(static_cast<int>(i)), 2);
+                break;
+            case 'R':
+                EXPECT_EQ(as.GetNthStep(static_cast<int>(i)), 3);
+                break;
+            default:
+                throw std::runtime_error("Invalid step");
+            }
+        }
+
         ids[as.GetId()] = true;
     };
 
@@ -101,4 +123,23 @@ TEST(ActionSequence, AllFromAnswer)
     }
 
     EXPECT_TRUE(std::all_of(std::cbegin(ids), std::cend(ids), [](bool v) { return v; }));
+}
+
+TEST(ActionSequence, GetNthStep)
+{
+    Answer answer;
+
+    {
+        answer.mSteps.push_back('U');
+        const ActionSequence action(answer);
+        EXPECT_EQ(action.GetAnswer().mSteps[0], 'U');
+        EXPECT_EQ(action.GetNthStep(0), 0);
+    }
+
+    {
+        answer.mSteps = { 'U', 'U', 'D' };
+        const ActionSequence action(answer);
+        EXPECT_EQ(action.GetAnswer().mSteps[2], 'D');
+        EXPECT_EQ(action.GetNthStep(2), 1);
+    }
 }

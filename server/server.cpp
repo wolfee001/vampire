@@ -110,14 +110,14 @@ std::vector<std::string> CreateInfo(const TickDescription& tick, int player)
 {
     std::vector<std::string> retVal;
     retVal.push_back(fmt::format("REQ {} {} {}", tick.mRequest.mGameId, tick.mRequest.mTick, player));
-    retVal.push_back(fmt::format("VAMPIRE 1 {} {} {} {} {} {}", tick.mMe.mX, tick.mMe.mY, tick.mMe.mHealth, tick.mMe.mPlacableGrenades, tick.mMe.mGrenadeRange,
+    retVal.push_back(fmt::format("VAMPIRE 1 {} {} {} {} {} {}", tick.mMe.mY, tick.mMe.mX, tick.mMe.mHealth, tick.mMe.mPlacableGrenades, tick.mMe.mGrenadeRange,
         tick.mMe.mRunningShoesTick));
     for (const auto& vampire : tick.mEnemyVampires) {
-        retVal.push_back(fmt::format("VAMPIRE {} {} {} {} {} {} {}", vampire.mId, vampire.mX, vampire.mY, vampire.mHealth, vampire.mPlacableGrenades,
+        retVal.push_back(fmt::format("VAMPIRE {} {} {} {} {} {} {}", vampire.mId, vampire.mY, vampire.mX, vampire.mHealth, vampire.mPlacableGrenades,
             vampire.mGrenadeRange, vampire.mRunningShoesTick));
     }
     for (const auto& grenade : tick.mGrenades) {
-        retVal.push_back(fmt::format("GRENADE {} {} {} {} {}", grenade.mId, grenade.mX, grenade.mY, grenade.mTick, grenade.mRange));
+        retVal.push_back(fmt::format("GRENADE {} {} {} {} {}", grenade.mId, grenade.mY, grenade.mX, grenade.mTick, grenade.mRange));
     }
     for (const auto& powerup : tick.mPowerUps) {
         std::string type = [](PowerUp::Type type) {
@@ -133,21 +133,21 @@ std::vector<std::string> CreateInfo(const TickDescription& tick, int player)
             }
             CHECK(false, "unhandled type!");
         }(powerup.mType);
-        retVal.push_back(fmt::format("POWERUP {} {} {} {}", type, powerup.mRemainingTick, powerup.mX, powerup.mY));
+        retVal.push_back(fmt::format("POWERUP {} {} {} {}", type, powerup.mRemainingTick, powerup.mY, powerup.mX));
     }
     std::string bat1 = "BAT1";
     for (const auto& bat : tick.mBat1) {
-        bat1 += fmt::format(" {} {}", bat.mX, bat.mY);
+        bat1 += fmt::format(" {} {}", bat.mY, bat.mX);
     }
     retVal.push_back(bat1);
     std::string bat2 = "BAT2";
     for (const auto& bat : tick.mBat2) {
-        bat2 += fmt::format(" {} {}", bat.mX, bat.mY);
+        bat2 += fmt::format(" {} {}", bat.mY, bat.mX);
     }
     retVal.push_back(bat2);
     std::string bat3 = "BAT3";
     for (const auto& bat : tick.mBat3) {
-        bat3 += fmt::format(" {} {}", bat.mX, bat.mY);
+        bat3 += fmt::format(" {} {}", bat.mY, bat.mX);
     }
     retVal.push_back(bat3);
 
@@ -182,7 +182,7 @@ int main()
     Simulator simulator(gd);
     simulator.SetState(tick);
 
-    const int playerCount = 4;
+    const int playerCount = 1;
     MultiServer ms(6789);
     ms.WaitForConnections(playerCount);
     for (int i = 0; i < playerCount; ++i) {

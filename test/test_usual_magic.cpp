@@ -281,7 +281,7 @@ TEST(UsualMagic, UsualMagicSim)
 				"OOOOO"
 			}
 		}
-		); */
+		);
 }
 
 TEST(UsualMagic, UsualMagicGetDist)
@@ -454,4 +454,15 @@ TEST(UsualMagic, UsualMagicGetDist)
 		}
 	};
 	ASSERT_EQ(getdist(mp, 1, 2, 1, noevents), 3);
+
+	events.clear();
+	events.push_back({ 0, 4, 1 });
+	events.push_back({ 1, 4, -1 });
+    ASSERT_EQ(getdist(
+		{ { 
+            "OOOOO", 
+            "OP*TO", 
+            "O O2O", 
+            "O 1 O", 
+            "OOOOO" } }, 1, 2, 0, events), 3);
 }

@@ -141,18 +141,22 @@ map_t sim(map_t& m)
 	auto res = m;
 	FOR0(y, SZ(m)) {
 		FOR0(x, SZ(m)) {
-			char c = m[y][x];
+			char c = res[y][x];
 			char c0 = c;
 			pos_t p(y, x);
 			if (c == '0')
 				c = '9';
-			else if (c == '1')
-				bomb(res, m, p, 1);
-			else if (c == '6')
-				bomb(res, m, p, 2);
+			else if (c == '1') {
+				map_t orim = res;
+				bomb(res, orim, p, 1);
+			}
+			else if (c == '6') {
+				map_t orim = res;
+				bomb(res, orim, p, 2);
+			}
 			else if (c >= '2' && c <= '9')
 				--c;
-			else if (c == '.')
+			else if (m[y][x] == '.')
 				c = ' ';
 			if (res[y][x] == c0)
 				res[y][x] = c;
@@ -238,6 +242,7 @@ void show(map_t& m, pos_t start, pos_t target)
 // note getdist to reach there (pick up will be next turn)
 int getdist(map_t& m, pos_t start, vector<pos_t> targets, int r, int stepcnt, int bombcnt, vector<event_t>& events)
 {
+	int ghost = 0;
 	vector<map_t> maps;
 	maps.push_back(m);
 	FOR0(i, MAXTURN + 1) // one turn ahead
@@ -304,7 +309,7 @@ int getdist(map_t& m, pos_t start, vector<pos_t> targets, int r, int stepcnt, in
 		FOR0(d, 4) {
 			pos_t p = qi.p.GetPos(d);
 			char c = maps[qi.turn][p.y][p.x];
-			bool bombnextturn = maps[qi.turn + 1][p.y][p.x] == '.';
+			bool bombnextturn = maps[qi.turn + 1][p.y][p.x] == '.' && !ghost;
 			if (bombnextturn)
 				spec = true;
 			if (!qi.delay && (c == ' ' || c == '.') && (qi.step < stepcnt - 1 || !bombnextturn)) {
@@ -406,8 +411,8 @@ map_t gen(int n)
 }
 
 // todo Kovi
+// ghost mode tests
 // phase1 plan
-// handle ghost mode
 
 UsualMagic::UsualMagic(const GameDescription& gameDescription)
     : IMagic(gameDescription)
@@ -425,7 +430,12 @@ int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescript
 	for (const auto& grenade : tickDescription.mGrenades)
 		if (grenade.mId == vampire.mId)
 			events.push_back(event_t(grenade.mTick, 3, 1));
-    return getdist(m, pos_t(vampire.mY, vampire.mX), targets, vampire.mGrenadeRange, vampire.mRunningShoesTick > 0 ? 3 : 2, vampire.mPlacableGrenades, events);
+	if (vampire.mGhostModeTick > 0) {
+		events.push_back(event_t(vampire.mGhostModeTick, 3, vampire.mPlacableGrenades));
+		events.push_back(event_t(0, 4, 1));
+		events.push_back(event_t(vampire.mGhostModeTick, 4, -1));
+	}
+    return getdist(m, pos_t(vampire.mY, vampire.mX), targets, vampire.mGrenadeRange, vampire.mRunningShoesTick > 0 ? 3 : 2, vampire.mGhostModeTick ? 0 : vampire.mPlacableGrenades, events);
 }
 
 Answer UsualMagic::Tick(const TickDescription& tickDescription)

@@ -142,7 +142,7 @@ TEST(UsualMagic, UsualMagicSim)
 			}
 		}
 		);
-	testsim(
+/*	testsim(
 		{
 			{
 				"OOOOO",
@@ -178,6 +178,26 @@ TEST(UsualMagic, UsualMagicSim)
 				"O.. O",
 				"O.O O",
 				"O.. O",
+				"OOOOO"
+			}
+		}
+		);
+	testsim(
+		{
+			{
+				"OOOOO",
+				"O1  O",
+				"O1O O",
+				"O+  O",
+				"OOOOO"
+			}
+		},
+		{
+			{
+				"OOOOO",
+				"O.. O",
+				"O.O O",
+				"O-  O",
 				"OOOOO"
 			}
 		}
@@ -247,8 +267,8 @@ TEST(UsualMagic, UsualMagicSim)
 			{
 				"OOOOO",
 				"O1  O",
-				"O-O O",
-				"O-  O",
+				"O1O O",
+				"O+  O",
 				"OOOOO"
 			}
 		},
@@ -261,20 +281,20 @@ TEST(UsualMagic, UsualMagicSim)
 				"OOOOO"
 			}
 		}
-		);
+		); */
 }
 
 TEST(UsualMagic, UsualMagicGetDist)
 {
     std::vector<event_t> noevents;
-    EXPECT_EQ(getdist(
+    ASSERT_EQ(getdist(
 		{ { 
             "OOOOO", 
             "OPT O", 
             "O O O", 
             "O   O", 
             "OOOOO" } }, 1, 2, 1, noevents), 0);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -284,7 +304,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"OOOOO"
 			}
 		}, 1, 2, 1, noevents), 0);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -294,7 +314,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"OOOOO"
 			}
 		}, 1, 2, 1, noevents), 1);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -304,7 +324,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"OOOOO"
 			}
 		}, 1, 2, 1, noevents), 2);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -315,7 +335,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 			}
 		}, 1, 2, 1, noevents), 7);
 
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -325,7 +345,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"OOOOO"
 			}
 		}, 1, 2, 1, noevents), 3);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -335,7 +355,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"OOOOO"
 			}
 		}, 1, 2, 1, noevents), 3);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -345,7 +365,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"OOOOO"
 			}
 		}, 1, 6, 1, noevents), 0);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -355,7 +375,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"OOOOO"
 			}
 		}, 1, 2, 1, noevents), 12);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -365,7 +385,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"OOOOO"
 			}
 		}, 1, 2, 2, noevents), 12);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -374,28 +394,8 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"O  +O",
 				"OOOOO"
 			}
-		}, 2, 2, 2, noevents), 8);
-	EXPECT_EQ(getdist(
-		{
-			{
-				"OOOOO",
-				"OP +O",
-				"O OTO",
-				"O 4+O",
-				"OOOOO"
-			}
-		}, 2, 2, 2, noevents), 8);
-	EXPECT_EQ(getdist(
-		{
-			{
-				"OOOOO",
-				"OP -O",
-				"O OTO",
-				"O  -O",
-				"OOOOO"
-			}
-		}, 2, 2, 2, noevents), 7);
-	EXPECT_EQ(getdist(
+		}, 2, 2, 2, noevents), 12);
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOOOO",
@@ -407,7 +407,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 				"OOOOOOO"
 			}
 		}, 1, 2, 2, noevents), 9);
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOOOO",
@@ -422,7 +422,7 @@ TEST(UsualMagic, UsualMagicGetDist)
 
 	std::vector<event_t> events;
 	events.push_back({ 1, 2, 1 });
-	EXPECT_EQ(getdist(
+	ASSERT_EQ(getdist(
 		{
 			{
 				"OOOOO",
@@ -453,5 +453,5 @@ TEST(UsualMagic, UsualMagicGetDist)
 			"OOOOO"
 		}
 	};
-	EXPECT_EQ(getdist(mp, 1, 2, 1, noevents), 3);
+	ASSERT_EQ(getdist(mp, 1, 2, 1, noevents), 3);
 }

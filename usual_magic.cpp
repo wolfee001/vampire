@@ -98,7 +98,7 @@ pos_t pos_t::GetPos(int d) const
 	return pos_t(y + dir[d].y, x + dir[d].x);
 }
 
-void bomb(map_t& m, pos_t p0, int r)
+void bomb(map_t& m, map_t& orim, pos_t p0, int r)
 {
 	m[p0.y][p0.x] = '.';
 	if (!m.bombrange.empty())
@@ -115,17 +115,21 @@ void bomb(map_t& m, pos_t p0, int r)
 				break;
 			}
 			else if (c == '+') {
+				if (orim[p.y][p.x] != c)
+					continue;
 				c = '-';
 				break;
 			}
 			else if (c == '-') {
+				if (orim[p.y][p.x] != c)
+					continue;
 				c = '.';
 				break;
 			}
 			else if (c >= '1' && c <= '5')
-				bomb(m, p, 1);
+				bomb(m, orim, p, 1);
 			else if (c >= '6' && c <= '9' || c == '0')
-				bomb(m, p, 2);
+				bomb(m, orim, p, 2);
 			else
 				c = '.';
 		}
@@ -143,9 +147,9 @@ map_t sim(map_t& m)
 			if (c == '0')
 				c = '9';
 			else if (c == '1')
-				bomb(res, p, 1);
+				bomb(res, m, p, 1);
 			else if (c == '6')
-				bomb(res, p, 2);
+				bomb(res, m, p, 2);
 			else if (c >= '2' && c <= '9')
 				--c;
 			else if (c == '.')
@@ -157,7 +161,7 @@ map_t sim(map_t& m)
 	return res;
 }
 
-static const int MAXTURN = 100;
+static const int MAXTURN = 20; // no sense in more as powerups will disappear
 
 struct reach_t {
 	int turn = MAXTURN + 1;
@@ -317,31 +321,15 @@ int getdist(map_t& m, pos_t start, vector<pos_t> targets, int r, int stepcnt, in
 				auto qi2 = qi;
 				qi2.p = p;
 				int mul = c == '-' ? 1 : c == '+' ? 2 : 3;
-				float div = 0;
+				float div = 1;
 				int cap = min(mul, min(r, bombcnt));
 				auto p1 = p;
 				int mode = 0;
 				if (cap == 1)
 					div = 1;
-				else {
-					FOR0(i, cap) {
-						p1 = p1.GetPos((d + 2) % 4);
-						char c1 = maps[qi.turn][p1.y][p1.x];
-						if (c1 != ' ' && c1 != '.')
-							break;
-						++div;
-					}
-				}
-				if (div > 1) {
-					mode = 1;
-				}
 				if (div == 1 && mul > 1 && bombcnt > 1 && checkcornerwithcycle(maps[qi.turn], p, d)) {
 					div = 1.5;
 					mode = 2;
-				}
-				else if (qi.turn >= 1 && maps[qi.turn - 1][p.y][p.x] != c && bombcnt > 1 && r > 1) {
-					div = 1.5;
-					mode = 3;
 				}
 				qi2.delay = (int) (mul / div * 5 + div);
 				if (qi.step > 0)
@@ -417,19 +405,17 @@ map_t gen(int n)
 	return m;
 }
 
-// todo: 
-// multiple bomb in the same place?
-
-// strategically
-// stay center
-// item: relative gain (better have 2<-1 range, than 3<-2 bomb)
-// item: range first, than number, than speed
+// todo Kovi
+// phase1 plan
+// handle multi bomb on same position?
+// handle ghost mode
 
 UsualMagic::UsualMagic(const GameDescription& gameDescription)
     : IMagic(gameDescription)
 {
     // Maybe some constructor magic? :)
     std::srand(static_cast<unsigned int>(time(nullptr)));
+	phase1 = true;
 }
 
 int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescription, const Vampire& vampire)
@@ -459,12 +445,68 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 		m.bombrange[grenade.mY][grenade.mX] = grenade.mRange + '0';
 	}
 	auto nextmap = sim(m);
-	if (tickDescription.mPowerUps.empty()) {
+	if (!tickDescription.mPowerUps.empty()) {
+		phase1 = false;
+
+		vector<pos_t> targets;
+		vector<int> closestenemy;
+		for (const auto& powerup : tickDescription.mPowerUps) {
+			targets.push_back(pos_t(powerup.mY, powerup.mX));
+			closestenemy.push_back(MAXTURN + 1);
+		}
+		for (const auto& enemy : tickDescription.mEnemyVampires) {
+			getdist(m, targets, tickDescription, enemy);
+			FOR0(i, SZ(targets))
+				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
+		}
+		getdist(m, targets, tickDescription, me);
+
+		int best = -1;
+		int closest = MAXTURN + 1;
+		FOR0(i, SZ(targets)) {
+			int reach = reaches[targets[i].y][targets[i].x].turn;
+			if (closestenemy[i] >= reach)
+				MINA2(closest, reach, best, i);
+		}
+
+		if (best == -1) {
+			cerr << "no target" << endl; 
+			// we gonna fall to temproary...or should we go for closest bad target
+		}
+		else {
+			cerr << "closest target: " << targets[best] << endl;
+			show(m, mypos, targets[best]);
+
+			if (SZ(steps) == best - 1) {
+				answer.mPlaceGrenade = false; // TBD
+				int stepcnt = me.mRunningShoesTick > 0 ? 3 : 2;
+				pos_t p = mypos;
+				int last = max(0, SZ(steps) - stepcnt);
+				FORD(i, SZ(steps) - 1, last) {
+					p = p.GetPos(steps[i]);
+					if (m[p.y][p.x] != ' ' || i == last && nextmap[p.y][p.x] == '.')
+						break;
+					char c = dirc2[steps[i]];
+					answer.mSteps.push_back(c);
+				}
+				for(auto c : answer.mSteps)
+					cerr << c;
+				cerr << endl;
+				// todo Gabor: detailed tactical, use/avoid bomb, finetune path
+				return answer;
+			}
+		}
+	}
+
+	if (phase1) {
+		// todo Kovi?: choose bombing sequence
+		// todo Gabor: use tactical plan to follow bombing sequence
+	} else {
 		vector<pos_t> targets;
 		vector<int> closestenemy;
 		FOR0(y, SZ(m)) {
 			FOR0(x, SZ(m)) {
-				if (m[y][x] == ' ' && m[SZ(m) - 1 - y][SZ(m) - 1 - x] == ' ') {
+				if (m[y][x] == ' ') { // we focus on reachable only
 					targets.push_back(pos_t(y, x));
 					closestenemy.push_back(MAXTURN + 1);
 				}
@@ -478,14 +520,16 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 		vector<char> dirs(4);
 		vector<char> bestdirs;
 		int best = 0;
-		FOR0(d1, 5) {
+		FOR(d11, -1, 3) {
+			int d1 = (d11 + 5) % 5;
 			pos_t p1 = mypos.GetPos(d1);
 			if (m[p1.y][p1.x] != ' ')
 				continue;
 			dirs.clear();
 			if (d1 != 4)
 				dirs.push_back(dirc2[d1]);
-			FOR0(d2, 5) {
+			FOR(d21, -1, 3) {
+				int d2 = (d21 + 5) % 5;
 				if (d1 == 4)
 					d2 = 4;
 				else if (d2 == (d1 + 2) % 4)
@@ -517,68 +561,16 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 			}
 		}
 		if (best > 0) {
-			answer.mPlaceGrenade = false; // SZ(bestdirs) < (me.mRunningShoesTick > 0 ? 3 : 2) && me.mPlacableGrenades > 0;
+			answer.mPlaceGrenade = false; 
 			answer.mSteps = bestdirs;
 			cerr << "go closer";
 			for(auto c : answer.mSteps)
 				cerr << c;
 			cerr << endl;
+			// todo Gabor: use/avoid bomb
 			return answer;
 		}
-
-	} else {
-		vector<pos_t> targets;
-		vector<int> closestenemy;
-		for (const auto& powerup : tickDescription.mPowerUps) {
-			targets.push_back(pos_t(powerup.mY, powerup.mX));
-			closestenemy.push_back(MAXTURN + 1);
-		}
-		for (const auto& enemy : tickDescription.mEnemyVampires) {
-			getdist(m, targets, tickDescription, enemy);
-			FOR0(i, SZ(targets))
-				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
-		}
-		getdist(m, targets, tickDescription, me);
-
-		int best = -1;
-		int closest = MAXTURN + 1;
-		FOR0(i, SZ(targets)) {
-			int reach = reaches[targets[i].y][targets[i].x].turn;
-			if (closestenemy[i] >= reach)
-				MINA2(closest, reach, best, i);
-		}
-
-		if (best == -1)
-			cerr << "no target" << endl;
-		else {
-			cerr << "closest target: " << targets[best] << endl;
-			show(m, mypos, targets[best]);
-
-			if (SZ(steps) == best - 1) {
-				answer.mPlaceGrenade = false; // TBD
-				int stepcnt = me.mRunningShoesTick > 0 ? 3 : 2;
-				pos_t p = mypos;
-				int last = max(0, SZ(steps) - stepcnt);
-				FORD(i, SZ(steps) - 1, last) {
-					p = p.GetPos(steps[i]);
-					if (m[p.y][p.x] != ' ' || i == last && nextmap[p.y][p.x] == '.')
-						break;
-					char c = dirc2[steps[i]];
-					answer.mSteps.push_back(c);
-				}
-				for(auto c : answer.mSteps)
-					cerr << c;
-				cerr << endl;
-				return answer;
-			}
-		}
-
-		// todo detailed tactical, use/avoid bomb etc
 	}
-
-// todo: handle multi bomb on same position?
-// todo: handle ghost mode
-// todo: assess enemy vampires as well
 
     std::vector<char> dirs = { 'U', 'R', 'D', 'L' };
     // answer.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);

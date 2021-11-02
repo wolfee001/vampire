@@ -54,7 +54,7 @@ TEST(Search, Basic)
     for (size_t steps = 0; steps <= 15; ++steps) {
         Search search(td, gd, 8);
         for (size_t i = 0; i < 3; ++i) {
-            search.CalculateNextLevel();
+            search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::milliseconds(1800));
         }
         const auto move = search.GetBestMove();
 

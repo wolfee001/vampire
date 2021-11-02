@@ -15,8 +15,8 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription)
 
     const auto t1 = std::chrono::steady_clock::now();
 
-    for (size_t i = 0; i < 6; ++i) {
-        search.CalculateNextLevel();
+    for (size_t i = 0; i < 10; ++i) {
+        search.CalculateNextLevel(t1 + std::chrono::milliseconds(1800));
     }
     auto move = search.GetBestMove();
 

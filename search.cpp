@@ -1,7 +1,8 @@
 #include "search.h"
 #include "action_sequence.h"
+#include <iostream>
 
-void Search::CalculateNextLevel()
+void Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
 {
     const int currentLevelIndex = static_cast<int>(mLevels.size());
     mLevels.resize(mLevels.size() + 1);
@@ -21,6 +22,11 @@ void Search::CalculateNextLevel()
         simulator.SetState(tick);
 
         for (ActionSequence::ActionSequence_t i = 0; i <= ActionSequence::MaxSequenceId; ++i) {
+            if (std::chrono::steady_clock::now() > deadline) {
+                mLevels.resize(mLevels.size() - 1);
+                return;
+            }
+
             const ActionSequence action(i);
             if (action.GetNumberOfSteps() == 3 && node.mTickDescription.mMe.mRunningShoesTick == 0) {
                 continue;
@@ -110,16 +116,29 @@ Answer Search::GetBestMove()
 
                 mLevels[level - 1][parentIndex].mNumberOfChildren += mLevels[level][i].mNumberOfChildren + 1;
             }
-
-            // mLevels[level - 1][parentIndex].mScore /= static_cast<float>(numberOfChildren);
         }
     }
 
-    const auto it = std::max_element(std::cbegin(mLevels[1]), std::cend(mLevels[1]), [](const TreeNode& x, const TreeNode& y) {
-        return (x.mScore / static_cast<float>(x.mNumberOfChildren)) < (y.mScore / static_cast<float>(y.mNumberOfChildren));
+    const auto bestIt = std::max_element(std::cbegin(mLevels[1]), std::cend(mLevels[1]), [](const TreeNode& x, const TreeNode& y) {
+        const auto score1 = x.mScore / static_cast<float>(x.mNumberOfChildren);
+        const auto score2 = y.mScore / static_cast<float>(y.mNumberOfChildren);
+
+        if (std::fabs(score1 - score2) < 0.1F) {
+            return ActionSequence(x.mAction).GetNumberOfSteps() < ActionSequence(y.mAction).GetNumberOfSteps();
+        } else {
+            return score1 < score2;
+        }
     });
 
-    return ActionSequence(it->mAction).GetAnswer();
+    for (auto it = std::cbegin(mLevels[1]); it != std::cend(mLevels[1]); ++it) {
+        if (it == bestIt) {
+            std::cerr << (it->mScore / static_cast<float>(it->mNumberOfChildren)) << "*, ";
+        } else {
+            std::cerr << (it->mScore / static_cast<float>(it->mNumberOfChildren)) << ", ";
+        }
+    }
+
+    return ActionSequence(bestIt->mAction).GetAnswer();
 }
 
 float Search::Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move) const
@@ -158,7 +177,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     if (closeGrenadeIt != std::cend(tickDescription.mGrenades)) {
         if (distance2(tickDescription.mMe.mX, closeGrenadeIt->mX) < static_cast<float>(closeGrenadeIt->mRange + 2)
             || distance2(tickDescription.mMe.mY, closeGrenadeIt->mY) < static_cast<float>(closeGrenadeIt->mRange + 2)) {
-            grenadePenalty = 48.F;
+            grenadePenalty -= 48.F / static_cast<float>(closeGrenadeIt->mTick);
         }
     }
 

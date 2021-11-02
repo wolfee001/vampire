@@ -1,6 +1,7 @@
 #include "simulator.h"
 #include "models.h"
 #include <algorithm>
+#include <bitset>
 #include <cstddef>
 #include <exception>
 #include <set>
@@ -311,20 +312,22 @@ void Simulator::PlantGrenades(TickDescription& state)
 
 void Simulator::Move(TickDescription& state)
 {
-    std::set<std::pair<int, int>> restricted;
+    std::bitset<23 * 23> restrictedAreas;
+    restrictedAreas.reset();
+    size_t mapSize = static_cast<size_t>(mGameDescription.mMapSize);
 
-    for (int x = 0; x < mGameDescription.mMapSize; ++x) {
-        for (int y = 0; y < mGameDescription.mMapSize; ++y) {
-            if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
-                restricted.emplace(x, y);
+    for (size_t x = 0; x < mapSize; ++x) {
+        for (size_t y = 0; y < mapSize; ++y) {
+            if (x == 0 || y == 0 || x == mapSize - 1 || y == mapSize - 1 || (!(x % 2) && !(y % 2))) {
+                restrictedAreas.set(y * mapSize + x);
             }
         }
     }
     for (const auto& grenade : state.mGrenades) {
-        restricted.emplace(grenade.mX, grenade.mY);
+        restrictedAreas.set(static_cast<size_t>(grenade.mY) * mapSize + static_cast<size_t>(grenade.mX));
     }
     for (const auto& bat : state.mAllBats) {
-        restricted.emplace(bat.mX, bat.mY);
+        restrictedAreas.set(static_cast<size_t>(bat.mY) * mapSize + static_cast<size_t>(bat.mX));
     }
 
     std::vector<Vampire*> vampRefs;
@@ -336,29 +339,29 @@ void Simulator::Move(TickDescription& state)
     for (const auto& vampire : vampRefs) {
         if (const auto it = mVampireMoves.find(vampire->mId); it != mVampireMoves.end()) {
             for (const auto& d : it->second.mSteps) {
-                if (d == 'U') {
-                    if (restricted.find({ vampire->mX, vampire->mY - 1 }) != restricted.end()) {
-                        break;
-                    }
-                    vampire->mY--;
-                } else if (d == 'R') {
-                    if (restricted.find({ vampire->mX + 1, vampire->mY }) != restricted.end()) {
-                        break;
-                    }
-                    vampire->mX++;
-                } else if (d == 'D') {
-                    if (restricted.find({ vampire->mX, vampire->mY + 1 }) != restricted.end()) {
-                        break;
-                    }
-                    vampire->mY++;
-                } else if (d == 'L') {
-                    if (restricted.find({ vampire->mX - 1, vampire->mY }) != restricted.end()) {
-                        break;
-                    }
-                    vampire->mX--;
-                } else {
+                size_t newX = static_cast<size_t>(vampire->mX);
+                size_t newY = static_cast<size_t>(vampire->mY);
+                switch (d) {
+                case 'U':
+                    --newY;
+                    break;
+                case 'R':
+                    ++newX;
+                    break;
+                case 'D':
+                    ++newY;
+                    break;
+                case 'L':
+                    --newX;
+                    break;
+                default:
                     CHECK(false, "Invalid direction!");
                 }
+                if (restrictedAreas[newY * mapSize + newX]) {
+                    break;
+                }
+                vampire->mX = static_cast<int>(newX);
+                vampire->mY = static_cast<int>(newY);
             }
         }
     }

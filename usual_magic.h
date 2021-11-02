@@ -20,8 +20,8 @@ int getdist(map_t m, int r, int stepcnt, int bombcnt, std::vector<event_t> event
 
 class UsualMagic : public IMagic {
 public:
+	bool phase1 = true;
     explicit UsualMagic(const GameDescription& gameDescription);
-
     Answer Tick(const TickDescription& tickDescription);
 };
 // clang-format on

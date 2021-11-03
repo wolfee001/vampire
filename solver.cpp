@@ -89,8 +89,11 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
             }
         }
     }
-    mSimulator->SetState(mTickDescription);
-    const auto points = mSimulator->Tick().second;
+    Simulator::NewPoints points;
+    if (mTickDescription.mRequest.mGameId != -1) {
+        mSimulator->SetState(mTickDescription);
+        points = mSimulator->Tick().second;
+    }
     mTickDescription = tick;
 
 #ifdef GAME_WITH_FRAMEWORK

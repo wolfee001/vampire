@@ -349,14 +349,14 @@ TEST_F(SimulateTest, BlowUpChainReaction)
     ASSERT_EQ(newState.mGrenades.size(), 0);
 }
 
-TEST_F(SimulateTest, DISABLED_BlowUpGrenadeKillBats)
+TEST_F(SimulateTest, BlowUpGrenadeKillBats)
 {
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "GRENADE 1 3 3 1 2",
-        "BAT1 3 1 4 1",
-        "BAT2 3 4 3 5",
+        "BAT1 1 3 1 4",
+        "BAT2 4 3 5 3",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -391,14 +391,14 @@ TEST_F(SimulateTest, BlowUpGrenadeKillVampires)
     ASSERT_EQ(newPoints.at(1), -48);
 }
 
-TEST_F(SimulateTest, DISABLED_BlowUpGrenadeTreesProtect)
+TEST_F(SimulateTest, BlowUpGrenadeTreesProtect)
 {
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "VAMPIRE 1 2 1 2 1 2 0",
-        "GRENADE 1 2 3 1 2",
-        "BAT1 2 5"
+        "VAMPIRE 1 1 2 2 1 2 0",
+        "GRENADE 1 3 2 1 2",
+        "BAT1 5 2"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -618,14 +618,14 @@ TEST_F(SimulateTest, GhostModeProtection)
     ASSERT_EQ(finalPoints.at(1), 0);
 }
 
-TEST_F(SimulateTest, DISABLED_Plantgrenade)
+TEST_F(SimulateTest, Plantgrenade)
 {
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 2 1 2 0",
-        "VAMPIRE 2 1 3 2 1 2 0",
-        "VAMPIRE 3 1 5 2 1 2 0"
+        "VAMPIRE 2 3 1 2 1 2 0",
+        "VAMPIRE 3 5 1 2 1 2 0"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -698,13 +698,13 @@ TEST_F(SimulateTest, StepToTree)
     ASSERT_EQ(newPoints.at(1), 0);
 }
 
-TEST_F(SimulateTest, DISABLED_StepToGrenade)
+TEST_F(SimulateTest, StepToGrenade)
 {
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 2 1 2 0",
-        "GRENADE 1 3 1 5"
+        "GRENADE 1 1 3 5"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -716,13 +716,13 @@ TEST_F(SimulateTest, DISABLED_StepToGrenade)
     ASSERT_EQ(newPoints.at(1), 0);
 }
 
-TEST_F(SimulateTest, DISABLED_StepToBat)
+TEST_F(SimulateTest, StepToBat)
 {
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 2 1 2 0",
-        "BAT1 3 1"
+        "BAT1 1 3"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -839,12 +839,12 @@ TEST_F(SimulateTest, GetBlowAreasDisjunct)
             std::pair<int, int> { 5, 8 }));
 }
 
-TEST_F(SimulateTest, DISABLED_GetBlowAreasJoint)
+TEST_F(SimulateTest, GetBlowAreasJoint)
 {
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "GRENADE 1 1 3 2 2",
+        "GRENADE 1 3 1 2 2",
         "GRENADE 2 3 3 4 3"
     };
     // clang-format on

@@ -2,6 +2,8 @@
 
 #include "models.h"
 
+#include <map>
+
 class IMagic {
 public:
     explicit IMagic(const GameDescription& gameDescription)
@@ -11,7 +13,7 @@ public:
 
     virtual ~IMagic() = default;
 
-    virtual Answer Tick(const TickDescription& tickDescription) = 0;
+    virtual Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points) = 0;
 
 protected:
     GameDescription mGameDescription;

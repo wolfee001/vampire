@@ -462,7 +462,7 @@ int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescript
     return getdist(m, pos_t(vampire.mY, vampire.mX), targets, vampire.mGrenadeRange, vampire.mRunningShoesTick > 0 ? 3 : 2, vampire.mGhostModeTick ? 0 : vampire.mPlacableGrenades, events);
 }
 
-Answer UsualMagic::Tick(const TickDescription& tickDescription)
+Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<int, float>& points)
 {
     Answer answer;
 	cerr << "turn " << tickDescription.mRequest.mTick << endl;

@@ -9,7 +9,7 @@ GaborMagic::GaborMagic(const GameDescription& gameDescription)
     // Maybe some constructor magic? :)
 }
 
-Answer GaborMagic::Tick(const TickDescription& tickDescription)
+Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<int, float>& points)
 {
     Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);
 

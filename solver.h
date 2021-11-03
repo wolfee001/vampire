@@ -8,6 +8,7 @@
 
 #include "i_magic.h"
 #include "models.h"
+#include "simulator.h"
 
 class solver {
     static std::vector<std::pair<int, int>> line2d(std::pair<int, int> from, const std::pair<int, int>& to);
@@ -20,6 +21,7 @@ private:
     GameDescription mGameDescription;
     TickDescription mTickDescription;
     std::unique_ptr<IMagic> mMagic;
+    std::unique_ptr<Simulator> mSimulator;
 };
 
 #endif // SOLVER_H_INCLUDED

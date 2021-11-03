@@ -59,6 +59,7 @@ std::vector<std::pair<int, int>> solver::line2d(std::pair<int, int> from, const 
 void solver::startMessage(const std::vector<std::string>& startInfos)
 {
     mGameDescription = parseGameDescription(startInfos);
+    mSimulator = std::make_unique<Simulator>(mGameDescription);
 #ifdef GAME_WITH_FRAMEWORK
     Framework::GetInstance().SetGameDescription(mGameDescription, startInfos);
 #endif
@@ -88,6 +89,11 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
             }
         }
     }
+    Simulator::NewPoints points;
+    if (mTickDescription.mRequest.mGameId != -1) {
+        mSimulator->SetState(mTickDescription);
+        points = mSimulator->Tick().second;
+    }
     mTickDescription = tick;
 
 #ifdef GAME_WITH_FRAMEWORK
@@ -98,7 +104,7 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
         return {};
     }
 
-    Answer answer = mMagic->Tick(mTickDescription);
+    Answer answer = mMagic->Tick(mTickDescription, points);
 
     std::vector<std::string> commands { "RES " + std::to_string(tick.mRequest.mGameId) + " " + std::to_string(tick.mRequest.mTick) + " "
         + std::to_string(tick.mRequest.mVampireId) };

@@ -469,6 +469,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 		}
 		for (const auto& enemy : tickDescription.mEnemyVampires) {
 			getdist(m, targets, tickDescription, enemy);
+			if (enemy.mGrenadeRange == mGameDescription.mGrenadeRadius && !enemy.mRunningShoesTick)
+				continue;
 			FOR0(i, SZ(targets))
 				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
 		}
@@ -526,6 +528,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 		}
 		for (const auto& enemy : tickDescription.mEnemyVampires) {
 			getdist(m, vector<pos_t>(), tickDescription, enemy);
+			if (enemy.mGrenadeRange == mGameDescription.mGrenadeRadius && !enemy.mRunningShoesTick)
+				continue;
 			FOR0(i, SZ(targets))
 				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
 		}

@@ -22,6 +22,6 @@ class UsualMagic : public IMagic {
 public:
 	bool phase1 = true;
     explicit UsualMagic(const GameDescription& gameDescription);
-    Answer Tick(const TickDescription& tickDescription);
+    Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points);
 };
 // clang-format on

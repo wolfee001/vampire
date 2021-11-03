@@ -47,11 +47,20 @@ void Framework::SetGameDescription(const GameDescription& description, const std
     }
     mVampireAvatarMapping.clear();
     mRenderLock.unlock();
+    mVampireCumulatedPoints.clear();
 }
 
 void Framework::Update(const TickDescription& description, const std::vector<std::string>& infos)
 {
     mRenderLock.lock();
+    if (mTickDescription.mRequest.mGameId != -1) {
+        Simulator simulator(mGameDescription);
+        simulator.SetState(mTickDescription);
+        const auto& points = simulator.Tick().second;
+        for (const auto& [id, point] : points) {
+            mVampireCumulatedPoints[id] += point;
+        }
+    }
     mTickDescription = description;
     if (mVampireAvatarMapping.empty()) {
         for (size_t i = 0; i < mTickDescription.mEnemyVampires.size(); ++i) {
@@ -89,6 +98,7 @@ void Framework::Render()
                 mTickDescription = TickDescription();
                 mGameDescription = GameDescription();
                 mPlayBook.mGameLoader = GameLoader(result[0]);
+                mVampireCumulatedPoints.clear();
 
                 std::thread t([&mPlayBook = mPlayBook]() {
                     mPlayBook.mSolver.startMessage(mPlayBook.mGameLoader.GetDescription().mMessage);
@@ -109,6 +119,7 @@ void Framework::Render()
                 mPlayBook = PlayBook();
                 mTickDescription = TickDescription();
                 mGameDescription = GameDescription();
+                mVampireCumulatedPoints.clear();
             }
 
             ImGui::Text("LOADED: %d", mPlayBook.mGameLoader.GetDescription().mGameDescription.mGameId);
@@ -146,8 +157,9 @@ void Framework::Render()
                         t.detach();
                     } else {
                         GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
-                        std::thread t([step, &mPlayBook = mPlayBook]() {
+                        std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
                             const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                            mVampireCumulatedPoints = step.mPoints;
                             if (resp != step.mAnswerMessage) {
                                 mPlayBook.mIsCorrupted = true;
                                 return;
@@ -177,8 +189,9 @@ void Framework::Render()
                             t.detach();
                         } else {
                             GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
-                            std::thread t([step, &mPlayBook = mPlayBook]() {
+                            std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
                                 const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                                mVampireCumulatedPoints = step.mPoints;
                                 if (resp != step.mAnswerMessage) {
                                     mPlayBook.mIsCorrupted = true;
                                     return;
@@ -199,7 +212,7 @@ void Framework::Render()
                     if (mPlayBook.mStep < mPlayBook.mGameLoader.GetStepCount() - 1) {
                         mPlayBook.mStep++;
                         GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
-                        std::thread t([step, &mPlayBook = mPlayBook]() {
+                        std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
                             const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                             if (resp != step.mAnswerMessage) {
                                 mPlayBook.mIsCorrupted = true;
@@ -438,6 +451,7 @@ void Framework::Render()
         ImGui::Text("Placable grenades:");
         ImGui::Text("Grenade range:");
         ImGui::Text("Running shoes:");
+        ImGui::Text("Points:");
         ImGui::EndGroup();
         ImGui::SameLine();
         ImGui::BeginGroup();
@@ -445,6 +459,7 @@ void Framework::Render()
         ImGui::Text("%d", mTickDescription.mMe.mPlacableGrenades);
         ImGui::Text("%d", mTickDescription.mMe.mGrenadeRange);
         ImGui::Text("%d", mTickDescription.mMe.mRunningShoesTick);
+        ImGui::Text("%f", mVampireCumulatedPoints[mTickDescription.mMe.mId]);
         ImGui::EndGroup();
         ImGui::EndGroup();
 
@@ -461,6 +476,7 @@ void Framework::Render()
             ImGui::Text("Placable grenades:");
             ImGui::Text("Grenade range:");
             ImGui::Text("Running shoes:");
+            ImGui::Text("Points:");
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::BeginGroup();
@@ -468,6 +484,7 @@ void Framework::Render()
             ImGui::Text("%d", vampire.mPlacableGrenades);
             ImGui::Text("%d", vampire.mGrenadeRange);
             ImGui::Text("%d", vampire.mRunningShoesTick);
+            ImGui::Text("%f", mVampireCumulatedPoints[vampire.mId]);
             ImGui::EndGroup();
             ImGui::EndGroup();
             ImGui::Separator();

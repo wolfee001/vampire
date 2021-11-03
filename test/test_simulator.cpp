@@ -119,6 +119,24 @@ TEST_F(SimulateTest, PowerupPickupSingleMeTomatoNoEffect)
     ASSERT_EQ(newPoints.at(1), 48);
 }
 
+TEST_F(SimulateTest, PowerupNoPickupOnCountdown)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 1 1 2 0",
+        "POWERUP TOMATO -3 1 1",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mPowerUps.size(), 1);
+    ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, -2);
+    ASSERT_EQ(newState.mMe.mHealth, 1);
+    ASSERT_EQ(newPoints.at(1), 0);
+}
+
 TEST_F(SimulateTest, PowerupPickupSingleMeTomato)
 {
     // clang-format off

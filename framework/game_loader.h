@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 
 #include "../models.h"
@@ -16,6 +17,7 @@ public:
         std::vector<std::string> mTickMessage;
         Answer mAnswer;
         std::vector<std::string> mAnswerMessage;
+        std::map<int, float> mPoints;
     };
 
 public:

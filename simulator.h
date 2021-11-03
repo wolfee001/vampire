@@ -42,6 +42,7 @@ public:
     std::pair<TickDescription, NewPoints> Tick();
     bool IsValidMove(int id, const Answer& move) const;
     std::vector<BlowArea> GetBlowAreas(const bool blowNow = false);
+    std::map<int, Answer> GetMoves(const TickDescription& newState);
 
 private:
     void RecalculateTicks(TickDescription& state);

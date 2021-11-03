@@ -52,4 +52,6 @@ private:
     std::map<int, std::string> mVampireAvatarMapping;
 
     PlayBook mPlayBook;
+
+    std::map<int, float> mVampireCumulatedPoints;
 };

@@ -9,6 +9,35 @@
 
 #include "check.h"
 
+bool Simulator::Area::find(int x, int y) const
+{
+    return mAreas[static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x)];
+}
+
+void Simulator::Area::insert(int x, int y)
+{
+    mAreas.set(static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x));
+    mVectorIsValid = false;
+}
+
+const Simulator::Area::AreaVector& Simulator::Area::getAsVector() const
+{
+    if (!mVectorIsValid) {
+        Simulator::Area& nonConst = const_cast<Simulator::Area&>(*this);
+        nonConst.mVector.reserve(23 * 23);
+        for (int x = 0; x < static_cast<int>(mMapSize); ++x) {
+            for (int y = 0; y < static_cast<int>(mMapSize); ++y) {
+                if (find(x, y)) {
+                    nonConst.mVector.emplace_back(x, y);
+                }
+            }
+        }
+        nonConst.mVectorIsValid = true;
+    }
+
+    return mVector;
+}
+
 Simulator::Simulator(const GameDescription& gameDescription)
     : mGameDescription(gameDescription)
 {
@@ -134,29 +163,31 @@ void Simulator::PowerupPickUp(TickDescription& state)
 
     for (const auto& pu : state.mPowerUps) {
         bool shouldDelete = false;
-        for (auto* vampire : vampRefs) {
-            if (vampire->mX == pu.mX && vampire->mY == pu.mY) {
-                mNewPoints[vampire->mId] += 48;
-                shouldDelete = true;
-                switch (pu.mType) {
-                case PowerUp::Type::Battery: {
-                    vampire->mGrenadeRange++;
-                    break;
-                }
-                case PowerUp::Type::Grenade: {
-                    vampire->mPlacableGrenades++;
-                    break;
-                }
-                case PowerUp::Type::Shoe: {
-                    vampire->mRunningShoesTick += mGameDescription.mMapSize * 2;
-                    break;
-                }
-                case PowerUp::Type::Tomato: {
-                    vampire->mHealth = std::min(3, vampire->mHealth + 1);
-                    break;
-                }
-                default:
-                    CHECK(false, "Unhandled powerup type!");
+        if (pu.mRemainingTick > 0) {
+            for (auto* vampire : vampRefs) {
+                if (vampire->mX == pu.mX && vampire->mY == pu.mY) {
+                    mNewPoints[vampire->mId] += 48;
+                    shouldDelete = true;
+                    switch (pu.mType) {
+                    case PowerUp::Type::Battery: {
+                        vampire->mGrenadeRange++;
+                        break;
+                    }
+                    case PowerUp::Type::Grenade: {
+                        vampire->mPlacableGrenades++;
+                        break;
+                    }
+                    case PowerUp::Type::Shoe: {
+                        vampire->mRunningShoesTick += mGameDescription.mMapSize * 2;
+                        break;
+                    }
+                    case PowerUp::Type::Tomato: {
+                        vampire->mHealth = std::min(3, vampire->mHealth + 1);
+                        break;
+                    }
+                    default:
+                        CHECK(false, "Unhandled powerup type!");
+                    }
                 }
             }
         }
@@ -549,33 +580,4 @@ Simulator::Area Simulator::GetBlowArea(const Grenade& grenade, const TickDescrip
         }
     }
     return area;
-}
-
-bool Simulator::Area::find(int x, int y) const
-{
-    return mAreas[static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x)];
-}
-
-void Simulator::Area::insert(int x, int y)
-{
-    mAreas.set(static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x));
-    mVectorIsValid = false;
-}
-
-const Simulator::Area::AreaVector& Simulator::Area::getAsVector() const
-{
-    if (!mVectorIsValid) {
-        Simulator::Area& nonConst = const_cast<Simulator::Area&>(*this);
-        nonConst.mVector.reserve(23 * 23);
-        for (int x = 0; x < static_cast<int>(mMapSize); ++x) {
-            for (int y = 0; y < static_cast<int>(mMapSize); ++y) {
-                if (find(x, y)) {
-                    nonConst.mVector.emplace_back(x, y);
-                }
-            }
-        }
-        nonConst.mVectorIsValid = true;
-    }
-
-    return mVector;
 }

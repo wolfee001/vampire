@@ -2,6 +2,7 @@
 
 #include "../check.h"
 #include "../parser.h"
+#include "../simulator.h"
 
 #include <exception>
 #include <fstream>
@@ -60,6 +61,19 @@ GameLoader::GameLoader(const std::string& fileName)
         step.mAnswer = parseAnswer(answer);
         step.mAnswerMessage = answer;
         mSteps.push_back(step);
+    }
+
+    std::map<int, float> cumulatedPoints;
+    Simulator simulator(mDescription.mGameDescription);
+    for (size_t i = 1; i < mSteps.size(); ++i) {
+        auto& step = mSteps[i];
+        const auto& prevStep = mSteps[i - 1];
+        simulator.SetState(prevStep.mTick);
+        const auto& points = simulator.Tick().second;
+        for (const auto& [id, point] : points) {
+            cumulatedPoints[id] += point;
+        }
+        step.mPoints = cumulatedPoints;
     }
 }
 

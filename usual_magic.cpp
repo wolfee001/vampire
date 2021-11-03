@@ -219,7 +219,7 @@ void show(map_t& m)
 reach_t reaches[23][23];
 vector<int> steps;
 
-void show(map_t& m, pos_t start, pos_t target)
+bool show(map_t& m, pos_t start, pos_t target)
 {
 	map_t res = m;
 	int cnt = 0;
@@ -233,10 +233,11 @@ void show(map_t& m, pos_t start, pos_t target)
 		steps.push_back(r.dirfrom);
 		if (++cnt > 100) {
 			cerr << "maxstep error (loop?)" << endl;
-			break;
+			return false;
 		}
 	}
 	show(res);
+	return true;
 }
 
 // note getdist to reach there (pick up will be next turn)
@@ -411,8 +412,8 @@ map_t gen(int n)
 }
 
 // todo Kovi
-// ghost mode tests
 // phase1 plan
+// only care about enemy which is targeting powerups!
 
 UsualMagic::UsualMagic(const GameDescription& gameDescription)
     : IMagic(gameDescription)
@@ -459,9 +460,12 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 
 		vector<pos_t> targets;
 		vector<int> closestenemy;
+		int waitturn = 0;
 		for (const auto& powerup : tickDescription.mPowerUps) {
 			targets.push_back(pos_t(powerup.mY, powerup.mX));
 			closestenemy.push_back(MAXTURN + 1);
+			if (powerup.mRemainingTick < 0)
+				waitturn = -powerup.mRemainingTick;
 		}
 		for (const auto& enemy : tickDescription.mEnemyVampires) {
 			getdist(m, targets, tickDescription, enemy);
@@ -474,7 +478,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 		int closest = MAXTURN + 1;
 		FOR0(i, SZ(targets)) {
 			int reach = reaches[targets[i].y][targets[i].x].turn;
-			if (closestenemy[i] >= reach)
+			if (closestenemy[i] >= reach || reach <= waitturn)
 				MINA2(closest, reach, best, i);
 		}
 
@@ -484,9 +488,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription)
 		}
 		else {
 			cerr << "closest target: " << targets[best] << endl;
-			show(m, mypos, targets[best]);
+			if (show(m, mypos, targets[best])) {
 
-			if (SZ(steps) == best - 1) {
 				answer.mPlaceGrenade = false; // TBD
 				int stepcnt = me.mRunningShoesTick > 0 ? 3 : 2;
 				pos_t p = mypos;

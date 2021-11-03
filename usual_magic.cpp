@@ -60,35 +60,6 @@ int g_seed = 777778;
 
 inline int randn0(int mod) { g_seed = (214013 * g_seed + 2531011); return (((g_seed >> 16) & 0x7FFF) * mod) >> 15; }
 
-struct pos_t {
-	int y;
-	int x;
-	pos_t(int y = -1, int x = -1) : y(y), x(x) {}
-	pos_t GetPos(int d) const;
-	int GetDir(pos_t p2) const
-	{
-		if (p2.y < y)
-			return 0;
-		if (p2.x > x)
-			return 1;
-		if (p2.y > y)
-			return 2;
-		if (p2.x < x)
-			return 3;
-		return -1;
-	}
-	int GetDist(const pos_t& o) const { return abs(x - o.x) + abs(y - o.y); }
-	int GetDist2(const pos_t& o) const { return SQR(x - o.x) + SQR(y - o.y); }
-	bool operator==(const pos_t& o) const { return x == o.x && y == o.y; }
-	bool operator<(const pos_t& o) const { return x < o.x || x == o.x && y < o.y; }
-	bool operator!=(const pos_t& o) const { return x != o.x || y != o.y; }
-	bool isvalid() const { return x != -1; }
-	friend ostream& operator<< (ostream& stream, const pos_t& p)
-	{
-		return stream << p.x << ":" << p.y << " ";
-	}
-};
-
 pos_t dir[5] = { { -1,0 },{ 0,1 },{ 1,0 },{ 0,-1 }, {0, 0} };
 char dirc[5] = "^>V<";
 char dirc2[5] = "URDL";
@@ -413,7 +384,6 @@ map_t gen(int n)
 
 // todo Kovi
 // phase1 plan
-// only care about enemy which is targeting powerups!
 
 UsualMagic::UsualMagic(const GameDescription& gameDescription)
     : IMagic(gameDescription)
@@ -421,6 +391,59 @@ UsualMagic::UsualMagic(const GameDescription& gameDescription)
     // Maybe some constructor magic? :)
     std::srand(static_cast<unsigned int>(time(nullptr)));
 	phase1 = true;
+}
+
+pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
+{
+	vector<pos_t> res;
+	deque<pos_t> q;
+	q.push_back(start);
+	reach_t unreachable;
+	FOR0(y, SZ(m))
+		FOR0(x, SZ(m))
+			reaches[y][x].turn = 0;
+	reaches[start.y][start.x].turn = 1;
+	int lastturn = 0;
+	pos_t firsttargetreached;
+	int cnt = 1;
+	while (!q.empty()) {
+		pos_t p1 = q.front();
+		q.pop_front();
+		bool spec = false;
+		FOR0(d, 4) {
+			pos_t p0 = p1.GetPos(d);
+			char c = m[p0.y][p0.x];
+			if (c == ' ' && reaches[p0.y][p0.x].turn == 0) {
+				bool simple = false;
+				int more = 0;
+				FOR0(d2, 4) {
+					auto p = p0;
+					FOR(i, 1, r) {
+						p = p.GetPos(d2);
+						char& c = m[p.y][p.x];
+						if (c == 'O')
+							break;
+						else if (c == '*' || c == '+') {
+							++more;
+							break;
+						}
+						else if (c == '-') {
+							simple = true;
+							break;
+						}
+					}
+					if (simple)
+						break;
+				}
+				if (simple || more > 1)
+					res.push_back(p0);
+				q.push_back(p0);
+				reaches[p0.y][p0.x].turn = 1;
+				++cnt;
+			}
+		}
+	}
+	return make_pair(cnt, res);
 }
 
 int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescription, const Vampire& vampire)

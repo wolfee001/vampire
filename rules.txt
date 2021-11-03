@@ -1,0 +1,333 @@
+Bevezetés
+
+Közeleg a Halloween, GraphiVáros lakói pedig az utolsó simításokat végzik az ünnepre szánt jelmezeiken.
+
+A város Polgármestere a nap folyamán kikérdezte a lakókat, hogy minek fognak beöltözni (tudniillik a Polgármester szörnyen fél a bohócoktól, ezért biztosra akart menni, hogy senki sem fog bohócnak öltözni). Megtudta, hogy Anna vámpírnak fog öltözni, Béla szellemnek, Cecília vámpírnak, Dénes tuzoltónak, Elemér vámpírnak, Fanni vámpírnak, ...
+
+"Jaj ne!" - gondolta a Polgármester - "Túl sok a vámpír, ez nem állapot!"
+
+Gyorsan összehívta a város lakóit, és a következo bejelentést tette:
+
+"A Halloween szépsége a diverzitásban rejlik, éppen ezért csakis egy vámpír kísértheti holnap GraphiVáros utcáit."
+
+"Irány hát a GraphiPark, ahol mire feljön a nap, kiderül ki a legvámpírabb vámpír."
+
+Hónapok óta készülsz a Halloweenra, vámpír jelmezed már hetekkel ezelott elkészült. Napok óta nem eszel fokhagymát és nem hagyod el nappal a házat, átszellemülve a szerepre. Mutasd meg, hogy te vagy az egyetlen, az igazi, a legvámpírabb vámpír. De légy óvatos, ki tudja milyen veszedelmek várnak rád éjszaka a GraphiParkban!
+
+Összegyultek tehát a vámpírjelöltek a GraphiPark mellett, ahol a Polgármester ismerteti a szabályokat:
+
+"Senki se higgye, hogy egyszeru lesz megszerezni a legvámpírabb vámpír címet. Mielott egyáltalán esélyt adnánk nektek, hogy egymással versenyezhessetek a gyozelemért, nekünk szervezoknek kell bizonyítanotok tudásotok egy elodönto formájában.
+
+Ahogy majd a döntoben, az elodöntoben is egyszerre 4 játékost engedünk be a GraphiParkba, azonban ebben a fordulóban hárman mindig a szervezok közül fognak kikerülni. Ha ellenünk méltónak bizonyultok, akkor továbbjuttok a döntobe. Hogy megnehezítsük a dolgotokat, nem lesz elég egyszer legyoznötök minket. Több mérkozést kell játszanotok, melyek során pontozzuk a teljesítményeteket.
+
+Minden játékos 3 élettél lép a parkba. Az a versenyzo, aki elveszti mindhármat, azonnal kiesik a játékból. A játék során végtelen mennyiségu, a város tudósa által kifejlesztett party-fénygránátot biztosítunk számotokra, melyek a földre helyezve néhány másodperc után eros fényt bocsátanak ki minden irányba, ezzel elvakítva a vámpírjelölteket, akik így elveszítenek egy életet. Csak óvatosan, a fénygránátok nagyon érzékeny eszközök, egy másik gránát fényétol azonnal felrobbannak.
+
+Az éjszaka során tapasztalhatjátok, hogy a GraphiPark félelmetesebb, mint nappal. Kisebb-nagyobb denevér rajok ólálkodnak bizonyos helyeken. Ne aggódjatok, nem bántanak titeket, viszont áthatolhatatlan falakat képzenek, amik korlátoznak titeket a mozgásban. Szerencsére a denevérek is osztoznak a vámpírok fényiszonyán, így a fénygránátok elijesztik oket. Nagyobb denevér rajhoz azonban lehet, hogy nem elég egy nagy villanás, több gránátra lesz szükségetek.
+
+Nem csak denevér rajok gátolnak titeket a mozgásban: a szimmetriát imádó kertész bizonyos helyekre bokrot ültetett, ami szintén áthatolhatatlan a számotokra és a fény számára is. Sajnos ezek nem repülnek el a fénytol.
+
+Hogy izgalmasabbá tegyük a játékot, bizonyos idopontokban hangosbemondókkal jelentjük be, hogy hamarosan erosítoket fogunk ledobni a pályára drónokkal. Halljátok majd mikor, hova és milyen erosítot fogunk dobni, érdemes sietni mielott valaki más szerzi meg oket.
+
+Természetesen nem tarthat örökké egy megmérettetés, ezért egy ido után elkezdjük felkapcsolni a GraphiPark lámpáit, ezzel csökkentve a pálya méretét. Akit megvilágít a lámpa, az minden pillanatban veszít egy életet.
+
+Csalásra mégcsak ne is gondoljatok, az egész versenyt drónokkal figyeljük a magasból. Hogy jobban taktikázhassatok, egy óriáskiveton látni fogjátok felülnézetbol a GraphiParkot az egész ido alatt.
+
+Ha sikeresen továbbjuttok a döntobe, akkor se bízzátok el magatokat, tartogatunk pár meglepetést a tarsolyunkban."
+
+Beszéde után a Polgármester kiosztott mindenkinek egy részletesebb tájékoztatót, amin a következok állnak:
+Játékmenet
+
+A játék során a GraphiPark nevu, N oszlopból és N sorból álló négyzetrács felosztású területen kell minél több pontot gyujtenetek. (N mindig páratlan.) A sorokat fentrol lefele számozzuk 0-tól N-1-ig, az oszlopokat pedig balról jobbra 0-tol N-1-ig. Azt a cellát, ami az i. sorban és j. oszlopban található, (i,j)-vel jelöljük. Tehát például a GraphiPark jobb felso celláját (0,N-1)-nel jelöljük.
+
+Azért, hogy a sportosabb vámpírok se kerüljenek elonybe, minden versenyzo csak 2 cellányit léphet egy körben, és minden lépés egy, az övével oldalszomszédos cellára kell történjen. (Az egy körben megteheto lépések száma erosítok segítségével növelheto). A játékosok áthaladhatnak egymáson és be is fejezhetik a lépésüket olyan mezon, ahol már tartózkodik másik vámpír. Minden versenyzo 3 élettel kezdi a versenyt, és ha életük 0-ra csökkenek, azonnal kiesnek.
+
+A pálya egyes celláin kétféle akadály lehet megtalálható: bokor VAGY denevér raj.
+
+A bokrok a játékosok és a fény számára is áthatolhatatlan objektumok, amik a játék kezdetétol a végéig jelen vannak. Egy pálya mind a négy oldala bokorral van beültetve, vagyis a 0. és az N-1. sor, valamint a 0. és az N-1. oszlop végig bokrokat tartalmaz. Ezen kívül egy (i,j) cellában (0 < i,j < N-1) pontosan akkor található bokor, ha i és j is páros.
+
+A denevér rajok a játékosok és a fény számára is áthatolhatatlan objektumok, de a fény hatására gyengülnek. Egy denevér raj a cellán tartózkodó denevérek száma alapján 3-as, 2-es vagy 1-es suruségu lehet. Egy, az adott cellát eléro fény hatására a denevérek egy része megijed, és elrepül, ezáltal a raj veszít egyet a suruségébol. Az 1-es suruségu denevér raj fény hatására teljesen megszunik. Ezután a játékosok már szabadon átmozoghatnak az adott cellán, és a fényt sem állítja már meg.
+
+A játékosoknak lehetoségük van a mozgásuk végrehajtása elott egy fénygránátot helyezniük arra a cellára, amelyiken épp tartózkodnak. Ezek a lehelyezéskor nem robbannak fel azonnal, csak 5 kör múlva. Kezdetben minden játékosnak csak egy, még fel nem robbant fénygránátja lehet lehelyezve a pályán (ez a limit Erosítovel növelheto). A fénygránátoknak játékosonként van egy hatósugara, ami alapból R (ez a limit Erosítovel növelheto). Ha egy R hatósugarú fénygránát felrobban az (i,j) cellában, a fény hatással van az (i,j) cellára, valamint elkezd terdjedni az i. sorban balra illetve jobbra, és a j. oszlopban pedig felfele illetve lefele. A fény minden irányban legfeljebb R cellát tud megvilágítani (i,j)-tol kezdve, de elobb is megállíthatja egy bokor vagy egy denevér raj. Ha a fény elér egy denevér rajt, annak surusége csökken 1-gyel, ha elér egy játékost, annak élete csökken 1-gyel, ha elér egy másik lehelyezett fénygránátot, akkor az is azonnal felrobban. Amennyiben több játékos fénygránátjának láncreakciója sebez meg egy másik játékost, osztoznak a kapott pontokon. Egy játékost a saját fénybomjája is meg tudja sebezni! Egy játékos egy körben legfeljebb 1 életet veszíthet. Az életvesztést követo 3 tickben a játékos nem sebzodhet meg, azonban ebben a 3 tickben o sem tud újabb bombát lerakni valamint erosítot felvenni. Egy lehelyezett fénygránáton biztonsági okokból nem lehet áthaladni. Ha a fénygránátot lerakó játékos elmozog az általa lehelyezett gránátról, akkor már o sem léphet vissza rá.
+
+A verseny bizonyos pillanataiban bejelentésre kerül, hogy T kör múlva erosítot fogunk ledobni az (i,j) és (N-1-i,N-1-j) cellákban. Mindkét cellában ugyanolyan típusú erosíto fogunk elhelyezni. Egy cellában egyszerre legfeljebb csak 1 db erosíto lehet. Ha egy játékos egy erosítot tartalmazo cellán fejezi be a körét, akkor a következo kör elején azt automatikusan felszedi. Ha több játékos lép egyszerre az erosítore, akkor mindegyik megkapja az erosítot a következo kör elején. A fel nem szedett erosítok a megjelenése után Y tickkel eltunnek. Amennyiben már csak két játékos van a pályán, csak egy erosíto jelenik meg ketto helyett! Az erosítok a következok lehetnek:
+
+    Paradicsomlé:
+        visszatölt egy életet
+        egy játékosnak legfeljebb 3 élete lehet
+    Extra fénygránát:
+        az eddiginél 1-gyel több fénygránátot helyezhet le a játékos egyidoben
+    Bónusz elem:
+        az eddiginél 1-gyel nagyobb lesz az ezután lerakásra kerülo fénygránátok robbanásának R sugara
+    Futócipo:
+        a következo X tickben a játékos sebessége 3 lesz
+            X az adott pálya szélességének kétszerese
+        a cipo felvételnek körében még nem hat ez a bónusz
+        egy újabb futócipo felvétele megnöveli az elozobol hátrelévo körök számát X-szel
+
+Körsorrend
+
+Egy mérkozés körökre (tickekre) van osztva. Egy körön belül a kötkezo sorrendben történnek az események:
+
+    Erosítok megjelenése, ha ebben a tickben esedékes
+    Erosítok felvétele, ha egy játékos egy erosítovel azonos mezon tartózkodik
+    Fénygránátok robbanása
+        Egy gránát akkor robban fel, ha lejárt az idozitoje vagy egy másik gránát felrobbantotta, és azon mezok versenyzoit és denevéreit "találja el", amelyek vagy a hatósugarában vannak vagy a hatósugarában lévo gránátok hatósugarában vannak, rekurzívan.
+    Sebzodés a lámpák fényétol
+    Új fénygránátok lehelyezése a játékosok által
+    Lépés
+        ha a valaki olyan utat járna be, amin akadály van, akkor addig megy el az útvonaloán ameddig csak tud, de az elso érvénytelen lépésnél helyben marad és befejezodik a mozgása
+        a játékosok léptetése tetszoleges sorrendben történik, mivel a sorrendnek nincs jelentosége a szabályok alapján
+
+Játék vége
+
+Egy mérkozésnek akkor van vége, ha
+
+    már csak egy játékos van életben (vagy egy sem)
+    kiesik a vámpírjelölt akit a mérkozés tesztel
+
+Ha egyik vámpírjelölt sem tud felülkerekedni az összes többin, akkor a mérkozés kezdete után P tickkel, elkezdjük felkapcsolni a GraphiPark lámpáit. A lámpákat a 4 sarokból indulva spirálszeruen kapcsoljuk fel. Ha valaki egy lámpa által megvilágított mezon áll egy tick elején, akkor veszít egy életet.
+Pontozás
+
+Egy mérkozés során több különbözo lehetoségetek is lesz pontokat szerezni:
+
+    12 pontot ér egy denevér raj elkergetése (függetlenül a denevér raj suruségétol)
+        Amennyiben több gránát egyszerre kergeti el a denevér rajt, a játékosok osztoznak a pontokon
+    48 pontot ér egy másik játékos egy életének levétele
+        Extra 96 pontot jelent, ha ez volt a másik játékos utolsó élete (így egy játékos teljes legyozésével 3*48+96=240 pont szerezheto)
+        Amennyiben fénygránátok láncolata sebzi meg a játékost, a láncban résztvevo összes játékos osztozik a kapott pontszámon
+        Amennyiben több, egymástól független gránát(lánc) is megsebez egy játékost, az összes gránát lehelyezoje osztozik a pontokon (a gránátok számától függetlenül, egyenlo arányban osztoznak)
+        Ha valaki saját magát sebzi meg, akkor a kapott pontszám nála nem hozzáadódik, hanem levonódik az eddig gyujtött pontjaiból
+            Példa: 'A' játékos lerak 1 gránátot, 'B' játékos pedig 2 gránátot (két egymást követo tickben), az eloször felrobbanó gránát aktiválja a maradék kettot is, a robbanás pedig megsebzi 'A'-t. 'A'-nak ez volt az utolsó élete. Mivel ketten vettek részt a sebzés okozásában, eloször megfelezzük a kapható 48+96=144 pontot. 'B' pontszámaihoz hozzáadódik a kapott 72 pont, 'A'-tól viszont levonódik a 72 pont, mivel saját magát sebezte meg.
+    48 pontot ér egy erosíto felvétele
+    Külön pont jár azért, ha minél tovább életben maradtok, legfeljebb 144
+        A maximális pontszám akkor jár, ha
+            ti egyedül maradtok életben utoljára, vagy
+            egészen a lámpák felkapcsolásának kezdetéig (MAXTICK) életben maradtok
+        Különben a kiesésetek tickjének és a lámpák felkapcsolása kezdetének (MAXTICK) arányában részesültök a maximális 144-bol
+
+A nem egész pontokat két tizedesjegyre kerekítjük.
+Kommunikáció
+Kezdeti (egyszeri) üzenetek a játékostól:
+
+LOGIN T L
+
+    T a token stringetek.
+        Ez az a token amit a felületen is megtaláltok.
+        A kezdokódotokban már megtalálható alapból.
+
+    Opcionális paraméter, (1 <= L <= 10) a 10 pálya egyikén szeretnétek tesztelni
+
+Vagy:
+
+LOGOUT T
+
+    T a token stringetek.
+    Ezzel egy MESSAGE-t kaptok vissza, hogy sikeres volt-e a kijelentkeztetés.
+    Arra az esetre, ha azzal az üzenettel nem engedi bejelentkezni a csapatot, hogy: “Already logged in”
+
+Kezdeti (egyszeri) üzenetek a szervertol:
+
+MESSAGE m
+
+    Az authentikáció sikeressége (m = OK, vagy a hiba üzenete) Ha nem sikerül az authentikáció, akkor csak a MESSAGE üzenet jön vissza!
+        "Not sent login message within 1s"
+        "Already logged in"
+        "Not exist token"
+        "Not a valid login message"
+        "Login message need to be exactly 1 line"
+        "Login message need a LOGIN command with at least one argument"
+        "Login message 2nd parameter need to be a numeric value"
+
+LEVEL n
+
+    n a pálya sorszáma
+
+GAMEID ID
+
+    ID a játék egyedi azonosítója (nemnegatív egész szám)
+
+TEST E
+
+    E lehet 1 vagy 0
+    Ha 1, akkor tesztkör van
+    TCP-n keresztüli csatlakozás esetén ez mindig 1 lesz
+
+MAXTICK P
+
+    P tick után elkezdjük felkapcsolni a GraphiPark lámpáit (0 < P <= 10000)
+
+GRENADERADIUS R
+
+    A fénygránátok kezdeti hatósugara (0 < R <= 10)
+
+SIZE N
+
+    N a pálya szélessége és magassága (0 < N < 24)
+        N mindig páratlan
+
+Körönkénti üzenetek
+Üzenetek a szervertol:
+
+REQ G T ID
+
+    G a játék egyedi azonosítója
+    T. körben vagyunk (0 <= T).
+    ID. azonosítójú vámpírral vagytok
+
+WARN m ; o
+
+    Több ilyen sor is jöhet.
+    m rövid szöveges üzenet a szervertol, hogy az elozoleg elküldött üzenetekbol melyek azok, amelyek nem teljesültek,
+    o - az elküldött sor, amelyiket nem tudtuk felismerni/valami történt ott
+        “Unrecognized command”
+        “Not sent header”
+        “Multiple command”
+        “Wrong header, expected:”
+        “Missing argument”
+        “Invalid parameter”
+        "Inactive player cannot put grenade"
+        "Not enough grenade"
+        "Cannot step this fast"
+        "Cannot recognize direction without space separators"
+        "Unrecognizable direction"
+
+VAMPIRE ID X Y H B R S
+
+    ID a játékos sorszáma
+    X és Y a játékos koordinátái
+    H a játékos életeinek száma
+    B a játékos által leteheto gránátok száma
+    R a játékos gránátjainak hatótávja
+    S tickig rendelkezik a játékos futócipovel
+        S == 0 esetén nincs futócipoje a játékosnak
+
+GRENADE ID X Y T R
+
+    ID a gránátot lerakó játékos sorszáma
+    X és Y a gránát koordinátái
+    T a gránát robbanásáig hátralevo ido. Ha T értéke 1, akkor a következo kör elején a gránát felrobban.
+    R a lerakott gránát hatótávja
+
+POWERUP T R X Y
+
+    T az erosíto típusa
+        TOMATO
+        GRENADE
+        BATTERY
+        SHOE
+    R a hátralevo tickek száma
+        Ha R negatív, akkor
+            R értéke minden tickben növekedni fog eggyel
+            Amikor R értéke -1, akkor a következo tickben elérhetové válik az erosíto
+            Az ezt követoen tickben R egy pozitív értéket kap
+        Ha R pozitív, akkor
+            R értéke minden tickben csökkenni fog eggyel
+        Amikor R értéke 1, akkor a következo tickben eltunik az erosíto
+    X Y az erosíto koordinátái
+
+BAT1 X1 Y1 X2 Y2 ... Xm Ym
+
+    Xi és Yi az 1 suruségu denevér rajok koordinátái
+    m az ilyen denevér rajok száma
+
+BAT2 X1 Y1 X2 Y2 ... Xq Yq
+
+    Xi és Yi a 2 suruségu denevér rajok koordinátái
+    q az ilyen denevér rajok száma
+
+BAT3 X1 Y1 X2 Y2 ... Xs Ys
+
+    Xi és Yi a 3 suruségu denevér rajok koordinátái
+    s az ilyen denevér rajok száma
+
+Üzenetek a játékostól:
+
+Az üzenet elküldése és beérkezése között nem telhet el 2 másodpercnél több.
+
+RES G T ID
+
+    G a játék egyedi azonosítója
+    A T. körre külditek a választ (0 <= T)
+    ID azonosítójú vámpír üzenete
+
+GRENADE
+
+    Csak akkor kell ezt az üzenetet elküldenetek, ha a körötök elején szeretnétek letenni egy gránátot
+
+MOVE D1 D2 ... Dk
+
+    Dj az j. mozgásotok iránya. Dj lehet:
+        U = fel
+        D = le
+        L = balra
+        R = jobbra
+
+Végso üzenet a szervertol:
+
+WARN m ; o
+
+A körönkénti üzenettel megegyezik.
+
+END P R
+
+    Az általatok szerzett pontok száma
+    R a játék befejezésének oka. Lehetséges értékei (ha több is van, pontosvesszovel vannak elválasztva):
+        No_connected_competitor_left -> Megszakadt a kapcsolat a versenyzo programjával, vagy bontottuk a kapcsolatot vele
+        No_opponent_left -> Elfogytak a vámpírok
+        No_competitor_left -> Csak bot játékosok maradtak
+        Ran_out_of_ticks -> A Tickszám elérte a MAXTICK + (SIZE * SIZE + 3) / 4 + 3 -t
+        Inactivity -> A játékos inaktív volt (10 körön keresztül)
+        Ran_out_of_time -> Valós ideju idokorlát (MAXTICK + (SIZE SIZE + 3) / 4 + 3) readTimeout (2 sec) * 2
+        Everyone_closed_connection -> A botok is leléptek ido elott :)
+
+Tesztelés
+
+Folyamatosan tesztelheto lesz az általatok írt program saját gépetekrol elérve (kisebb kiesésekkel kalkulálva).
+
+Egy csapatból egyszerre csak egy kód csatlakozhat a szerverhez. Bármilyen kommunikációs hiba esetén (internet megszakadás) a szerver kidobja a versenybol az adott játékost, a játékot megszünteti. Az addig elért teljesítmény megmarad. (Nincs lehetoség visszacsatlakozásra és a játék folytatására!)
+
+10 darab tesztpálya van, ezeket lehet külön kérni is, a fent említett opcionális paraméterrel. Ha nem adtok meg paramétert, akkor véletlenszeruen választ egyet a szerver.
+
+A tesztpályák csapatonkénti legjobb pontszámát közzétesszük a verseny honlapján. A végso pontszám viszont nem ez alapján számolódik (lásd “A végso pontszám meghatározása” rész), ezért határozottan kérünk Titeket, hogy a tesztpályákon elért eredményekbol ne vonjatok le messzemeno következtetéseket!
+
+Szerkesztheto, és commitolható a kód a webes felületen keresztül is a tesztidoszak alatt. A commitolás után lefuttatjuk egyszer, egy véletlenszeruen választott tesztpályán. Ekkor a konzolon keresztüli kommunikációt fogjuk alkalmazni. Ennek muködése fontos, hisz a végso értékelés is ezzel a módszerrel fog történni.
+Végso pontszám meghatározása
+
+Az elodönto végén az utolsó GIT-re sikeresen felcommitolt, és forduló kódotokat fogjuk futtatni az éles pályákon.
+
+10 éles pálya lesz, melyek paramétereikben hasonlóak lesznek a teszt pályákhoz.
+
+Az egyes pályákon szerzett pontjaitok alapján pályánkénti sorrendet állitunk fel, és GP40 pontszámitás alapján kaptok pontok, amelyeket összeadva kapjátok meg a végleges pontszámotokat. Amennyiben valamelyik pályán valamelyik helyezésen döntetlen alakulna ki, akkor átlagoljuk a GP-pontokat.
+Példa üzenetek
+
+LOGIN user 1
+.
+MESSAGE OK
+LEVEL 1
+GAMEID 775
+TEST 1
+MAXTICK 500
+GRENADERADIUS 2
+SIZE 11
+.
+REQ 775 0 1
+VAMPIRE 1 1 1 3 1 2 0
+VAMPIRE 3 9 9 3 1 2 0
+VAMPIRE 4 1 9 3 1 2 0
+VAMPIRE 2 9 1 3 1 2 0
+BAT1 4 1 5 1 6 1 3 2 7 2 2 3 3 3 7 3 8 3 1 4 9 4 1 5 9 5 1 6 9 6 2 7 3 7 7 7 8 7 3 8 7 8 4 9 5 9 6 9
+BAT2 5 2 4 3 6 3 3 4 7 4 2 5 8 5 3 6 7 6 4 7 6 7 5 8
+BAT3 5 3 5 4 3 5 4 5 5 5 6 5 7 5 5 6 5 7
+.
+RES 775 0 1
+MOVE R R
+.
+RES 775 0 1
+VAMPIRE 2 9 1 3 1 2 0
+VAMPIRE 1 1 1 3 1 2 0
+VAMPIRE 4 1 9 3 1 2 0
+VAMPIRE 3 9 9 3 1 2 0
+BAT1 4 1 5 1 6 1 3 2 7 2 2 3 3 3 7 3 8 3 1 4 9 4 1 5 9 5 1 6 9 6 2 7 3 7 7 7 8 7 3 8 7 8 4 9 5 9 6 9
+BAT2 5 2 4 3 6 3 3 4 7 4 2 5 8 5 3 6 7 6 4 7 6 7 5 8
+BAT3 5 3 5 4 3 5 4 5 5 5 6 5 7 5 5 6 5 7
+.

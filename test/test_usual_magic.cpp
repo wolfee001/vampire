@@ -466,3 +466,70 @@ TEST(UsualMagic, UsualMagicGetDist)
             "O 1 O", 
             "OOOOO" } }, 1, 2, 0, events), 3);
 }
+
+void checkgoodbombpos(map_t m, int r, int cnt)
+{
+	pos_t start;
+	map_t orim = m;
+	std::vector<pos_t> expect;
+	for(int y = 0; y < (int) m.size(); ++y) {
+		for(int x = 0; x < (int) m.size(); ++x) {
+			if (m[y][x] == 'P') {
+				m[y][x] = ' ';
+				start = pos_t(y, x);
+			}
+			if (m[y][x] == 'T')
+				m[y][x] = ' ';
+		}
+	}
+	auto res = collectgoodbombpos(m, start, r);
+	for(auto p : res.second)
+		m[p.y][p.x] = 'T';
+	m[start.y][start.x] = 'P';
+	ASSERT_EQ(m, orim);
+	ASSERT_EQ(res.first, cnt);
+}
+
+TEST(UsualMagic, CollectGoodBombPos)
+{
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OP  O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }, 1, 8);
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OP +O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }, 1, 7);
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OPT-O", 
+            "O OTO", 
+            "O   O", 
+            "OOOOO" } }, 1, 7);
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OTT-O", 
+            "OPOTO", 
+            "O  TO", 
+            "OOOOO" } }, 2, 7);
+	checkgoodbombpos(
+		{
+			{
+				"OOOOOOO",
+				"OP    O",
+				"O O+O O",
+				"O  T  O",
+				"O O+O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}, 1, 19);
+}

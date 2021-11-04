@@ -337,6 +337,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
             }
 
             if (isDead) {
+                vampire.mHealth = 0;
                 for (const auto& vId : vampiresDamaging) {
                     if (vId != vampire.mId) {
                         mNewPoints[vId] += 96.F / static_cast<float>(vampiresDamaging.size());
@@ -390,6 +391,9 @@ void Simulator::PlantGrenades(TickDescription& state)
     }
 
     for (const auto& vampire : vampRefs) {
+        if (vampire->mHealth <= 0) {
+            continue;
+        }
         if (const auto it = mVampireMoves.find(vampire->mId); it != mVampireMoves.end()) {
             if (it->second.mPlaceGrenade) {
                 if (vampire->mGhostModeTick != 0) {
@@ -436,6 +440,9 @@ void Simulator::Move(TickDescription& state)
     }
 
     for (const auto& vampire : vampRefs) {
+        if (vampire->mHealth <= 0) {
+            continue;
+        }
         if (const auto it = mVampireMoves.find(vampire->mId); it != mVampireMoves.end()) {
             for (const auto& d : it->second.mSteps) {
                 size_t newX = static_cast<size_t>(vampire->mX);

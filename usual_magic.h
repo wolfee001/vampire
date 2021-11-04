@@ -49,10 +49,20 @@ int getdist(map_t m, int r, int stepcnt, int bombcnt, std::vector<event_t> event
 std::pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r);
 std::vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep);
 
+enum phase_t {
+	NONE,
+	PHASE1,
+	ITEM,
+	IDLE
+};
+
 class UsualMagic : public IMagic {
 public:
-	bool phase1 = true;
+	bool mInPhase1 = true;
     explicit UsualMagic(const GameDescription& gameDescription);
     Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points);
+	phase_t mPhase; 
+	std::vector<pos_t> mPath;
 };
+
 // clang-format on

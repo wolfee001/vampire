@@ -389,7 +389,7 @@ UsualMagic::UsualMagic(const GameDescription& gameDescription)
 {
     // Maybe some constructor magic? :)
     std::srand(static_cast<unsigned int>(time(nullptr)));
-	phase1 = true;
+	mInPhase1 = true;
 }
 
 pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
@@ -527,6 +527,8 @@ int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescript
 Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<int, float>& points)
 {
     Answer answer;
+	mPhase = NONE;
+	mPath.clear();
 	cerr << "turn " << tickDescription.mRequest.mTick << endl;
 
 	auto& me = tickDescription.mMe;
@@ -541,7 +543,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	}
 	auto nextmap = sim(m);
 	if (!tickDescription.mPowerUps.empty()) {
-		phase1 = false;
+		mInPhase1 = false;
 
 		vector<pos_t> targets;
 		vector<int> closestenemy;
@@ -591,15 +593,19 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 				for(auto c : answer.mSteps)
 					cerr << c;
 				cerr << endl;
-				// todo Gabor: detailed tactical, use/avoid bomb, finetune path
+				mPhase = ITEM;
+				FORD(i, SZ(steps) - 1, 0)
+					mPath.push_back(steps[i]);
 				return answer;
 			}
 		}
 	}
 
-	if (phase1) {
+	if (mInPhase1) {
 		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 50 * 2); // todo how many steps (not turns) ahead
-		cerr << "seq";
+		mPhase = PHASE1;
+		mPath = seq;
+		cerr << "phase1 seq";
 		for(auto p : seq)
 			cerr << p;
 		cerr << endl;
@@ -674,11 +680,15 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		if (best > 0) {
 			answer.mPlaceGrenade = false; 
 			answer.mSteps = bestdirs;
-			cerr << "go closer";
-			for(auto c : answer.mSteps)
+			cerr << "idle, go closer";
+			mPhase = IDLE;
+			pos_t p = mypos;
+			for(auto c : answer.mSteps) {
+				p = p.GetPos(c == 'U' ? 0 : c == 'R' ? 1 : c == 'D' ? 2 : 3);
+				mPath.push_back(p);
 				cerr << c;
+			}
 			cerr << endl;
-			// todo Gabor: use/avoid bomb
 			return answer;
 		}
 	}

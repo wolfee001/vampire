@@ -406,7 +406,7 @@ pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 	reaches[start.y][start.x].step = 0;
 	int lastturn = 0;
 	pos_t firsttargetreached;
-	int cnt = 1;
+	int cnt = 0;
 	while (!q.empty()) {
 		pos_t p1 = q.front();
 		q.pop_front();
@@ -414,7 +414,8 @@ pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 		FOR0(d, 4) {
 			pos_t p0 = p1.GetPos(d);
 			char c = m[p0.y][p0.x];
-			if (c == ' ' && reaches[p0.y][p0.x].step > reaches[p1.y][p1.x].step + 1) {
+			if (c == ' ' && (reaches[p0.y][p0.x].step > reaches[p1.y][p1.x].step + 1 || 
+				reaches[start.y][start.x].step == 0)) {
 				bool simple = false;
 				int more = 0;
 				FOR0(d2, 4) {
@@ -496,6 +497,7 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx)
 		bombdfs(m2, b, r, step + dst, i);
 		bombseq.pop_back();
 	}
+	allbombs.resize(oldcnt);
 }
 
 vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep)

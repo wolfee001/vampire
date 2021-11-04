@@ -575,7 +575,7 @@ void checkbombsequence(map_t m, int r, int maxstep)
 		}
 	}
 	int repeat = 0;
-	for(int i = 0; i < 9; ++i) {
+	for(int i = 1; i < 9; ++i) {
 		bool found = false;
 		int later = 0;
 		for(int y = 0; y < (int) m.size() && !found; ++y) {
@@ -597,6 +597,8 @@ void checkbombsequence(map_t m, int r, int maxstep)
 			if (!later)
 				break;
 			repeat = later;
+			if (repeat == 2)
+				++i;
 		} else
 			repeat = 0;
 	}
@@ -615,7 +617,7 @@ TEST(UsualMagic, BombSequence)
             "O   O", 
             "OOOOO" } }, 1, 12);
 
-/*   checkbombsequence(
+   checkbombsequence(
 		{ { 
             "OOOOO", 
             "OP2+O", 
@@ -625,8 +627,51 @@ TEST(UsualMagic, BombSequence)
     checkbombsequence(
 		{ { 
             "OOOOO", 
-            "OP3+O", 
+            "OP3*O", 
             "O O O", 
             "O   O", 
-            "OOOOO" } }, 1, 36); */
+            "OOOOO" } }, 1, 36);
+    checkbombsequence(
+		{ { 
+            "OOOOO", 
+            "OP1-O", 
+            "O*O2O", 
+            "O  -O", 
+            "OOOOO" } }, 1, 24);
+	checkbombsequence(
+		{
+			{
+				"OOOOOOO",
+				"OP 1 +O",
+				"O O-O O",
+				"O+ 2 +O",
+				"O O-O O",
+				"O  3- O",
+				"OOOOOOO"
+			}
+		}, 1, 36);
+	checkbombsequence(
+		{
+			{
+				"OOOOOOO",
+				"OP 1 +O",
+				"O O-O O",
+				"O* 3 *O",
+				"O O+O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}, 1, 36);
+	checkbombsequence(
+		{
+			{
+				"OOOOOOO",
+				"OP ++ O",
+				"O3O+O O",
+				"O*    O",
+				"O O O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}, 1, 40);
 }

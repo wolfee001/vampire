@@ -14,9 +14,9 @@
 // . blast (with last step of the turn do not step there if blast is there on next turn map)
 
 
-void testsim(map_t inp, map_t expect)
+void testsim(map_t inp, map_t expect, bool dot = true)
 {
-    auto res = sim(inp);
+    auto res = sim(inp, dot);
     ASSERT_EQ(res,  expect);
 }
 
@@ -61,6 +61,26 @@ TEST(UsualMagic, UsualMagicSim)
 				"OOOOO"
 			}
 		}
+		);
+	testsim(
+		{
+			{
+				"OOOOO",
+				"O   O",
+				"O1O O",
+				"O-  O",
+				"OOOOO"
+			}
+		},
+		{
+			{
+				"OOOOO",
+				"O   O",
+				"O O O",
+				"O   O",
+				"OOOOO"
+			}
+		}, false
 		);
 	testsim(
 		{
@@ -465,4 +485,193 @@ TEST(UsualMagic, UsualMagicGetDist)
             "O O2O", 
             "O 1 O", 
             "OOOOO" } }, 1, 2, 0, events), 3);
+}
+
+void checkgoodbombpos(map_t m, int r, int cnt)
+{
+	pos_t start;
+	map_t orim = m;
+	std::vector<pos_t> expect;
+	for(int y = 0; y < (int) m.size(); ++y) {
+		for(int x = 0; x < (int) m.size(); ++x) {
+			if (m[y][x] == 'P') {
+				m[y][x] = ' ';
+				start = pos_t(y, x);
+			}
+			if (m[y][x] == 'T')
+				m[y][x] = ' ';
+		}
+	}
+	auto res = collectgoodbombpos(m, start, r);
+	for(auto p : res.second)
+		m[p.y][p.x] = 'T';
+	m[start.y][start.x] = 'P';
+	ASSERT_EQ(m, orim);
+	ASSERT_EQ(res.first, cnt);
+}
+
+TEST(UsualMagic, CollectGoodBombPos)
+{
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OP  O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }, 1, 8);
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OPT-O", 
+            "O OTO", 
+            "O   O", 
+            "OOOOO" } }, 1, 7);
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OPT+O", 
+            "O OTO", 
+            "O   O", 
+            "OOOOO" } }, 1, 7);
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OPT-O", 
+            "O O O", 
+            "O+  O", 
+            "OOOOO" } }, 1, 3);
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OTT-O", 
+            "OPOTO", 
+            "O  TO", 
+            "OOOOO" } }, 2, 7);
+	checkgoodbombpos(
+		{
+			{
+				"OOOOOOO",
+				"OP    O",
+				"O O+O O",
+				"O  T  O",
+				"O O+O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}, 1, 19);
+}
+
+void checkbombsequence(map_t m, int r, int maxstep)
+{
+	pos_t start;
+	map_t orim = m;
+	std::vector<pos_t> expect;
+	for(int y = 0; y < (int) m.size(); ++y) {
+		for(int x = 0; x < (int) m.size(); ++x) {
+			if (m[y][x] == 'P') {
+				m[y][x] = ' ';
+				start = pos_t(y, x);
+			}
+		}
+	}
+	int repeat = 0;
+	for(int i = 1; i < 9; ++i) {
+		bool found = false;
+		int later = 0;
+		for(int y = 0; y < (int) m.size() && !found; ++y) {
+			for(int x = 0; x < (int) m.size() && !found; ++x) {
+				if (m[y][x] == '0' + i) {
+					m[y][x] = ' ';
+					for(int j = 0; j <= repeat; ++j)
+						expect.push_back(pos_t(y, x));
+					found = true;
+					break;
+				}
+				else if (m[y][x] == '0' + i + 1)
+					later = 1;
+				else if (m[y][x] == '0' + i + 2)
+					later = 2;
+			}
+		}
+		if (!found) {
+			if (!later)
+				break;
+			repeat = later;
+			if (repeat == 2)
+				++i;
+		} else
+			repeat = 0;
+	}
+	auto res = bombsequence(m, start, r, maxstep);
+	ASSERT_EQ(res, expect);
+}
+
+// tests should have clear winner
+TEST(UsualMagic, BombSequence)
+{
+    checkbombsequence(
+		{ { 
+            "OOOOO", 
+            "OP1-O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }, 1, 12);
+
+   checkbombsequence(
+		{ { 
+            "OOOOO", 
+            "OP2+O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }, 1, 24);
+    checkbombsequence(
+		{ { 
+            "OOOOO", 
+            "OP3*O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }, 1, 36);
+    checkbombsequence(
+		{ { 
+            "OOOOO", 
+            "OP1-O", 
+            "O*O2O", 
+            "O  -O", 
+            "OOOOO" } }, 1, 24);
+	checkbombsequence(
+		{
+			{
+				"OOOOOOO",
+				"OP 1 +O",
+				"O O-O O",
+				"O+ 2 +O",
+				"O O-O O",
+				"O  3- O",
+				"OOOOOOO"
+			}
+		}, 1, 36);
+	checkbombsequence(
+		{
+			{
+				"OOOOOOO",
+				"OP 1 +O",
+				"O O-O O",
+				"O* 3 *O",
+				"O O+O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}, 1, 36);
+	checkbombsequence(
+		{
+			{
+				"OOOOOOO",
+				"OP ++ O",
+				"O3O+O O",
+				"O*    O",
+				"O O O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}, 1, 36);
 }

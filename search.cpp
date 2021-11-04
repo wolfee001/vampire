@@ -111,7 +111,7 @@ Answer Search::GetBestMove()
         for (size_t i = 0; i < mLevels[level].size();) {
             const size_t parentIndex = mLevels[level][i].mParentIndex;
 
-            for (; mLevels[level][i].mParentIndex == parentIndex && i < mLevels[level].size(); ++i) {
+            for (; i < mLevels[level].size() && mLevels[level][i].mParentIndex == parentIndex; ++i) {
                 // mLevels[level - 1][parentIndex].mNumberOfChildren += mLevels[level][i].mNumberOfChildren + 1;
                 mLevels[level - 1][parentIndex].mScore += mLevels[level][i].mScore * 1.0F / static_cast<float>(level);
             }

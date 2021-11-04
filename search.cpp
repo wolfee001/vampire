@@ -97,9 +97,15 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             const auto [tickDescription, newPoints] = simulator.Tick();
             simulator.SetState(tick);
 
-            const auto score = Evaluate(tickDescription, newPoints, move);
-            nextLevel.emplace_back(nodeIndex, tickDescription, node.mScore + score, action.GetId());
+            const auto heuristicScore = Evaluate(tickDescription, newPoints, move);
+            nextLevel.emplace_back(
+                nodeIndex, tickDescription, node.mPermanentScore + newPoints.at(mPlayerId), node.mHeuristicScore + heuristicScore, action.GetId());
         }
+    }
+
+    if (nextLevel.empty()) {
+        mLevels.resize(mLevels.size() - 1);
+        return false;
     }
 
     return true;
@@ -107,34 +113,51 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
 
 Answer Search::GetBestMove()
 {
+    /*
     for (size_t level = mLevels.size() - 1; level >= 1; --level) {
         for (size_t i = 0; i < mLevels[level].size();) {
             const size_t parentIndex = mLevels[level][i].mParentIndex;
 
             for (; mLevels[level][i].mParentIndex == parentIndex && i < mLevels[level].size(); ++i) {
-                // mLevels[level - 1][parentIndex].mNumberOfChildren += mLevels[level][i].mNumberOfChildren + 1;
-                mLevels[level - 1][parentIndex].mScore += mLevels[level][i].mScore * 1.0F / static_cast<float>(level);
+                mLevels[level - 1][parentIndex].mPermanentScore += mLevels[level][i].mPermanentScore + mLevels[level][i].mHeuristicScore;
             }
+            mLevels[level - 1][parentIndex].mPermanentScore += mLevels[level - 1][parentIndex].mHeuristicScore;
         }
     }
+*/
+    const auto bestIt = std::max_element(std::cbegin(mLevels.back()), std::cend(mLevels.back()), [](const TreeNode& x, const TreeNode& y) {
+        const auto score1 = x.mPermanentScore + x.mHeuristicScore;
+        const auto score2 = y.mPermanentScore + y.mHeuristicScore;
 
-    const auto bestIt = std::max_element(std::cbegin(mLevels[1]), std::cend(mLevels[1]), [](const TreeNode& x, const TreeNode& y) {
-        const auto score1 = x.mScore;
-        const auto score2 = y.mScore;
+        if (score1 == score2) {
+            if (x.mPermanentScore != y.mPermanentScore) {
+                return x.mPermanentScore != y.mPermanentScore;
+            } else {
+                return ActionSequence(x.mAction).GetNumberOfSteps() < ActionSequence(y.mAction).GetNumberOfSteps();
+            }
+        }
 
         return score1 < score2;
     });
 
-    for (auto it = std::cbegin(mLevels[1]); it != std::cend(mLevels[1]); ++it) {
-        if (it == bestIt) {
-            std::cerr << it->mScore << "*, ";
-        } else {
-            std::cerr << it->mScore << ", ";
-        }
+    const TreeNode* current = &*bestIt;
+    for (size_t level = mLevels.size() - 1; level > 1; --level) {
+        current = &mLevels[level - 1][current->mParentIndex];
     }
-    std::cerr << std::endl;
 
-    return ActionSequence(bestIt->mAction).GetAnswer();
+    std::cerr << "Permanent score: " << bestIt->mPermanentScore << " Heuristic score: " << bestIt->mHeuristicScore << std::endl;
+
+    /*
+        for (auto it = std::cbegin(mLevels.back()); it != std::cend(mLevels.back()); ++it) {
+            std::cerr << (it->mPermanentScore + it->mHeuristicScore);
+            if (it == bestIt) {
+                std::cerr << "*";
+            }
+            std::cerr << ", ";
+        }
+        std::cerr << std::endl;
+    */
+    return ActionSequence(current->mAction).GetAnswer();
 }
 
 float Search::Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move) const
@@ -183,5 +206,5 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     (void)move;
     (void)newPoints;
 
-    return newPoints.at(mPlayerId) + batScore + 2.F * (3.F - static_cast<float>(tickDescription.mMe.mHealth)) * grenadePenalty + powerUpScore;
+    return batScore + (3.F - static_cast<float>(tickDescription.mMe.mHealth)) * grenadePenalty + powerUpScore + 0.01F * static_cast<float>(move.mSteps.size());
 }

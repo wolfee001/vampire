@@ -478,19 +478,7 @@ bool Simulator::IsValidMove(int id, const Answer& move) const
             CHECK(false, "Invalid direction!");
         }
 
-        if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
-            return false;
-        }
-
-        const auto batIt
-            = std::find_if(std::cbegin(mState.mAllBats), std::cend(mState.mAllBats), [&x, &y](const BatSquad& bq) { return bq.mX == x && bq.mY == y; });
-        if (batIt != std::cend(mState.mAllBats)) {
-            return false;
-        }
-
-        const auto grenadeIt = std::find_if(
-            std::cbegin(mState.mGrenades), std::cend(mState.mGrenades), [&x, &y](const Grenade& grenade) { return grenade.mX == x && grenade.mY == y; });
-        if (grenadeIt != std::cend(mState.mGrenades)) {
+        if (!mReachableArea.find(x, y)) {
             return false;
         }
     }

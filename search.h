@@ -13,7 +13,7 @@ public:
         : mGameDescription(gameDescription)
         , mPlayerId(playerId)
     {
-        const auto score = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0.F } }, {});
+        const auto heuristicScore = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0.F } }, {});
         mLevels.reserve(10);
 
         const auto grenadeIt = std::find_if(
@@ -21,7 +21,7 @@ public:
 
         const ActionSequence action(Answer { grenadeIt != std::cend(tickDescription.mGrenades), {} });
 
-        mLevels.emplace_back().emplace_back(std::numeric_limits<uint16_t>::max(), tickDescription, score, action.GetId());
+        mLevels.emplace_back().emplace_back(std::numeric_limits<uint32_t>::max(), tickDescription, 0, heuristicScore, action.GetId());
     }
 
     bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
@@ -30,18 +30,19 @@ public:
 
     // private:
     struct TreeNode {
-        TreeNode(uint32_t parent, TickDescription td, float score, ActionSequence::ActionSequence_t action)
+        TreeNode(uint32_t parent, TickDescription td, float permanentScore, float heuristicScore, ActionSequence::ActionSequence_t action)
             : mParentIndex(parent)
             , mTickDescription(std::move(td))
-            , mScore(score)
+            , mPermanentScore(permanentScore)
+            , mHeuristicScore(heuristicScore)
             , mAction(action)
         {
         }
 
-        uint32_t mNumberOfChildren = 0;
         uint32_t mParentIndex;
         TickDescription mTickDescription;
-        float mScore;
+        float mPermanentScore;
+        float mHeuristicScore;
         ActionSequence::ActionSequence_t mAction = std::numeric_limits<ActionSequence::ActionSequence_t>::max();
     };
 

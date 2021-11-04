@@ -1,5 +1,6 @@
 // clang-format off
 
+#include <cstddef>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "../usual_magic.h"
@@ -492,11 +493,11 @@ void checkgoodbombpos(map_t m, int r, int cnt)
 	pos_t start;
 	map_t orim = m;
 	std::vector<pos_t> expect;
-	for(int y = 0; y < (int) m.size(); ++y) {
-		for(int x = 0; x < (int) m.size(); ++x) {
+	for(size_t y = 0; y < m.size(); ++y) {
+		for(size_t x = 0; x < m.size(); ++x) {
 			if (m[y][x] == 'P') {
 				m[y][x] = ' ';
-				start = pos_t(y, x);
+				start = pos_t(static_cast<int>(y), static_cast<int>(x));
 			}
 			if (m[y][x] == 'T')
 				m[y][x] = ' ';
@@ -504,8 +505,8 @@ void checkgoodbombpos(map_t m, int r, int cnt)
 	}
 	auto res = collectgoodbombpos(m, start, r);
 	for(auto p : res.second)
-		m[p.y][p.x] = 'T';
-	m[start.y][start.x] = 'P';
+		m[static_cast<size_t>(p.y)][static_cast<size_t>(p.x)] = 'T';
+	m[static_cast<size_t>(start.y)][static_cast<size_t>(start.x)] = 'P';
 	ASSERT_EQ(m, orim);
 	ASSERT_EQ(res.first, cnt);
 }
@@ -566,11 +567,11 @@ void checkbombsequence(map_t m, int r, int maxstep)
 	pos_t start;
 	map_t orim = m;
 	std::vector<pos_t> expect;
-	for(int y = 0; y < (int) m.size(); ++y) {
-		for(int x = 0; x < (int) m.size(); ++x) {
+	for(size_t y = 0; y < m.size(); ++y) {
+		for(size_t x = 0; x < m.size(); ++x) {
 			if (m[y][x] == 'P') {
 				m[y][x] = ' ';
-				start = pos_t(y, x);
+				start = pos_t(static_cast<int>(y), static_cast<int>(x));
 			}
 		}
 	}
@@ -578,12 +579,12 @@ void checkbombsequence(map_t m, int r, int maxstep)
 	for(int i = 1; i < 9; ++i) {
 		bool found = false;
 		int later = 0;
-		for(int y = 0; y < (int) m.size() && !found; ++y) {
-			for(int x = 0; x < (int) m.size() && !found; ++x) {
+		for(size_t y = 0; y < m.size() && !found; ++y) {
+			for(size_t x = 0; x < m.size() && !found; ++x) {
 				if (m[y][x] == '0' + i) {
 					m[y][x] = ' ';
 					for(int j = 0; j <= repeat; ++j)
-						expect.push_back(pos_t(y, x));
+						expect.push_back(pos_t(static_cast<int>(y), static_cast<int>(x)));
 					found = true;
 					break;
 				}

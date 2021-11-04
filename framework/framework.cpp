@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fmt/core.h>
 #include <imgui.h>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -170,32 +171,34 @@ void Framework::Render()
                 }
                 ImGui::EndDisabled();
 
-                ImGui::BeginDisabled(mPlayBook.mIsPlaying);
+                ImGui::BeginDisabled(mPlayBook.mIsPlaying || mPlayBook.mSteppingDisabled);
                 if (ImGui::Button("|< ")) {
                     if (mPlayBook.mStep > 0) {
                         mPlayBook.mStep--;
                         if (mPlayBook.mSolverIsStateful) {
                             std::vector<GameLoader::Step> steps = mPlayBook.mGameLoader.GetStepUntil(mPlayBook.mStep);
                             std::thread t([steps, &mPlayBook = mPlayBook]() {
+                                mPlayBook.mSteppingDisabled = true;
                                 for (const auto& element : steps) {
                                     const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
                                     if (resp != element.mAnswerMessage) {
                                         mPlayBook.mIsCorrupted = true;
                                         mPlayBook.mIsPlaying = false;
-                                        return;
                                     }
                                 }
+                                mPlayBook.mSteppingDisabled = false;
                             });
                             t.detach();
                         } else {
                             GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                             std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
+                                mPlayBook.mSteppingDisabled = true;
                                 const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                 mVampireCumulatedPoints = step.mPoints;
                                 if (resp != step.mAnswerMessage) {
                                     mPlayBook.mIsCorrupted = true;
-                                    return;
                                 }
+                                mPlayBook.mSteppingDisabled = false;
                             });
                             t.detach();
                         }
@@ -203,21 +206,47 @@ void Framework::Render()
                 }
                 ImGui::EndDisabled();
                 ImGui::SameLine();
+                ImGui::BeginDisabled(mPlayBook.mSteppingDisabled);
                 if (ImGui::Button(mPlayBook.mIsPlaying ? " || " : " > ")) {
                     mPlayBook.mIsPlaying = !mPlayBook.mIsPlaying;
+                    if (mPlayBook.mIsPlaying) {
+                        std::thread t([&mPlayBook = mPlayBook]() {
+                            while (mPlayBook.mIsPlaying) {
+                                std::chrono::milliseconds time
+                                    = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+                                std::chrono::milliseconds delta = time - mPlayBook.mLastStepTime;
+                                if (delta.count() > mPlayBook.mStepSpeed) {
+                                    mPlayBook.mLastStepTime = time;
+                                    if (mPlayBook.mStep < mPlayBook.mGameLoader.GetStepCount() - 1) {
+                                        mPlayBook.mStep++;
+                                        GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
+                                        const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                                        if (resp != step.mAnswerMessage) {
+                                            mPlayBook.mIsCorrupted = true;
+                                        }
+                                    } else {
+                                        mPlayBook.mIsPlaying = false;
+                                    }
+                                }
+                            }
+                        });
+                        t.detach();
+                    }
                 }
+                ImGui::EndDisabled();
                 ImGui::SameLine();
-                ImGui::BeginDisabled(mPlayBook.mIsPlaying);
+                ImGui::BeginDisabled(mPlayBook.mIsPlaying || mPlayBook.mSteppingDisabled);
                 if (ImGui::Button(" >|")) {
                     if (mPlayBook.mStep < mPlayBook.mGameLoader.GetStepCount() - 1) {
                         mPlayBook.mStep++;
                         GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                         std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
+                            mPlayBook.mSteppingDisabled = true;
                             const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                             if (resp != step.mAnswerMessage) {
                                 mPlayBook.mIsCorrupted = true;
-                                return;
                             }
+                            mPlayBook.mSteppingDisabled = false;
                         });
                         t.detach();
                     }
@@ -229,28 +258,6 @@ void Framework::Render()
         }
 
         ImGui::End();
-    }
-
-    {
-        if (mPlayBook.mIsPlaying) {
-            std::chrono::milliseconds time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-            std::chrono::milliseconds delta = time - mPlayBook.mLastStepTime;
-            if (delta.count() > mPlayBook.mStepSpeed) {
-                mPlayBook.mLastStepTime = time;
-                if (mPlayBook.mStep < mPlayBook.mGameLoader.GetStepCount() - 1) {
-                    mPlayBook.mStep++;
-                    GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
-                    std::thread t([step, &mPlayBook = mPlayBook]() {
-                        const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
-                        if (resp != step.mAnswerMessage) {
-                            mPlayBook.mIsCorrupted = true;
-                            return;
-                        }
-                    });
-                    t.detach();
-                }
-            }
-        }
     }
 
     {
@@ -282,51 +289,76 @@ void Framework::Render()
     {
         ImGui::Begin("Game handler");
 
-        ImGui::Combo("Select map", &mMapSelector, " RANDOM\0 1\0 2\0 3\0 4\0 5\0 6\0 7\0 8\0 9\0 10\0");
+        ImGui::BeginDisabled(mIsPlaying);
+        ImGui::Combo("Select map", &mMapSelector, " RANDOM\0 1\0 2\0 3\0 4\0 5\0 6\0 7\0 8\0 9\0 10\0 ALL\0");
         ImGui::Checkbox("Record game", &mRecordGame);
 
         if (ImGui::Button("GO", ImVec2(-1.F, 0.F))) {
-            std::thread t([&mMapSelector = mMapSelector]() {
-                std::string selectedMap = std::to_string(mMapSelector);
-                std::string programName = "fake_program_name";
+            static std::vector<int> selectedMaps;
+            selectedMaps.clear();
+            if (mMapSelector != 11) {
+                selectedMaps.emplace_back(mMapSelector);
+            } else {
+                selectedMaps.resize(10);
+                std::iota(selectedMaps.begin(), selectedMaps.end(), 1);
+            }
+            std::thread t([&mIsPlaying = mIsPlaying]() {
+                mIsPlaying = true;
+                for (const auto& selectedMap : selectedMaps) {
+                    const std::string selectedMapString = std::to_string(selectedMap);
+                    const std::string programName = "fake_program_name";
 #if defined(__GNUC__) && !defined(__llvm__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
-                char* params[2] = { const_cast<char*>(programName.data()), const_cast<char*>(selectedMap.data()) };
+                    char* params[2] = { const_cast<char*>(programName.data()), const_cast<char*>(selectedMapString.data()) };
 #if defined(__GNUC__) && !defined(__llvm__)
 #pragma GCC diagnostic pop
 #endif
-                __main(2, params);
+                    __main(2, params);
+                }
+                mIsPlaying = false;
             });
             t.detach();
         }
+        ImGui::EndDisabled();
 
         ImGui::End();
     }
 
     {
-        ImGui::Begin("Map");
+        if (mGameDescription.mGameId != -1 && mTickDescription.mRequest.mGameId != -1) {
+            ImGui::Begin(fmt::format("Map GAME {} LEVEL {} TICK {} MAXTICK: {}###Map", mGameDescription.mGameId, mGameDescription.mLevelId,
+                mTickDescription.mRequest.mTick, mGameDescription.mMaxTick)
+                             .c_str());
+        } else {
+            ImGui::Begin("Map###Map");
+        }
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         const ImVec2 p = ImGui::GetCursorScreenPos();
         draw_list->AddRectFilled(p, ImVec2(p.x + 23 * 34, p.y + 23 * 34), IM_COL32(238, 238, 238, 255));
+
+        Simulator simulator(mGameDescription);
+        simulator.SetState(mTickDescription);
+        const std::vector<Simulator::BlowArea>& blowAreas = simulator.GetBlowAreas();
+        const Simulator::Area& litAreas = simulator.GetLitArea();
 
         for (int x = 0; x < mGameDescription.mMapSize; ++x) {
             for (int y = 0; y < mGameDescription.mMapSize; ++y) {
                 ImVec2 tl = ImGui::GetCursorScreenPos();
                 tl.x += static_cast<float>(x) * 34.f + 1.f;
                 tl.y += static_cast<float>(y) * 34.f + 1.f;
-                draw_list->AddRectFilled(tl, ImVec2(tl.x + 32, tl.y + 32), IM_COL32(96, 163, 98, 255));
+                if (litAreas.find(x, y)) {
+                    draw_list->AddRectFilled(tl, ImVec2(tl.x + 32, tl.y + 32), IM_COL32(255, 255, 101, 255));
+                } else {
+                    draw_list->AddRectFilled(tl, ImVec2(tl.x + 32, tl.y + 32), IM_COL32(96, 163, 98, 255));
+                }
                 if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
                     draw_list->AddImage(mAssets["bush"], tl, ImVec2(tl.x + 32, tl.y + 32));
                 }
             }
         }
-
-        Simulator simulator(mGameDescription);
-        simulator.SetState(mTickDescription);
-        std::vector<Simulator::BlowArea> blowAreas = simulator.GetBlowAreas();
 
         for (const auto& area : blowAreas) {
             for (const auto& position : area.mArea.getAsVector()) {
@@ -345,12 +377,6 @@ void Framework::Render()
         for (const auto& vampire : mTickDescription.mEnemyVampires) {
             ImVec2 vampirePos = ImVec2(p.x + static_cast<float>(vampire.mX) * 34 + 1, p.y + static_cast<float>(vampire.mY) * 34 + 1);
             draw_list->AddImage(mAssets[mVampireAvatarMapping[vampire.mId]], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
-        }
-
-        for (const auto& bat : mTickDescription.mAllBats) {
-            std::string batAvatar = "bat" + std::to_string(bat.mDensity);
-            ImVec2 pos = ImVec2(p.x + static_cast<float>(bat.mX) * 34 + 1, p.y + static_cast<float>(bat.mY) * 34 + 1);
-            draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
         }
 
         for (const auto& grenade : mTickDescription.mGrenades) {
@@ -413,8 +439,14 @@ void Framework::Render()
                 }
             }(pu.mType);
             ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
-            draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32));
+            draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32), { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, 128));
             draw_list->AddText({ pos.x + 12, pos.y + 10 }, IM_COL32(0, 0, 0, 255), fmt::format("{}", pu.mRemainingTick).c_str());
+        }
+
+        for (const auto& bat : mTickDescription.mAllBats) {
+            std::string batAvatar = "bat" + std::to_string(bat.mDensity);
+            ImVec2 pos = ImVec2(p.x + static_cast<float>(bat.mX) * 34 + 1, p.y + static_cast<float>(bat.mY) * 34 + 1);
+            draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
         }
 
         ImGui::End();

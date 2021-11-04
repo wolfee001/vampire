@@ -467,6 +467,25 @@ TEST_F(SimulateTest, OneBatTwoGrenade)
     ASSERT_EQ(newPoints.at(2), 12);
 }
 
+TEST_F(SimulateTest, OneBatTwoGrenadeSamePoisition)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "BAT1 1 1",
+        "GRENADE 1 1 2 1 2",
+        "GRENADE 2 1 2 1 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), 6);
+    ASSERT_EQ(newPoints.at(2), 6);
+}
+
 TEST_F(SimulateTest, InjureOneVampireTwoGrenade)
 {
     // clang-format off
@@ -647,6 +666,22 @@ TEST_F(SimulateTest, Plantgrenade)
     ASSERT_EQ(newPoints.at(3), 0);
 }
 
+TEST_F(SimulateTest, PlantgrenadeAfterDeath)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 2 1 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { true, {} });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+}
+
 TEST_F(SimulateTest, StepSimple)
 {
     // clang-format off
@@ -662,6 +697,23 @@ TEST_F(SimulateTest, StepSimple)
     ASSERT_EQ(newState.mMe.mX, 3);
     ASSERT_EQ(newState.mMe.mY, 1);
     ASSERT_EQ(newPoints.at(1), 0);
+}
+
+TEST_F(SimulateTest, StepSimpleAfterDeath)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 2 1 2",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { true, { 'R', 'R' } });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mMe.mX, 3);
+    ASSERT_EQ(newState.mMe.mY, 1);
 }
 
 TEST_F(SimulateTest, StepExtra)
@@ -860,4 +912,54 @@ TEST_F(SimulateTest, GetBlowAreasJoint)
             std::pair<int, int> { 1, 5 }, std::pair<int, int> { 2, 3 }, std::pair<int, int> { 3, 1 }, std::pair<int, int> { 3, 2 },
             std::pair<int, int> { 3, 3 }, std::pair<int, int> { 3, 4 }, std::pair<int, int> { 3, 5 }, std::pair<int, int> { 3, 6 },
             std::pair<int, int> { 4, 3 }, std::pair<int, int> { 5, 3 }, std::pair<int, int> { 6, 3 }));
+}
+
+TEST_F(SimulateTest, DecreaseHpByLight)
+{
+    std::pair<TickDescription, Simulator::NewPoints> tickRes;
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 510 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 2);
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 511 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 1);
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 511 1",
+        "VAMPIRE 1 2 1 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 2);
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 517 1",
+        "VAMPIRE 1 1 2 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 2);
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 518 1",
+        "VAMPIRE 1 1 2 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 1);
 }

@@ -60,35 +60,6 @@ int g_seed = 777778;
 
 inline int randn0(int mod) { g_seed = (214013 * g_seed + 2531011); return (((g_seed >> 16) & 0x7FFF) * mod) >> 15; }
 
-struct pos_t {
-	int y;
-	int x;
-	pos_t(int y = -1, int x = -1) : y(y), x(x) {}
-	pos_t GetPos(int d) const;
-	int GetDir(pos_t p2) const
-	{
-		if (p2.y < y)
-			return 0;
-		if (p2.x > x)
-			return 1;
-		if (p2.y > y)
-			return 2;
-		if (p2.x < x)
-			return 3;
-		return -1;
-	}
-	int GetDist(const pos_t& o) const { return abs(x - o.x) + abs(y - o.y); }
-	int GetDist2(const pos_t& o) const { return SQR(x - o.x) + SQR(y - o.y); }
-	bool operator==(const pos_t& o) const { return x == o.x && y == o.y; }
-	bool operator<(const pos_t& o) const { return x < o.x || x == o.x && y < o.y; }
-	bool operator!=(const pos_t& o) const { return x != o.x || y != o.y; }
-	bool isvalid() const { return x != -1; }
-	friend ostream& operator<< (ostream& stream, const pos_t& p)
-	{
-		return stream << p.x << ":" << p.y << " ";
-	}
-};
-
 pos_t dir[5] = { { -1,0 },{ 0,1 },{ 1,0 },{ 0,-1 }, {0, 0} };
 char dirc[5] = "^>V<";
 char dirc2[5] = "URDL";
@@ -98,10 +69,10 @@ pos_t pos_t::GetPos(int d) const
 	return pos_t(y + dir[d].y, x + dir[d].x);
 }
 
-void bomb(map_t& m, map_t& orim, pos_t p0, int r)
+void bomb(map_t& m, map_t& orim, pos_t p0, int r, bool dot = true)
 {
-	m[p0.y][p0.x] = '.';
-	if (!m.bombrange.empty())
+	m[p0.y][p0.x] = dot ? '.' : ' ';
+	if (dot && !m.bombrange.empty())
 		r = m.bombrange[p0.y][p0.x] - '0';
 	FOR0(d, 4) {
 		auto p = p0;
@@ -123,20 +94,20 @@ void bomb(map_t& m, map_t& orim, pos_t p0, int r)
 			else if (c == '-') {
 				if (orim[p.y][p.x] != c)
 					continue;
-				c = '.';
+				c = dot ? '.' : ' ';
 				break;
 			}
 			else if (c >= '1' && c <= '5')
 				bomb(m, orim, p, 1);
 			else if (c >= '6' && c <= '9' || c == '0')
 				bomb(m, orim, p, 2);
-			else
+			else if (dot)
 				c = '.';
 		}
 	}
 }
 
-map_t sim(map_t& m)
+map_t sim(map_t& m, bool dot)
 {
 	auto res = m;
 	FOR0(y, SZ(m)) {
@@ -148,11 +119,11 @@ map_t sim(map_t& m)
 				c = '9';
 			else if (c == '1') {
 				map_t orim = res;
-				bomb(res, orim, p, 1);
+				bomb(res, orim, p, 1, dot);
 			}
 			else if (c == '6') {
 				map_t orim = res;
-				bomb(res, orim, p, 2);
+				bomb(res, orim, p, 2, dot);
 			}
 			else if (c >= '2' && c <= '9')
 				--c;
@@ -280,7 +251,6 @@ int getdist(map_t& m, pos_t start, vector<pos_t> targets, int r, int stepcnt, in
 		if (qi.step == stepcnt - 1) {
 			++qi.turn;
 			if (qi.turn >= MAXTURN) {
-				cerr << "max turn reached" << endl;
 				return -1;
 			}
 			if (qi.turn > lastturn) {
@@ -413,7 +383,6 @@ map_t gen(int n)
 
 // todo Kovi
 // phase1 plan
-// only care about enemy which is targeting powerups!
 
 UsualMagic::UsualMagic(const GameDescription& gameDescription)
     : IMagic(gameDescription)
@@ -421,6 +390,122 @@ UsualMagic::UsualMagic(const GameDescription& gameDescription)
     // Maybe some constructor magic? :)
     std::srand(static_cast<unsigned int>(time(nullptr)));
 	phase1 = true;
+}
+
+pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
+{
+	vector<pos_t> res;
+	vector<pos_t> other;
+	deque<pos_t> q;
+	q.push_back(start);
+	reach_t unreachable;
+	FOR0(y, SZ(m))
+		FOR0(x, SZ(m))
+			reaches[y][x].step = 1000;
+	reaches[start.y][start.x].step = 0;
+	int lastturn = 0;
+	pos_t firsttargetreached;
+	int cnt = 0;
+	while (!q.empty()) {
+		pos_t p1 = q.front();
+		q.pop_front();
+		bool spec = false;
+		FOR0(d, 4) {
+			pos_t p0 = p1.GetPos(d);
+			char c = m[p0.y][p0.x];
+			if (c == ' ' && (reaches[p0.y][p0.x].step > reaches[p1.y][p1.x].step + 1 || 
+				reaches[p0.y][p0.x].step == 0)) {
+				bool simple = false;
+				int more = 0;
+				FOR0(d2, 4) {
+					auto p = p0;
+					FOR(i, 1, r) {
+						p = p.GetPos(d2);
+						char& c = m[p.y][p.x];
+						if (c == 'O')
+							break;
+						else if (c == '*' || c == '+') {
+							++more;
+							break;
+						}
+						else if (c == '-') {
+							simple = true;
+							break;
+						}
+					}
+					if (simple)
+						break;
+				}
+				if (simple || more > 1)
+					res.push_back(p0);
+				else if (more)
+					other.push_back(p0);
+				q.push_back(p0);
+				reaches[p0.y][p0.x].step = reaches[p1.y][p1.x].step + 1;
+				++cnt;
+			}
+		}
+	}
+	if (res.empty())
+		return make_pair(cnt, other);
+	return make_pair(cnt, res);
+}
+
+int bestbombseqval;
+int bombseqmaxstep;
+vector<pos_t> bombseq;
+vector<pos_t> bestbombseq;
+vector<pos_t> allbombs;
+
+void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
+{
+	reach_t currreaches[23][23];
+	auto bombs = collectgoodbombpos(m, start, r);
+	memcpy(currreaches, reaches, sizeof(reaches));
+
+	if (step > bombseqmaxstep) {
+		MAXA2(bestbombseqval, (bombs.first + 1) * 100 - step, bestbombseq, bombseq);
+		return;
+	}
+
+	// keep bombs ordered so that we dont waste on shuffles
+	vector<int> indices;
+	int oldcnt = SZ(allbombs);
+	for (auto b : bombs.second) {
+		bool found = false;
+		FOR0(i, oldcnt) {
+			if (allbombs[i] == b) {
+				if (i >= lastbombidx)
+					indices.push_back(i);
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			indices.push_back(SZ(allbombs));
+			allbombs.push_back(b);
+		}
+	}
+
+	int oldseqsize = SZ(bombseq);
+	for (auto i : indices) {
+		auto b = allbombs[i];
+		bombseq.push_back(b);
+		map_t m2 = m;
+		bomb(m2, m2, b, r, false);
+		int dst = currreaches[b.y][b.x].step + 6 * 2;
+		bombdfs(m2, b, r, step + dst, i, depth + 1);
+		bombseq.pop_back();
+	}
+	allbombs.resize(oldcnt);
+}
+
+vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep)
+{
+	bestbombseqval = 0;
+	bombseqmaxstep = maxstep;
+	bombdfs(m, start, r, 0, 0, 0);
+	return bestbombseq;
 }
 
 int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescription, const Vampire& vampire)
@@ -486,7 +571,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 
 		if (best == -1) {
 			cerr << "no target" << endl; 
-			// we gonna fall to temproary...or should we go for closest bad target
+			// we gonna fall to temporary...or should we go for closest bad target
 		}
 		else {
 			cerr << "closest target: " << targets[best] << endl;
@@ -513,7 +598,11 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	}
 
 	if (phase1) {
-		// todo Kovi?: choose bombing sequence
+		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 50 * 2); // todo how many steps (not turns) ahead
+		cerr << "seq";
+		for(auto p : seq)
+			cerr << p;
+		cerr << endl;
 		// todo Gabor: use tactical plan to follow bombing sequence
 	} else {
 		vector<pos_t> targets;

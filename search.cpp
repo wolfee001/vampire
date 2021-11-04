@@ -113,18 +113,6 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
 
 Answer Search::GetBestMove()
 {
-    /*
-    for (size_t level = mLevels.size() - 1; level >= 1; --level) {
-        for (size_t i = 0; i < mLevels[level].size();) {
-            const size_t parentIndex = mLevels[level][i].mParentIndex;
-
-            for (; mLevels[level][i].mParentIndex == parentIndex && i < mLevels[level].size(); ++i) {
-                mLevels[level - 1][parentIndex].mPermanentScore += mLevels[level][i].mPermanentScore + mLevels[level][i].mHeuristicScore;
-            }
-            mLevels[level - 1][parentIndex].mPermanentScore += mLevels[level - 1][parentIndex].mHeuristicScore;
-        }
-    }
-*/
     const auto bestIt = std::max_element(std::cbegin(mLevels.back()), std::cend(mLevels.back()), [](const TreeNode& x, const TreeNode& y) {
         const auto score1 = x.mPermanentScore + x.mHeuristicScore;
         const auto score2 = y.mPermanentScore + y.mHeuristicScore;

@@ -673,5 +673,5 @@ TEST(UsualMagic, BombSequence)
 				"O     O",
 				"OOOOOOO"
 			}
-		}, 1, 40);
+		}, 1, 36);
 }

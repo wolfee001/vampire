@@ -72,7 +72,7 @@ pos_t pos_t::GetPos(int d) const
 void bomb(map_t& m, map_t& orim, pos_t p0, int r, bool dot = true)
 {
 	m[p0.y][p0.x] = dot ? '.' : ' ';
-	if (!m.bombrange.empty())
+	if (dot && !m.bombrange.empty())
 		r = m.bombrange[p0.y][p0.x] - '0';
 	FOR0(d, 4) {
 		auto p = p0;
@@ -251,7 +251,6 @@ int getdist(map_t& m, pos_t start, vector<pos_t> targets, int r, int stepcnt, in
 		if (qi.step == stepcnt - 1) {
 			++qi.turn;
 			if (qi.turn >= MAXTURN) {
-				cerr << "max turn reached" << endl;
 				return -1;
 			}
 			if (qi.turn > lastturn) {
@@ -415,7 +414,7 @@ pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 			pos_t p0 = p1.GetPos(d);
 			char c = m[p0.y][p0.x];
 			if (c == ' ' && (reaches[p0.y][p0.x].step > reaches[p1.y][p1.x].step + 1 || 
-				reaches[start.y][start.x].step == 0)) {
+				reaches[p0.y][p0.x].step == 0)) {
 				bool simple = false;
 				int more = 0;
 				FOR0(d2, 4) {
@@ -458,7 +457,7 @@ vector<pos_t> bombseq;
 vector<pos_t> bestbombseq;
 vector<pos_t> allbombs;
 
-void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx)
+void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 {
 	reach_t currreaches[23][23];
 	auto bombs = collectgoodbombpos(m, start, r);
@@ -474,9 +473,10 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx)
 	int oldcnt = SZ(allbombs);
 	for (auto b : bombs.second) {
 		bool found = false;
-		FOR(i, lastbombidx, oldcnt - 1) { // we can put twice
+		FOR0(i, oldcnt) {
 			if (allbombs[i] == b) {
-				indices.push_back(i);
+				if (i >= lastbombidx)
+					indices.push_back(i);
 				found = true;
 				break;
 			}
@@ -487,14 +487,14 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx)
 		}
 	}
 
+	int oldseqsize = SZ(bombseq);
 	for (auto i : indices) {
-		// todo order bombs and avoid shuffled order
 		auto b = allbombs[i];
 		bombseq.push_back(b);
 		map_t m2 = m;
 		bomb(m2, m2, b, r, false);
 		int dst = currreaches[b.y][b.x].step + 6 * 2;
-		bombdfs(m2, b, r, step + dst, i);
+		bombdfs(m2, b, r, step + dst, i, depth + 1);
 		bombseq.pop_back();
 	}
 	allbombs.resize(oldcnt);
@@ -504,7 +504,7 @@ vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep)
 {
 	bestbombseqval = 0;
 	bombseqmaxstep = maxstep;
-	bombdfs(m, start, r, 0, 0);
+	bombdfs(m, start, r, 0, 0, 0);
 	return bestbombseq;
 }
 
@@ -571,7 +571,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 
 		if (best == -1) {
 			cerr << "no target" << endl; 
-			// we gonna fall to temproary...or should we go for closest bad target
+			// we gonna fall to temporary...or should we go for closest bad target
 		}
 		else {
 			cerr << "closest target: " << targets[best] << endl;
@@ -598,7 +598,11 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	}
 
 	if (phase1) {
-		// todo Kovi?: choose bombing sequence
+		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 50 * 2); // todo how many steps (not turns) ahead
+		cerr << "seq";
+		for(auto p : seq)
+			cerr << p;
+		cerr << endl;
 		// todo Gabor: use tactical plan to follow bombing sequence
 	} else {
 		vector<pos_t> targets;

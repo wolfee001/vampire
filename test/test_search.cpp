@@ -11,6 +11,7 @@ TEST(Search, Basic)
     gd.mGameId = 1;
     gd.mGrenadeRadius = 2;
     gd.mMapSize = 11;
+    gd.mMaxTick = 100;
 
     TickDescription td;
     td.mMe.mId = 8;
@@ -21,8 +22,8 @@ TEST(Search, Basic)
     td.mMe.mY = 1;
 
     td.mBat1.resize(1);
-    td.mBat1[0].mX = 10;
-    td.mBat1[0].mY = 10;
+    td.mBat1[0].mX = 9;
+    td.mBat1[0].mY = 9;
     td.mBat1[0].mDensity = 1;
 
     td.mAllBats = td.mBat1;
@@ -55,8 +56,11 @@ TEST(Search, Basic)
 
     for (size_t steps = 0; steps <= 15; ++steps) {
         Search search(td, gd, 8);
-        for (size_t i = 0; i < 10; ++i) {
-            search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::milliseconds(100));
+        for (size_t i = 0; i < 3; ++i) {
+            if (!search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::hours(200))) {
+                std::cerr << "calculate timeouted at level " << i << std::endl;
+                break;
+            }
         }
         const auto move = search.GetBestMove();
 
@@ -64,7 +68,7 @@ TEST(Search, Basic)
         for (const auto& s : move.mSteps) {
             std::cerr << s << ", ";
         }
-        std::cerr << std::endl;
+        std::cerr << std::endl << std::endl;
 
         const auto originalX = td.mMe.mX;
         const auto originalY = td.mMe.mY;
@@ -75,7 +79,7 @@ TEST(Search, Basic)
 
         EXPECT_EQ(td.mMe.mHealth, 3);
 
-        std::cerr << "position: " << td.mMe.mX << ", " << td.mMe.mY << std::endl;
+        // std::cerr << "position: " << td.mMe.mX << ", " << td.mMe.mY << std::endl;
 
         int newX = originalX;
         int newY = originalY;
@@ -97,14 +101,15 @@ TEST(Search, Basic)
         }
         EXPECT_EQ(newX, td.mMe.mX);
         EXPECT_EQ(newY, td.mMe.mY);
-
-        std::cerr << search.mLevels.size() << std::endl;
-        for (const auto& l : search.mLevels) {
-            std::cerr << l.size() << std::endl;
-        }
+        /*
+                std::cerr << search.mLevels.size() << std::endl;
+                for (const auto& l : search.mLevels) {
+                    std::cerr << l.size() << std::endl;
+                }
+        */
     }
 
-    // EXPECT_TRUE(move.mPlaceGrenade);
+    EXPECT_TRUE(td.mAllBats.empty());
 }
 
 class SearchTest : public testing::Test {

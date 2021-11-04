@@ -134,7 +134,6 @@ Answer Search::GetBestMove()
     }
 
     std::cerr << "Permanent score: " << bestIt->mPermanentScore << " Heuristic score: " << bestIt->mHeuristicScore << std::endl;
-
     /*
         for (auto it = std::cbegin(mLevels.back()); it != std::cend(mLevels.back()); ++it) {
             std::cerr << (it->mPermanentScore + it->mHeuristicScore);
@@ -174,6 +173,15 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
                 batScore += 12.F / static_cast<float>(bat.mDensity);
             }
         }
+    }
+
+    const auto closestBatIt = std::min_element(
+        std::cbegin(tickDescription.mAllBats), std::cend(tickDescription.mAllBats), [&distance, &tickDescription](const BatSquad& x, const BatSquad& y) {
+            return distance(x.mX, x.mY, tickDescription.mMe.mX, tickDescription.mMe.mY) < distance(y.mX, y.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
+        });
+    if (closestBatIt != std::cend(tickDescription.mAllBats)) {
+        const auto d = distance(closestBatIt->mX, closestBatIt->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
+        batScore += 12.F / d;
     }
 
     const std::function<bool(const PowerUp&)> filter

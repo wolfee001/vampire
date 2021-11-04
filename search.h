@@ -21,7 +21,7 @@ public:
 
         const ActionSequence action(Answer { grenadeIt != std::cend(tickDescription.mGrenades), {} });
 
-        mLevels.emplace_back().emplace_back(std::numeric_limits<uint32_t>::max(), tickDescription, 0, heuristicScore, action.GetId());
+        mLevels.emplace_back().emplace_back(std::numeric_limits<uint32_t>::max(), tickDescription, 0.F, heuristicScore, action.GetId());
     }
 
     bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);

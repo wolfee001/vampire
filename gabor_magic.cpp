@@ -2,6 +2,7 @@
 #include "search.h"
 #include <chrono>
 #include <iostream>
+#include <thread>
 
 GaborMagic::GaborMagic(const GameDescription& gameDescription)
     : IMagic(gameDescription)
@@ -16,7 +17,10 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<i
     const auto t1 = std::chrono::steady_clock::now();
 
     for (size_t i = 0; i < 10; ++i) {
-        search.CalculateNextLevel(t1 + std::chrono::milliseconds(1800));
+        if (!search.CalculateNextLevel(t1 + std::chrono::milliseconds(500))) {
+            std::cerr << "Calculation timeout at level " << i << std::endl;
+            break;
+        }
     }
     auto move = search.GetBestMove();
 

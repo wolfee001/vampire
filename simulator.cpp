@@ -40,12 +40,33 @@ const Simulator::Area::AreaVector& Simulator::Area::getAsVector() const
 
 Simulator::Simulator(const GameDescription& gameDescription)
     : mGameDescription(gameDescription)
+    , mReachableArea(mGameDescription.mMapSize)
 {
 }
 
 void Simulator::SetState(const TickDescription& state)
 {
     mState = state;
+    mReachableArea = Area(mGameDescription.mMapSize);
+    for (const auto& bat : state.mAllBats) {
+        mReachableArea.insert(bat.mX, bat.mY);
+    }
+    for (const auto& grenade : state.mGrenades) {
+        mReachableArea.insert(grenade.mX, grenade.mY);
+    }
+    for (int x = 0; x < mGameDescription.mMapSize; ++x) {
+        for (int y = 0; y < mGameDescription.mMapSize; ++y) {
+            if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
+                mReachableArea.insert(x, y);
+            }
+        }
+    }
+    mReachableArea.mAreas.flip();
+}
+
+const Simulator::Area& Simulator::GetReachableArea() const
+{
+    return mReachableArea;
 }
 
 void Simulator::SetVampireMove(int id, const Answer& move)
@@ -249,29 +270,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
             CHECK(false, "Some calculation is wrong...");
         }
     }
-    /*
-        if (state.mMe.mGhostModeTick == 0) {
-            const auto areaIt = std::find_if(std::cbegin(areas), std::cend(areas), [&state](const auto& area) {
-                return area.mArea.find({ state.mMe.mX, state.mMe.mY }) != area.mArea.end();
-            });
-            if (areaIt != std::cend(areas)) {
-                state.mMe.mHealth--;
-                state.mMe.mGhostModeTick = 3;
 
-                const auto meIt = std::find(std::cbegin(areaIt->mVampireIds), std::cend(areaIt->mVampireIds), state.mMe.mId);
-                const bool meInTheArea = meIt == std::cend(areaIt->mVampireIds);
-
-                for (const auto& vId : areaIt->mVampireIds) {
-                    if (vId == state.mMe.mId) {
-                        // i get penalized for injuring myself
-                        mNewPoints[vId] -= 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
-                    } else {
-                        mNewPoints[vId] += 48.F / static_cast<float>(areaIt->mVampireIds.size() - (meInTheArea ? 1 : 0));
-                    }
-                }
-            }
-        }
-    */
     std::vector<Vampire> survivorVampires;
 
     std::vector<Vampire*> vampires = { &state.mMe };
@@ -456,7 +455,6 @@ bool Simulator::IsValidMove(int id, const Answer& move) const
             return false;
         }
     }
-
     if (move.mSteps.size() > 3) {
         return false;
     }

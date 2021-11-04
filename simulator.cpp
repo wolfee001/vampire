@@ -128,7 +128,7 @@ std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
     // a) powerup show up - not simulated, comes as state
     // b) powerup pick up
     // c) blow up grenades recursively and calculate grenade damage
-    // d) calculate light damage - NOT SIMULATED! (maybe later. i didn't understand the rule.)
+    // d) calculate light damage
     // e) plant grenades
     // f) move
 
@@ -141,9 +141,11 @@ std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
     PowerupPickUp(retVal);
     // 4) (c) blow up grenades recursively and calculate grenade damage
     BlowUpGrenades(retVal);
-    // 5) (e) plant grenades
+    // 5) (d) calculate light damage
+    HitLight(retVal);
+    // 7) (e) plant grenades
     PlantGrenades(retVal);
-    // 6) (f) move
+    // 7) (f) move
     Move(retVal);
 
     mState = TickDescription();
@@ -358,6 +360,25 @@ void Simulator::BlowUpGrenades(TickDescription& state)
         }
     }
     state.mEnemyVampires = survivorVampires;
+}
+
+void Simulator::HitLight(TickDescription& state)
+{
+    if (state.mMe.mHealth == mState.mMe.mHealth) {
+        if (mLitArea.find(state.mMe.mX, state.mMe.mY)) {
+            state.mMe.mHealth--;
+        }
+    }
+
+    for (auto& vampire : state.mEnemyVampires) {
+        const auto oldVamp
+            = std::find_if(mState.mEnemyVampires.begin(), mState.mEnemyVampires.end(), [&vampire](const auto& element) { return element.mId == vampire.mId; });
+        if (vampire.mHealth == oldVamp->mHealth) {
+            if (mLitArea.find(vampire.mX, vampire.mY)) {
+                vampire.mHealth--;
+            }
+        }
+    }
 }
 
 void Simulator::PlantGrenades(TickDescription& state)

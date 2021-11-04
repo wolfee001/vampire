@@ -52,6 +52,7 @@ private:
     void RemoveDisappearedPowerups(TickDescription& state);
     void PowerupPickUp(TickDescription& state);
     void BlowUpGrenades(TickDescription& state);
+    void HitLight(TickDescription& state);
     void PlantGrenades(TickDescription& state);
     void Move(TickDescription& state);
 

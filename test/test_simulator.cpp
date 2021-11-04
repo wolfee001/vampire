@@ -861,3 +861,53 @@ TEST_F(SimulateTest, GetBlowAreasJoint)
             std::pair<int, int> { 3, 3 }, std::pair<int, int> { 3, 4 }, std::pair<int, int> { 3, 5 }, std::pair<int, int> { 3, 6 },
             std::pair<int, int> { 4, 3 }, std::pair<int, int> { 5, 3 }, std::pair<int, int> { 6, 3 }));
 }
+
+TEST_F(SimulateTest, DecreaseHpByLight)
+{
+    std::pair<TickDescription, Simulator::NewPoints> tickRes;
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 510 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 2);
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 511 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 1);
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 511 1",
+        "VAMPIRE 1 2 1 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 2);
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 517 1",
+        "VAMPIRE 1 1 2 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 2);
+
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 518 1",
+        "VAMPIRE 1 1 2 2 1 2 0"
+    }));
+    // clang-format on
+    tickRes = mSimulator->Tick();
+    ASSERT_EQ(tickRes.first.mMe.mHealth, 1);
+}

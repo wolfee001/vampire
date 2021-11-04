@@ -321,7 +321,13 @@ void Framework::Render()
     }
 
     {
-        ImGui::Begin("Map");
+        if (mGameDescription.mGameId != -1 && mTickDescription.mRequest.mGameId != -1) {
+            ImGui::Begin(fmt::format("Map GAME {} LEVEL {} TICK {} MAXTICK: {}###Map", mGameDescription.mGameId, mGameDescription.mLevelId,
+                mTickDescription.mRequest.mTick, mGameDescription.mMaxTick)
+                             .c_str());
+        } else {
+            ImGui::Begin("Map###Map");
+        }
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         const ImVec2 p = ImGui::GetCursorScreenPos();

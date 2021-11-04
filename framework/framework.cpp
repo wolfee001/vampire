@@ -206,6 +206,29 @@ void Framework::Render()
                 ImGui::SameLine();
                 if (ImGui::Button(mPlayBook.mIsPlaying ? " || " : " > ")) {
                     mPlayBook.mIsPlaying = !mPlayBook.mIsPlaying;
+                    if (mPlayBook.mIsPlaying) {
+                        std::thread t([&mPlayBook = mPlayBook]() {
+                            while (mPlayBook.mIsPlaying) {
+                                std::chrono::milliseconds time
+                                    = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+                                std::chrono::milliseconds delta = time - mPlayBook.mLastStepTime;
+                                if (delta.count() > mPlayBook.mStepSpeed) {
+                                    mPlayBook.mLastStepTime = time;
+                                    if (mPlayBook.mStep < mPlayBook.mGameLoader.GetStepCount() - 1) {
+                                        mPlayBook.mStep++;
+                                        GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
+                                        const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
+                                        if (resp != step.mAnswerMessage) {
+                                            mPlayBook.mIsCorrupted = true;
+                                        }
+                                    } else {
+                                        mPlayBook.mIsPlaying = false;
+                                    }
+                                }
+                            }
+                        });
+                        t.detach();
+                    }
                 }
                 ImGui::SameLine();
                 ImGui::BeginDisabled(mPlayBook.mIsPlaying);
@@ -230,28 +253,6 @@ void Framework::Render()
         }
 
         ImGui::End();
-    }
-
-    {
-        if (mPlayBook.mIsPlaying) {
-            std::chrono::milliseconds time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-            std::chrono::milliseconds delta = time - mPlayBook.mLastStepTime;
-            if (delta.count() > mPlayBook.mStepSpeed) {
-                mPlayBook.mLastStepTime = time;
-                if (mPlayBook.mStep < mPlayBook.mGameLoader.GetStepCount() - 1) {
-                    mPlayBook.mStep++;
-                    GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
-                    std::thread t([step, &mPlayBook = mPlayBook]() {
-                        const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
-                        if (resp != step.mAnswerMessage) {
-                            mPlayBook.mIsCorrupted = true;
-                            return;
-                        }
-                    });
-                    t.detach();
-                }
-            }
-        }
     }
 
     {

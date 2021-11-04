@@ -647,6 +647,22 @@ TEST_F(SimulateTest, Plantgrenade)
     ASSERT_EQ(newPoints.at(3), 0);
 }
 
+TEST_F(SimulateTest, PlantgrenadeAfterDeath)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 2 1 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { true, {} });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+}
+
 TEST_F(SimulateTest, StepSimple)
 {
     // clang-format off
@@ -662,6 +678,23 @@ TEST_F(SimulateTest, StepSimple)
     ASSERT_EQ(newState.mMe.mX, 3);
     ASSERT_EQ(newState.mMe.mY, 1);
     ASSERT_EQ(newPoints.at(1), 0);
+}
+
+TEST_F(SimulateTest, StepSimpleAfterDeath)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 2 1 2",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { true, { 'R', 'R' } });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mMe.mX, 3);
+    ASSERT_EQ(newState.mMe.mY, 1);
 }
 
 TEST_F(SimulateTest, StepExtra)

@@ -1,8 +1,9 @@
 #include "search.h"
 #include "action_sequence.h"
+#include <boost/iterator/filter_iterator.hpp>
 #include <iostream>
 
-void Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
+bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
 {
     const int currentLevelIndex = static_cast<int>(mLevels.size());
     mLevels.resize(mLevels.size() + 1);
@@ -24,7 +25,7 @@ void Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
         for (ActionSequence::ActionSequence_t i = 0; i <= ActionSequence::MaxSequenceId; ++i) {
             if (std::chrono::steady_clock::now() > deadline) {
                 mLevels.resize(mLevels.size() - 1);
-                return;
+                return false;
             }
 
             const ActionSequence action(i);
@@ -97,46 +98,41 @@ void Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             simulator.SetState(tick);
 
             const auto score = Evaluate(tickDescription, newPoints, move);
-            nextLevel.emplace_back(nodeIndex, tickDescription, score, action.GetId());
+            nextLevel.emplace_back(nodeIndex, tickDescription, node.mScore + score, action.GetId());
         }
     }
+
+    return true;
 }
 
 Answer Search::GetBestMove()
 {
     for (size_t level = mLevels.size() - 1; level >= 1; --level) {
-
         for (size_t i = 0; i < mLevels[level].size();) {
             const size_t parentIndex = mLevels[level][i].mParentIndex;
 
-            mLevels[level - 1][parentIndex].mScore = 0;
-
             for (; mLevels[level][i].mParentIndex == parentIndex && i < mLevels[level].size(); ++i) {
-                mLevels[level - 1][parentIndex].mScore += mLevels[level][i].mScore;
-
-                mLevels[level - 1][parentIndex].mNumberOfChildren += mLevels[level][i].mNumberOfChildren + 1;
+                // mLevels[level - 1][parentIndex].mNumberOfChildren += mLevels[level][i].mNumberOfChildren + 1;
+                mLevels[level - 1][parentIndex].mScore += mLevels[level][i].mScore * 1.0F / static_cast<float>(level);
             }
         }
     }
 
     const auto bestIt = std::max_element(std::cbegin(mLevels[1]), std::cend(mLevels[1]), [](const TreeNode& x, const TreeNode& y) {
-        const auto score1 = x.mScore / static_cast<float>(x.mNumberOfChildren);
-        const auto score2 = y.mScore / static_cast<float>(y.mNumberOfChildren);
+        const auto score1 = x.mScore;
+        const auto score2 = y.mScore;
 
-        if (std::fabs(score1 - score2) < 0.1F) {
-            return ActionSequence(x.mAction).GetNumberOfSteps() < ActionSequence(y.mAction).GetNumberOfSteps();
-        } else {
-            return score1 < score2;
-        }
+        return score1 < score2;
     });
 
     for (auto it = std::cbegin(mLevels[1]); it != std::cend(mLevels[1]); ++it) {
         if (it == bestIt) {
-            std::cerr << (it->mScore / static_cast<float>(it->mNumberOfChildren)) << "*, ";
+            std::cerr << it->mScore << "*, ";
         } else {
-            std::cerr << (it->mScore / static_cast<float>(it->mNumberOfChildren)) << ", ";
+            std::cerr << it->mScore << ", ";
         }
     }
+    std::cerr << std::endl;
 
     return ActionSequence(bestIt->mAction).GetAnswer();
 }
@@ -144,42 +140,48 @@ Answer Search::GetBestMove()
 float Search::Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move) const
 {
     const auto distance2 = [](int x, int y) -> float { return static_cast<float>(std::max(x, y) - std::min(x, y)); };
-
     const auto distance = [&distance2](int x1, int y1, int x2, int y2) -> float { return distance2(x1, x2) + distance2(y1, y2); };
 
-    float batScore = 0;
+    Simulator simulator(mGameDescription);
+    simulator.SetState(tickDescription);
+    const auto areas = simulator.GetBlowAreas();
 
-    const auto myGrenade = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
-        [&tickDescription](const Grenade& g) { return g.mId == tickDescription.mMe.mId; });
-    if (myGrenade != std::cend(tickDescription.mGrenades)) {
+    float batScore = 0;
+    float grenadePenalty = 0;
+
+    for (const auto& area : areas) {
+        if (area.mArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY)) {
+            grenadePenalty -= 48.F / static_cast<float>(area.mTickCount);
+        }
+
+        if (std::find(std::cbegin(area.mVampireIds), std::cend(area.mVampireIds), mPlayerId) == std::cend(area.mVampireIds)) {
+            continue;
+        }
+
         for (const auto& bat : tickDescription.mAllBats) {
-            if (distance2(bat.mX, myGrenade->mX) <= static_cast<float>(myGrenade->mRange)
-                && distance2(bat.mY, myGrenade->mY) <= static_cast<float>(myGrenade->mRange)) {
-                batScore += 12 / static_cast<float>(bat.mDensity);
+            if (area.mArea.find(bat.mX, bat.mY)) {
+                batScore += 12.F / static_cast<float>(bat.mDensity);
             }
         }
     }
 
-    const auto batIt = std::min_element(
-        std::cbegin(tickDescription.mAllBats), std::cend(tickDescription.mAllBats), [&tickDescription, &distance](const BatSquad& x, const BatSquad& y) {
-            return distance(tickDescription.mMe.mX, tickDescription.mMe.mY, x.mX, x.mY) < distance(tickDescription.mMe.mX, tickDescription.mMe.mY, y.mX, y.mY);
-        });
+    const std::function<bool(const PowerUp&)> filter
+        = [&simulator](const PowerUp& powerUp) { return !simulator.GetReachableArea().find(powerUp.mX, powerUp.mY); };
 
-    if (batIt != std::cend(tickDescription.mAllBats)) {
-        batScore += 12.F / distance(tickDescription.mMe.mX, tickDescription.mMe.mY, batIt->mX, batIt->mY);
+    const auto beginIt = boost::make_filter_iterator(filter, std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
+    const auto endIt = boost::make_filter_iterator(filter, std::cend(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
+
+    float powerUpScore = 0;
+    const auto powerUpIt = std::min_element(beginIt, endIt, [&distance, &tickDescription](const PowerUp& x, const PowerUp& y) {
+        return distance(x.mX, x.mY, tickDescription.mMe.mX, tickDescription.mMe.mY) < distance(y.mX, y.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
+    });
+    if (powerUpIt != endIt) {
+        const auto d = distance(powerUpIt->mX, powerUpIt->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
+        powerUpScore += 48.F / (d + 1.F);
     }
 
-    float grenadePenalty = 0;
-    const auto closeGrenadeIt = std::min_element(
-        std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades), [&tickDescription, &distance](const Grenade& x, const Grenade& y) {
-            return distance(tickDescription.mMe.mX, tickDescription.mMe.mY, x.mX, x.mY) < distance(tickDescription.mMe.mX, tickDescription.mMe.mY, y.mX, y.mY);
-        });
-    if (closeGrenadeIt != std::cend(tickDescription.mGrenades)) {
-        if (distance2(tickDescription.mMe.mX, closeGrenadeIt->mX) < static_cast<float>(closeGrenadeIt->mRange + 2)
-            || distance2(tickDescription.mMe.mY, closeGrenadeIt->mY) < static_cast<float>(closeGrenadeIt->mRange + 2)) {
-            grenadePenalty -= 48.F / static_cast<float>(closeGrenadeIt->mTick);
-        }
-    }
+    (void)move;
+    (void)newPoints;
 
-    return newPoints.at(mPlayerId) + 0.001F * static_cast<float>(move.mSteps.size()) + batScore + grenadePenalty;
+    return newPoints.at(mPlayerId) + batScore + 2.F * (3.F - static_cast<float>(tickDescription.mMe.mHealth)) * grenadePenalty + powerUpScore;
 }

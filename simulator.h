@@ -42,7 +42,9 @@ public:
     std::pair<TickDescription, NewPoints> Tick();
     bool IsValidMove(int id, const Answer& move) const;
     std::vector<BlowArea> GetBlowAreas(const bool blowNow = false);
+    Area GetBlowArea(const Grenade& grenade, const TickDescription& state);
     std::map<int, Answer> GetMoves(const TickDescription& newState);
+    const Area& GetReachableArea() const;
 
 private:
     void RecalculateTicks(TickDescription& state);
@@ -51,11 +53,11 @@ private:
     void BlowUpGrenades(TickDescription& state);
     void PlantGrenades(TickDescription& state);
     void Move(TickDescription& state);
-    Area GetBlowArea(const Grenade& grenade, const TickDescription& state);
 
 private:
     GameDescription mGameDescription;
     TickDescription mState;
     std::map<int, Answer> mVampireMoves;
     NewPoints mNewPoints;
+    Area mReachableArea;
 };

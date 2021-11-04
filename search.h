@@ -24,7 +24,7 @@ public:
         mLevels.emplace_back().emplace_back(std::numeric_limits<uint16_t>::max(), tickDescription, score, action.GetId());
     }
 
-    void CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
+    bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     Answer GetBestMove();
 

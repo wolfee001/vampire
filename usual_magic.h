@@ -35,7 +35,7 @@ struct pos_t {
 	}
 	int GetDist(const pos_t& o) const { return abs(x - o.x) + abs(y - o.y); }
 	bool operator==(const pos_t& o) const { return x == o.x && y == o.y; }
-	bool operator<(const pos_t& o) const { return x < o.x || x == o.x && y < o.y; }
+	bool operator<(const pos_t& o) const { return x < o.x || (x == o.x && y < o.y); }
 	bool operator!=(const pos_t& o) const { return x != o.x || y != o.y; }
 	bool isvalid() const { return x != -1; }
 	friend std::ostream& operator<< (std::ostream& stream, const pos_t& p)

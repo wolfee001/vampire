@@ -171,32 +171,34 @@ void Framework::Render()
                 }
                 ImGui::EndDisabled();
 
-                ImGui::BeginDisabled(mPlayBook.mIsPlaying);
+                ImGui::BeginDisabled(mPlayBook.mIsPlaying || mPlayBook.mSteppingDisabled);
                 if (ImGui::Button("|< ")) {
                     if (mPlayBook.mStep > 0) {
                         mPlayBook.mStep--;
                         if (mPlayBook.mSolverIsStateful) {
                             std::vector<GameLoader::Step> steps = mPlayBook.mGameLoader.GetStepUntil(mPlayBook.mStep);
                             std::thread t([steps, &mPlayBook = mPlayBook]() {
+                                mPlayBook.mSteppingDisabled = true;
                                 for (const auto& element : steps) {
                                     const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
                                     if (resp != element.mAnswerMessage) {
                                         mPlayBook.mIsCorrupted = true;
                                         mPlayBook.mIsPlaying = false;
-                                        return;
                                     }
                                 }
+                                mPlayBook.mSteppingDisabled = false;
                             });
                             t.detach();
                         } else {
                             GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                             std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
+                                mPlayBook.mSteppingDisabled = true;
                                 const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                 mVampireCumulatedPoints = step.mPoints;
                                 if (resp != step.mAnswerMessage) {
                                     mPlayBook.mIsCorrupted = true;
-                                    return;
                                 }
+                                mPlayBook.mSteppingDisabled = false;
                             });
                             t.detach();
                         }
@@ -204,6 +206,7 @@ void Framework::Render()
                 }
                 ImGui::EndDisabled();
                 ImGui::SameLine();
+                ImGui::BeginDisabled(mPlayBook.mSteppingDisabled);
                 if (ImGui::Button(mPlayBook.mIsPlaying ? " || " : " > ")) {
                     mPlayBook.mIsPlaying = !mPlayBook.mIsPlaying;
                     if (mPlayBook.mIsPlaying) {
@@ -230,18 +233,20 @@ void Framework::Render()
                         t.detach();
                     }
                 }
+                ImGui::EndDisabled();
                 ImGui::SameLine();
-                ImGui::BeginDisabled(mPlayBook.mIsPlaying);
+                ImGui::BeginDisabled(mPlayBook.mIsPlaying || mPlayBook.mSteppingDisabled);
                 if (ImGui::Button(" >|")) {
                     if (mPlayBook.mStep < mPlayBook.mGameLoader.GetStepCount() - 1) {
                         mPlayBook.mStep++;
                         GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                         std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
+                            mPlayBook.mSteppingDisabled = true;
                             const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                             if (resp != step.mAnswerMessage) {
                                 mPlayBook.mIsCorrupted = true;
-                                return;
                             }
+                            mPlayBook.mSteppingDisabled = false;
                         });
                         t.detach();
                     }

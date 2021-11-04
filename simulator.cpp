@@ -565,9 +565,9 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
             continue;
         }
 
+        Simulator::BlowArea ba(mGameDescription.mMapSize);
         std::vector<const Grenade*> grenadesToProcess;
         grenadesToProcess.push_back(grenadeDesc.first);
-        Simulator::BlowArea ba(mGameDescription.mMapSize);
         while (!grenadesToProcess.empty()) {
             const Grenade& grenade = *grenadesToProcess.back();
             grenadesToProcess.pop_back();
@@ -585,9 +585,15 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
                     }
                 }
             }
-            ba.mTickCount = ba.mTickCount == -1 ? grenade.mTick : std::min(ba.mTickCount, grenade.mTick);
-            ba.mVampireIds.insert(grenade.mId);
         }
+
+        for (const auto& g : mState.mGrenades) {
+            if (ba.mArea.find(g.mX, g.mY)) {
+                ba.mTickCount = ba.mTickCount == -1 ? g.mTick : std::min(ba.mTickCount, g.mTick);
+                ba.mVampireIds.insert(g.mId);
+            }
+        }
+
         retVal.push_back(ba);
     }
     return retVal;

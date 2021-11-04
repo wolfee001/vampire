@@ -14,9 +14,9 @@
 // . blast (with last step of the turn do not step there if blast is there on next turn map)
 
 
-void testsim(map_t inp, map_t expect)
+void testsim(map_t inp, map_t expect, bool dot = true)
 {
-    auto res = sim(inp);
+    auto res = sim(inp, dot);
     ASSERT_EQ(res,  expect);
 }
 
@@ -61,6 +61,26 @@ TEST(UsualMagic, UsualMagicSim)
 				"OOOOO"
 			}
 		}
+		);
+	testsim(
+		{
+			{
+				"OOOOO",
+				"O   O",
+				"O1O O",
+				"O-  O",
+				"OOOOO"
+			}
+		},
+		{
+			{
+				"OOOOO",
+				"O   O",
+				"O O O",
+				"O   O",
+				"OOOOO"
+			}
+		}, false
 		);
 	testsim(
 		{
@@ -502,17 +522,24 @@ TEST(UsualMagic, CollectGoodBombPos)
     checkgoodbombpos(
 		{ { 
             "OOOOO", 
-            "OP +O", 
-            "O O O", 
+            "OPT-O", 
+            "O OTO", 
+            "O   O", 
+            "OOOOO" } }, 1, 7);
+    checkgoodbombpos(
+		{ { 
+            "OOOOO", 
+            "OPT+O", 
+            "O OTO", 
             "O   O", 
             "OOOOO" } }, 1, 7);
     checkgoodbombpos(
 		{ { 
             "OOOOO", 
             "OPT-O", 
-            "O OTO", 
-            "O   O", 
-            "OOOOO" } }, 1, 7);
+            "O O O", 
+            "O+  O", 
+            "OOOOO" } }, 1, 3);
     checkgoodbombpos(
 		{ { 
             "OOOOO", 
@@ -532,4 +559,74 @@ TEST(UsualMagic, CollectGoodBombPos)
 				"OOOOOOO"
 			}
 		}, 1, 19);
+}
+
+void checkbombsequence(map_t m, int r, int maxstep)
+{
+	pos_t start;
+	map_t orim = m;
+	std::vector<pos_t> expect;
+	for(int y = 0; y < (int) m.size(); ++y) {
+		for(int x = 0; x < (int) m.size(); ++x) {
+			if (m[y][x] == 'P') {
+				m[y][x] = ' ';
+				start = pos_t(y, x);
+			}
+		}
+	}
+	int repeat = 0;
+	for(int i = 0; i < 9; ++i) {
+		bool found = false;
+		int later = 0;
+		for(int y = 0; y < (int) m.size() && !found; ++y) {
+			for(int x = 0; x < (int) m.size() && !found; ++x) {
+				if (m[y][x] == '0' + i) {
+					m[y][x] = ' ';
+					for(int j = 0; j <= repeat; ++j)
+						expect.push_back(pos_t(y, x));
+					found = true;
+					break;
+				}
+				else if (m[y][x] == '0' + i + 1)
+					later = 1;
+				else if (m[y][x] == '0' + i + 2)
+					later = 2;
+			}
+		}
+		if (!found) {
+			if (!later)
+				break;
+			repeat = later;
+		} else
+			repeat = 0;
+	}
+	auto res = bombsequence(m, start, r, maxstep);
+	ASSERT_EQ(res, expect);
+}
+
+// tests should have clear winner
+TEST(UsualMagic, BombSequence)
+{
+    checkbombsequence(
+		{ { 
+            "OOOOO", 
+            "OP1-O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }, 1, 12);
+
+/*   checkbombsequence(
+		{ { 
+            "OOOOO", 
+            "OP2+O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }, 1, 24);
+    checkbombsequence(
+		{ { 
+            "OOOOO", 
+            "OP3+O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }, 1, 36); */
 }

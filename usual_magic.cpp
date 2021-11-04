@@ -69,9 +69,9 @@ pos_t pos_t::GetPos(int d) const
 	return pos_t(y + dir[d].y, x + dir[d].x);
 }
 
-void bomb(map_t& m, map_t& orim, pos_t p0, int r)
+void bomb(map_t& m, map_t& orim, pos_t p0, int r, bool dot = true)
 {
-	m[p0.y][p0.x] = '.';
+	m[p0.y][p0.x] = dot ? '.' : ' ';
 	if (!m.bombrange.empty())
 		r = m.bombrange[p0.y][p0.x] - '0';
 	FOR0(d, 4) {
@@ -94,20 +94,20 @@ void bomb(map_t& m, map_t& orim, pos_t p0, int r)
 			else if (c == '-') {
 				if (orim[p.y][p.x] != c)
 					continue;
-				c = '.';
+				c = dot ? '.' : ' ';
 				break;
 			}
 			else if (c >= '1' && c <= '5')
 				bomb(m, orim, p, 1);
 			else if (c >= '6' && c <= '9' || c == '0')
 				bomb(m, orim, p, 2);
-			else
+			else if (dot)
 				c = '.';
 		}
 	}
 }
 
-map_t sim(map_t& m)
+map_t sim(map_t& m, bool dot)
 {
 	auto res = m;
 	FOR0(y, SZ(m)) {
@@ -119,11 +119,11 @@ map_t sim(map_t& m)
 				c = '9';
 			else if (c == '1') {
 				map_t orim = res;
-				bomb(res, orim, p, 1);
+				bomb(res, orim, p, 1, dot);
 			}
 			else if (c == '6') {
 				map_t orim = res;
-				bomb(res, orim, p, 2);
+				bomb(res, orim, p, 2, dot);
 			}
 			else if (c >= '2' && c <= '9')
 				--c;
@@ -396,13 +396,14 @@ UsualMagic::UsualMagic(const GameDescription& gameDescription)
 pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 {
 	vector<pos_t> res;
+	vector<pos_t> other;
 	deque<pos_t> q;
 	q.push_back(start);
 	reach_t unreachable;
 	FOR0(y, SZ(m))
 		FOR0(x, SZ(m))
-			reaches[y][x].turn = 0;
-	reaches[start.y][start.x].turn = 1;
+			reaches[y][x].step = 1000;
+	reaches[start.y][start.x].step = 0;
 	int lastturn = 0;
 	pos_t firsttargetreached;
 	int cnt = 1;
@@ -413,7 +414,7 @@ pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 		FOR0(d, 4) {
 			pos_t p0 = p1.GetPos(d);
 			char c = m[p0.y][p0.x];
-			if (c == ' ' && reaches[p0.y][p0.x].turn == 0) {
+			if (c == ' ' && reaches[p0.y][p0.x].step > reaches[p1.y][p1.x].step + 1) {
 				bool simple = false;
 				int more = 0;
 				FOR0(d2, 4) {
@@ -437,13 +438,72 @@ pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 				}
 				if (simple || more > 1)
 					res.push_back(p0);
+				else if (more)
+					other.push_back(p0);
 				q.push_back(p0);
-				reaches[p0.y][p0.x].turn = 1;
+				reaches[p0.y][p0.x].step = reaches[p1.y][p1.x].step + 1;
 				++cnt;
 			}
 		}
 	}
+	if (res.empty())
+		return make_pair(cnt, other);
 	return make_pair(cnt, res);
+}
+
+int bestbombseqval;
+int bombseqmaxstep;
+vector<pos_t> bombseq;
+vector<pos_t> bestbombseq;
+vector<pos_t> allbombs;
+
+void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx)
+{
+	reach_t currreaches[23][23];
+	auto bombs = collectgoodbombpos(m, start, r);
+	memcpy(currreaches, reaches, sizeof(reaches));
+
+	if (step > bombseqmaxstep) {
+		MAXA2(bestbombseqval, (bombs.first + 1) * 100 - step, bestbombseq, bombseq);
+		return;
+	}
+
+	// keep bombs ordered so that we dont waste on shuffles
+	vector<int> indices;
+	int oldcnt = SZ(allbombs);
+	for (auto b : bombs.second) {
+		bool found = false;
+		FOR(i, lastbombidx, oldcnt - 1) { // we can put twice
+			if (allbombs[i] == b) {
+				indices.push_back(i);
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			indices.push_back(SZ(allbombs));
+			allbombs.push_back(b);
+		}
+	}
+
+	for (auto i : indices) {
+		// todo order bombs and avoid shuffled order
+		auto b = allbombs[i];
+		bombseq.push_back(b);
+		map_t m2 = m;
+		bomb(m2, m2, b, r, false);
+		int dst = currreaches[b.y][b.x].step + 6 * 2;
+		bombdfs(m2, b, r, step + dst, i);
+		bombseq.pop_back();
+	}
+}
+
+vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep)
+{
+	bestbombseqval = 0;
+	bombseqmaxstep = maxstep;
+	bombdfs(m, start, r, 0, 0);
+	return bestbombseq;
 }
 
 int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescription, const Vampire& vampire)

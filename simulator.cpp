@@ -41,6 +41,7 @@ const Simulator::Area::AreaVector& Simulator::Area::getAsVector() const
 Simulator::Simulator(const GameDescription& gameDescription)
     : mGameDescription(gameDescription)
     , mReachableArea(mGameDescription.mMapSize)
+    , mLitArea(mGameDescription.mMapSize)
 {
 }
 
@@ -62,11 +63,33 @@ void Simulator::SetState(const TickDescription& state)
         }
     }
     mReachableArea.mAreas.flip();
+
+    mLitArea = Area(mGameDescription.mMapSize);
+    if (state.mRequest.mTick > mGameDescription.mMaxTick) {
+        int x = mGameDescription.mMapSize - 1;
+        int y = 0;
+        for (int i = 0; i < state.mRequest.mTick - mGameDescription.mMaxTick; ++i) {
+            mLitArea.insert(x, y);
+            mLitArea.insert(mGameDescription.mMapSize - x - 1, mGameDescription.mMapSize - y - 1);
+            mLitArea.insert(y, mGameDescription.mMapSize - x - 1);
+            mLitArea.insert(mGameDescription.mMapSize - y - 1, x);
+            x--;
+            if (x == y) {
+                y++;
+                x = mGameDescription.mMapSize - 1 - y;
+            }
+        }
+    }
 }
 
 const Simulator::Area& Simulator::GetReachableArea() const
 {
     return mReachableArea;
+}
+
+const Simulator::Area& Simulator::GetLitArea() const
+{
+    return mLitArea;
 }
 
 void Simulator::SetVampireMove(int id, const Answer& move)

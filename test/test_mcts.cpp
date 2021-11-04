@@ -9,6 +9,7 @@ TEST(MCTS, Basic)
     gd.mGameId = 1;
     gd.mGrenadeRadius = 2;
     gd.mMapSize = 5;
+    gd.mMaxTick = 500;
 
     TickDescription td;
     td.mMe.mId = 8;

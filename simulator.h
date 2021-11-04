@@ -45,12 +45,14 @@ public:
     Area GetBlowArea(const Grenade& grenade, const TickDescription& state);
     std::map<int, Answer> GetMoves(const TickDescription& newState);
     const Area& GetReachableArea() const;
+    const Area& GetLitArea() const;
 
 private:
     void RecalculateTicks(TickDescription& state);
     void RemoveDisappearedPowerups(TickDescription& state);
     void PowerupPickUp(TickDescription& state);
     void BlowUpGrenades(TickDescription& state);
+    void HitLight(TickDescription& state);
     void PlantGrenades(TickDescription& state);
     void Move(TickDescription& state);
 
@@ -60,4 +62,5 @@ private:
     std::map<int, Answer> mVampireMoves;
     NewPoints mNewPoints;
     Area mReachableArea;
+    Area mLitArea;
 };

@@ -321,27 +321,38 @@ void Framework::Render()
     }
 
     {
-        ImGui::Begin("Map");
+        if (mGameDescription.mGameId != -1 && mTickDescription.mRequest.mGameId != -1) {
+            ImGui::Begin(fmt::format("Map GAME {} LEVEL {} TICK {} MAXTICK: {}###Map", mGameDescription.mGameId, mGameDescription.mLevelId,
+                mTickDescription.mRequest.mTick, mGameDescription.mMaxTick)
+                             .c_str());
+        } else {
+            ImGui::Begin("Map###Map");
+        }
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         const ImVec2 p = ImGui::GetCursorScreenPos();
         draw_list->AddRectFilled(p, ImVec2(p.x + 23 * 34, p.y + 23 * 34), IM_COL32(238, 238, 238, 255));
+
+        Simulator simulator(mGameDescription);
+        simulator.SetState(mTickDescription);
+        const std::vector<Simulator::BlowArea>& blowAreas = simulator.GetBlowAreas();
+        const Simulator::Area& litAreas = simulator.GetLitArea();
 
         for (int x = 0; x < mGameDescription.mMapSize; ++x) {
             for (int y = 0; y < mGameDescription.mMapSize; ++y) {
                 ImVec2 tl = ImGui::GetCursorScreenPos();
                 tl.x += static_cast<float>(x) * 34.f + 1.f;
                 tl.y += static_cast<float>(y) * 34.f + 1.f;
-                draw_list->AddRectFilled(tl, ImVec2(tl.x + 32, tl.y + 32), IM_COL32(96, 163, 98, 255));
+                if (litAreas.find(x, y)) {
+                    draw_list->AddRectFilled(tl, ImVec2(tl.x + 32, tl.y + 32), IM_COL32(255, 255, 101, 255));
+                } else {
+                    draw_list->AddRectFilled(tl, ImVec2(tl.x + 32, tl.y + 32), IM_COL32(96, 163, 98, 255));
+                }
                 if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
                     draw_list->AddImage(mAssets["bush"], tl, ImVec2(tl.x + 32, tl.y + 32));
                 }
             }
         }
-
-        Simulator simulator(mGameDescription);
-        simulator.SetState(mTickDescription);
-        std::vector<Simulator::BlowArea> blowAreas = simulator.GetBlowAreas();
 
         for (const auto& area : blowAreas) {
             for (const auto& position : area.mArea.getAsVector()) {
@@ -360,12 +371,6 @@ void Framework::Render()
         for (const auto& vampire : mTickDescription.mEnemyVampires) {
             ImVec2 vampirePos = ImVec2(p.x + static_cast<float>(vampire.mX) * 34 + 1, p.y + static_cast<float>(vampire.mY) * 34 + 1);
             draw_list->AddImage(mAssets[mVampireAvatarMapping[vampire.mId]], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
-        }
-
-        for (const auto& bat : mTickDescription.mAllBats) {
-            std::string batAvatar = "bat" + std::to_string(bat.mDensity);
-            ImVec2 pos = ImVec2(p.x + static_cast<float>(bat.mX) * 34 + 1, p.y + static_cast<float>(bat.mY) * 34 + 1);
-            draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
         }
 
         for (const auto& grenade : mTickDescription.mGrenades) {
@@ -428,8 +433,14 @@ void Framework::Render()
                 }
             }(pu.mType);
             ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
-            draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32));
+            draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32), { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, 128));
             draw_list->AddText({ pos.x + 12, pos.y + 10 }, IM_COL32(0, 0, 0, 255), fmt::format("{}", pu.mRemainingTick).c_str());
+        }
+
+        for (const auto& bat : mTickDescription.mAllBats) {
+            std::string batAvatar = "bat" + std::to_string(bat.mDensity);
+            ImVec2 pos = ImVec2(p.x + static_cast<float>(bat.mX) * 34 + 1, p.y + static_cast<float>(bat.mY) * 34 + 1);
+            draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
         }
 
         ImGui::End();

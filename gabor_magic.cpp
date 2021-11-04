@@ -15,9 +15,14 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<i
     Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);
 
     const auto t1 = std::chrono::steady_clock::now();
+    auto calculationTime = std::chrono::milliseconds(1000);
+
+    if (tickDescription.mAllBats.empty() && tickDescription.mPowerUps.empty() && tickDescription.mGrenades.empty()) {
+        calculationTime = std::chrono::milliseconds(500);
+    }
 
     for (size_t i = 0; i < 10; ++i) {
-        if (!search.CalculateNextLevel(t1 + std::chrono::milliseconds(500))) {
+        if (!search.CalculateNextLevel(t1 + calculationTime)) {
             std::cerr << "Calculation timeout at level " << i << std::endl;
             break;
         }

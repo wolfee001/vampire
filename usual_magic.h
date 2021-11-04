@@ -19,7 +19,7 @@ struct event_t {
 struct pos_t {
 	int y;
 	int x;
-	pos_t(int y = -1, int x = -1) : y(y), x(x) {}
+	pos_t(int _y = -1, int _x = -1) : y(_y), x(_x) {}
 	pos_t GetPos(int d) const;
 	int GetDir(pos_t p2) const
 	{

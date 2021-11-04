@@ -38,7 +38,6 @@ file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/data)
 add_library(libhelper
     parser.cpp
     simulator.cpp
-    mcts.cpp
     search.cpp
 )
 target_link_libraries(libhelper
@@ -50,6 +49,7 @@ target_link_libraries(libhelper
 add_library(libmagic
     usual_magic.cpp
     gabor_magic.cpp
+    final_magic.cpp
 )
 target_link_libraries(libmagic
     PUBLIC project_options
@@ -82,7 +82,6 @@ add_executable(unittest
     test/test_solver.cpp
     test/test_simulator.cpp
     test/test_action_sequence.cpp
-    test/test_mcts.cpp
     test/test_usual_magic.cpp
     test/test_search.cpp
 )

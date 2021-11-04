@@ -364,7 +364,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
 
 void Simulator::HitLight(TickDescription& state)
 {
-    if (state.mMe.mHealth == mState.mMe.mHealth) {
+    if (mState.mMe.mId != -1 && state.mMe.mHealth == mState.mMe.mHealth) {
         if (mLitArea.find(state.mMe.mX, state.mMe.mY)) {
             state.mMe.mHealth--;
         }

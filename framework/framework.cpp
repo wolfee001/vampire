@@ -368,12 +368,6 @@ void Framework::Render()
             draw_list->AddImage(mAssets[mVampireAvatarMapping[vampire.mId]], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
         }
 
-        for (const auto& bat : mTickDescription.mAllBats) {
-            std::string batAvatar = "bat" + std::to_string(bat.mDensity);
-            ImVec2 pos = ImVec2(p.x + static_cast<float>(bat.mX) * 34 + 1, p.y + static_cast<float>(bat.mY) * 34 + 1);
-            draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
-        }
-
         for (const auto& grenade : mTickDescription.mGrenades) {
             if (grenade.mTick > 0) {
                 ImVec2 pos = ImVec2(p.x + static_cast<float>(grenade.mX) * 34 + 1, p.y + static_cast<float>(grenade.mY) * 34 + 1);
@@ -434,8 +428,14 @@ void Framework::Render()
                 }
             }(pu.mType);
             ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
-            draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32));
+            draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32), { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, 128));
             draw_list->AddText({ pos.x + 12, pos.y + 10 }, IM_COL32(0, 0, 0, 255), fmt::format("{}", pu.mRemainingTick).c_str());
+        }
+
+        for (const auto& bat : mTickDescription.mAllBats) {
+            std::string batAvatar = "bat" + std::to_string(bat.mDensity);
+            ImVec2 pos = ImVec2(p.x + static_cast<float>(bat.mX) * 34 + 1, p.y + static_cast<float>(bat.mY) * 34 + 1);
+            draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
         }
 
         ImGui::End();

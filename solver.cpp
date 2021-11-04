@@ -17,6 +17,7 @@
 
 #include "magic_selector.h"
 
+#include "final_magic.h"
 #include "gabor_magic.h"
 #include "usual_magic.h"
 
@@ -68,6 +69,8 @@ void solver::startMessage(const std::vector<std::string>& startInfos)
     mMagic = std::make_unique<UsualMagic>(mGameDescription);
 #elif defined(GABOR_MAGIC)
     mMagic = std::make_unique<GaborMagic>(mGameDescription);
+#elif defined(FINAL_MAGIC)
+    mMagic = std::make_unique<FinalMagic>(mGameDescription);
 #else
 #pragma error "No magic defined!"
 #endif

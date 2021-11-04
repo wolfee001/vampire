@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fmt/core.h>
 #include <imgui.h>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -282,25 +283,39 @@ void Framework::Render()
     {
         ImGui::Begin("Game handler");
 
-        ImGui::Combo("Select map", &mMapSelector, " RANDOM\0 1\0 2\0 3\0 4\0 5\0 6\0 7\0 8\0 9\0 10\0");
+        ImGui::BeginDisabled(mIsPlaying);
+        ImGui::Combo("Select map", &mMapSelector, " RANDOM\0 1\0 2\0 3\0 4\0 5\0 6\0 7\0 8\0 9\0 10\0 ALL\0");
         ImGui::Checkbox("Record game", &mRecordGame);
 
         if (ImGui::Button("GO", ImVec2(-1.F, 0.F))) {
-            std::thread t([&mMapSelector = mMapSelector]() {
-                std::string selectedMap = std::to_string(mMapSelector);
-                std::string programName = "fake_program_name";
+            static std::vector<int> selectedMaps;
+            selectedMaps.clear();
+            if (mMapSelector != 11) {
+                selectedMaps.emplace_back(mMapSelector);
+            } else {
+                selectedMaps.resize(10);
+                std::iota(selectedMaps.begin(), selectedMaps.end(), 1);
+            }
+            std::thread t([&mIsPlaying = mIsPlaying]() {
+                mIsPlaying = true;
+                for (const auto& selectedMap : selectedMaps) {
+                    const std::string selectedMapString = std::to_string(selectedMap);
+                    const std::string programName = "fake_program_name";
 #if defined(__GNUC__) && !defined(__llvm__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
-                char* params[2] = { const_cast<char*>(programName.data()), const_cast<char*>(selectedMap.data()) };
+                    char* params[2] = { const_cast<char*>(programName.data()), const_cast<char*>(selectedMapString.data()) };
 #if defined(__GNUC__) && !defined(__llvm__)
 #pragma GCC diagnostic pop
 #endif
-                __main(2, params);
+                    __main(2, params);
+                }
+                mIsPlaying = false;
             });
             t.detach();
         }
+        ImGui::EndDisabled();
 
         ImGui::End();
     }

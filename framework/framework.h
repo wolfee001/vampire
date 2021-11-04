@@ -54,4 +54,6 @@ private:
     PlayBook mPlayBook;
 
     std::map<int, float> mVampireCumulatedPoints;
+
+    bool mIsPlaying = false;
 };

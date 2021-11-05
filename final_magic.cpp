@@ -16,7 +16,7 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const std::map<i
 
     std::chrono::milliseconds start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
     mUsualMagic.mTimeout = totalAllowedTime / 4;
-    const auto& retVal = mUsualMagic.Tick(tickDescription, points);
+    mUsualMagic.Tick(tickDescription, points);
     if (mUsualMagic.mPhase == PHASE1) {
         mGaborMagic.SetBombSequence(mUsualMagic.mPath);
     } else if (mUsualMagic.mPhase == ITEM || mUsualMagic.mPhase == BETWEEN_ITEMS) {
@@ -24,7 +24,7 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const std::map<i
     }
     std::chrono::milliseconds usualTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - start;
     mGaborMagic.SetTickTimeout(totalAllowedTime - usualTime);
-    // const auto& retVal = mGaborMagic.Tick(tickDescription, points);
+    const auto& retVal = mGaborMagic.Tick(tickDescription, points);
     std::chrono::milliseconds totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - start;
 
     std::cerr << "Total allowed time: " << totalAllowedTime.count() << " ms" << std::endl;

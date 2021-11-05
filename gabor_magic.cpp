@@ -15,10 +15,10 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<i
     Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);
 
     const auto t1 = std::chrono::steady_clock::now();
-    auto calculationTime = std::chrono::milliseconds(1000);
+    auto calculationTime = mTimeout;
 
     if (tickDescription.mAllBats.empty() && tickDescription.mPowerUps.empty() && tickDescription.mGrenades.empty()) {
-        calculationTime = std::chrono::milliseconds(500);
+        calculationTime = mTimeout / 2;
     }
 
     for (size_t i = 0; i < 10; ++i) {
@@ -37,5 +37,24 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<i
         std::cerr << s << ", ";
     }
     std::cerr << std::endl;
+
+    mBombSequence.clear();
+    mPathSequence.clear();
+
     return move;
+}
+
+void GaborMagic::SetBombSequence(const std::vector<pos_t>& sequence)
+{
+    mBombSequence = sequence;
+}
+
+void GaborMagic::SetPathSequence(const std::vector<pos_t>& sequence)
+{
+    mPathSequence = sequence;
+}
+
+void GaborMagic::SetTickTimeout(std::chrono::milliseconds millis)
+{
+    mTimeout = millis;
 }

@@ -189,36 +189,37 @@ TEST_F(SearchTest, BombUnderMe)
     }
 }
 
-/*
 TEST_F(SearchTest, BatBesideMe)
 {
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 3 1 2 0",
-        "BAT1 1 2"
+        "BAT1 1 3",
+        "BAT2 3 1"
     };
     // clang-format on
     TickDescription state = parseTickDescription(info);
-    Simulator::NewPoints cumulativePoints;
-    cumulativePoints[1] = 0;
 
     for (size_t tick = 0; tick <= 6; ++tick) {
         Search search(state, mGameDescripton, 1);
-        for (size_t i = 0; i < 6; ++i) {
+        for (size_t i = 0; i < 5; ++i) {
             search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::hours(100));
         }
 
         mSimulator->SetState(state);
         const auto move = search.GetBestMove();
+
+        std::cerr << " grenade: " << move.mPlaceGrenade << " moves: ";
+        for (const auto& s : move.mSteps) {
+            std::cerr << s << ", ";
+        }
+        std::cerr << std::endl << std::endl;
+
         mSimulator->SetVampireMove(1, move);
         Simulator::NewPoints newPoints;
         std::tie(state, newPoints) = mSimulator->Tick();
 
-        cumulativePoints.at(1) += newPoints.at(1);
-
         EXPECT_EQ(state.mMe.mHealth, 3);
     }
-    EXPECT_EQ(cumulativePoints.at(1), 12);
 }
-*/

@@ -36,14 +36,21 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
-            if (action.GetNumberOfSteps() == 2) {
+            if (action.GetNumberOfSteps() > 1) {
                 const auto firstStep = action.GetNthStep(0);
                 const auto secondStep = action.GetNthStep(1);
 
-                // visszamozgás
                 if ((firstStep == 0 && secondStep == 1) || (firstStep == 1 && secondStep == 0) || (firstStep == 2 && secondStep == 3)
                     || (firstStep == 3 && secondStep == 2)) {
                     continue;
+                }
+
+                if (action.GetNumberOfSteps() == 3) {
+                    const auto thirdStep = action.GetNthStep(1);
+                    if ((thirdStep == 0 && secondStep == 1) || (thirdStep == 1 && secondStep == 0) || (thirdStep == 2 && secondStep == 3)
+                        || (thirdStep == 3 && secondStep == 2)) {
+                        continue;
+                    }
                 }
             }
 
@@ -71,20 +78,28 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 }
             }
 
-            const TreeNode* searchNode = &node;
-            bool sameAsPreviousStatus = false;
-            for (int level = currentLevelIndex - 2; level >= 1; --level) {
-                searchNode = &(mLevels[static_cast<size_t>(level)][searchNode->mParentIndex]);
-                if (ActionSequence(searchNode->mAction).IsGrenade()) {
-                    break;
-                }
+            if (action.GetNumberOfSteps() > 0) {
+                const TreeNode* searchNode = &node;
+                bool sameAsPreviousStatus = false;
+                for (int level = currentLevelIndex - 2; level >= 1; --level) {
+                    searchNode = &(mLevels[static_cast<size_t>(level)][searchNode->mParentIndex]);
+                    if (ActionSequence(searchNode->mAction).IsGrenade()) {
+                        break;
+                    }
 
-                if (searchNode->mTickDescription.mMe.mX == nextX && searchNode->mTickDescription.mMe.mY == nextY) {
-                    sameAsPreviousStatus = true;
-                    break;
+                    if (searchNode->mTickDescription.mMe.mX == nextX && searchNode->mTickDescription.mMe.mY == nextY) {
+                        sameAsPreviousStatus = true;
+                        break;
+                    }
+                }
+                if (sameAsPreviousStatus) {
+                    continue;
                 }
             }
-            if (sameAsPreviousStatus) {
+
+            if (mTomatoSafePlay && std::find_if(std::cbegin(tick.mPowerUps), std::cend(tick.mPowerUps), [&nextX, &nextY](const PowerUp& powerup) {
+                    return powerup.mType == PowerUp::Type::Tomato && powerup.mX == nextX && powerup.mY == nextY;
+                }) != std::cend(tick.mPowerUps)) {
                 continue;
             }
 
@@ -103,7 +118,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
         }
     }
 
-    if (nextLevel.empty()) {
+    if (nextLevel.empty() || nextLevel.size() < currentLevel.size()) {
         mLevels.resize(mLevels.size() - 1);
         return false;
     }
@@ -119,7 +134,7 @@ Answer Search::GetBestMove()
 
         if (score1 == score2) {
             if (x.mPermanentScore != y.mPermanentScore) {
-                return x.mPermanentScore != y.mPermanentScore;
+                return x.mPermanentScore < y.mPermanentScore;
             } else {
                 return ActionSequence(x.mAction).GetNumberOfSteps() < ActionSequence(y.mAction).GetNumberOfSteps();
             }
@@ -133,17 +148,9 @@ Answer Search::GetBestMove()
         current = &mLevels[level - 1][current->mParentIndex];
     }
 
-    std::cerr << "Permanent score: " << bestIt->mPermanentScore << " Heuristic score: " << bestIt->mHeuristicScore << std::endl;
-    /*
-        for (auto it = std::cbegin(mLevels.back()); it != std::cend(mLevels.back()); ++it) {
-            std::cerr << (it->mPermanentScore + it->mHeuristicScore);
-            if (it == bestIt) {
-                std::cerr << "*";
-            }
-            std::cerr << ", ";
-        }
-        std::cerr << std::endl;
-    */
+    std::cerr << "Permanent score: " << bestIt->mPermanentScore << " Heuristic score: " << bestIt->mHeuristicScore
+              << " last level size: " << mLevels.back().size() << std::endl;
+
     return ActionSequence(current->mAction).GetAnswer();
 }
 
@@ -162,6 +169,10 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     for (const auto& area : areas) {
         if (area.mArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY)) {
             grenadePenalty -= 48.F / static_cast<float>(area.mTickCount);
+
+            if (area.mTickCount == 1) {
+                grenadePenalty -= 96.F;
+            }
         }
 
         if (std::find(std::cbegin(area.mVampireIds), std::cend(area.mVampireIds), mPlayerId) == std::cend(area.mVampireIds)) {
@@ -181,11 +192,11 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
         });
     if (closestBatIt != std::cend(tickDescription.mAllBats)) {
         const auto d = distance(closestBatIt->mX, closestBatIt->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
-        batScore += 12.F / d;
+        batScore += 0.01F / d;
     }
 
     const std::function<bool(const PowerUp&)> filter
-        = [&simulator](const PowerUp& powerUp) { return !simulator.GetReachableArea().find(powerUp.mX, powerUp.mY); };
+        = [&simulator](const PowerUp& powerUp) { return simulator.GetReachableArea().find(powerUp.mX, powerUp.mY); };
 
     const auto beginIt = boost::make_filter_iterator(filter, std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
     const auto endIt = boost::make_filter_iterator(filter, std::cend(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
@@ -194,13 +205,26 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     const auto powerUpIt = std::min_element(beginIt, endIt, [&distance, &tickDescription](const PowerUp& x, const PowerUp& y) {
         return distance(x.mX, x.mY, tickDescription.mMe.mX, tickDescription.mMe.mY) < distance(y.mX, y.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
     });
-    if (powerUpIt != endIt) {
+    if (powerUpIt != endIt && (!mTomatoSafePlay || powerUpIt->mType != PowerUp::Type::Tomato)) {
         const auto d = distance(powerUpIt->mX, powerUpIt->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
         powerUpScore += 48.F / (d + 1.F);
+        if (powerUpIt->mRemainingTick > 0) {
+            powerUpScore -= 48.F * static_cast<float>(std::distance(beginIt, endIt));
+        }
     }
+
+    const float healthPenalty = -96.F * static_cast<float>(3 - tickDescription.mMe.mHealth);
+
+    float positionScore = 0.F;
+    const auto& reachableArea = simulator.GetReachableArea();
+
+    positionScore += 0.01F * reachableArea.find(tickDescription.mMe.mX + 1, tickDescription.mMe.mY);
+    positionScore += 0.01F * reachableArea.find(tickDescription.mMe.mX - 1, tickDescription.mMe.mY);
+    positionScore += 0.01F * reachableArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY + 1);
+    positionScore += 0.01F * reachableArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY - 1);
 
     (void)move;
     (void)newPoints;
 
-    return batScore + (3.F - static_cast<float>(tickDescription.mMe.mHealth)) * grenadePenalty + powerUpScore + 0.01F * static_cast<float>(move.mSteps.size());
+    return batScore + grenadePenalty + powerUpScore + 0.01F * static_cast<float>(move.mSteps.size()) + healthPenalty + positionScore;
 }

@@ -22,6 +22,7 @@ class Framework {
         std::chrono::milliseconds mLastStepTime = std::chrono::milliseconds(0);
         int mStepSpeed = 200;
         bool mSteppingDisabled = false;
+        bool mPlaybackOnly = false;
     };
 
 public:

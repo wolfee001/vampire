@@ -453,6 +453,8 @@ pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 
 int bestbombseqval;
 int bombseqmaxstep;
+int bombtimeout = 1000;
+std::chrono::time_point<std::chrono::steady_clock>  bombtimestart;
 vector<pos_t> bombseq;
 vector<pos_t> bestbombseq;
 vector<pos_t> allbombs;
@@ -461,12 +463,15 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 {
 	reach_t currreaches[23][23];
 	auto bombs = collectgoodbombpos(m, start, r);
-	memcpy(currreaches, reaches, sizeof(reaches));
-
 	if (step > bombseqmaxstep) {
 		MAXA2(bestbombseqval, (bombs.first + 1) * 100 - step, bestbombseq, bombseq);
 		return;
 	}
+
+	memcpy(currreaches, reaches, sizeof(reaches));
+
+	if (SZ(bombs.second) > 5)
+		step += SZ(bombs.second) / 2;
 
 	// keep bombs ordered so that we dont waste on shuffles
 	vector<int> indices;
@@ -488,6 +493,7 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 	}
 
 	int oldseqsize = SZ(bombseq);
+
 	for (auto i : indices) {
 		auto b = allbombs[i];
 		bombseq.push_back(b);
@@ -496,6 +502,8 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 		int dst = currreaches[b.y][b.x].step + 6 * 2;
 		bombdfs(m2, b, r, step + dst, i, depth + 1);
 		bombseq.pop_back();
+		if (chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - bombtimestart).count() > bombtimeout)
+			break;
 	}
 	allbombs.resize(oldcnt);
 }
@@ -504,6 +512,7 @@ vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep)
 {
 	bestbombseqval = 0;
 	bombseqmaxstep = maxstep;
+	bombtimestart = chrono::steady_clock::now();
 	bombdfs(m, start, r, 0, 0, 0);
 	return bestbombseq;
 }
@@ -605,6 +614,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	}
 
 	if (mInPhase1) {
+		bombtimeout = mTimeout.count();
 		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 50 * 2); // todo how many steps (not turns) ahead
 		mPhase = PHASE1;
 		mPath = seq;

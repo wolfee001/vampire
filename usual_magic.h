@@ -2,6 +2,7 @@
 #pragma once
 
 #include <iostream>
+#include <chrono>
 #include "i_magic.h"
 
 struct map_t : std::vector<std::string> 
@@ -30,6 +31,7 @@ enum phase_t {
 
 class UsualMagic : public IMagic {
 public:
+	std::chrono::milliseconds mTimeout;
 	bool mInPhase1 = true;
     explicit UsualMagic(const GameDescription& gameDescription);
     Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points);

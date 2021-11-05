@@ -53,7 +53,7 @@ enum phase_t {
 	NONE,
 	PHASE1,
 	ITEM,
-	IDLE
+	BETWEEN_ITEMS
 };
 
 class UsualMagic : public IMagic {

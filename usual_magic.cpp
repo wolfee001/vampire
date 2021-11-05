@@ -529,6 +529,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
     Answer answer;
 	mPhase = NONE;
 	mPath.clear();
+	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick)
+		return answer;
+
 	cerr << "turn " << tickDescription.mRequest.mTick << endl;
 
 	auto& me = tickDescription.mMe;
@@ -681,7 +684,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 			answer.mPlaceGrenade = false; 
 			answer.mSteps = bestdirs;
 			cerr << "idle, go closer";
-			mPhase = IDLE;
+			mPhase = BETWEEN_ITEMS;
 			pos_t p = mypos;
 			for(auto c : answer.mSteps) {
 				p = p.GetPos(c == 'U' ? 0 : c == 'R' ? 1 : c == 'D' ? 2 : 3);

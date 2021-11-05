@@ -74,6 +74,7 @@ TEST(ActionSequence, AllFromAnswer)
         EXPECT_FALSE(ids[as.GetId()]);
 
         EXPECT_EQ(answer.mSteps.size(), as.GetNumberOfSteps());
+        EXPECT_EQ(answer.mPlaceGrenade, as.IsGrenade());
 
         for (size_t i = 0; i < answer.mSteps.size(); ++i) {
             switch (answer.mSteps[i]) {

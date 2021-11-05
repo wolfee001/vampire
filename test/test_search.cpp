@@ -189,7 +189,7 @@ TEST_F(SearchTest, BombUnderMe)
     }
 }
 
-TEST_F(SearchTest, BatBesideMe)
+TEST_F(SearchTest, StuckInMap10)
 {
     // clang-format off
     std::vector<std::string> info = {
@@ -222,4 +222,97 @@ TEST_F(SearchTest, BatBesideMe)
 
         EXPECT_EQ(state.mMe.mHealth, 3);
     }
+}
+
+TEST_F(SearchTest, StuckInMap7)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 3 3 3 1 2 0",
+        "BAT3 1 4",
+        "BAT2 4 1 3 5 5 3"
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    Search search(state, mGameDescripton, 1);
+    for (size_t i = 0; i < 6; ++i) {
+        search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::hours(100));
+    }
+
+    mSimulator->SetState(state);
+    const auto move = search.GetBestMove();
+
+    mSimulator->SetVampireMove(1, move);
+    Simulator::NewPoints newPoints;
+    std::tie(state, newPoints) = mSimulator->Tick();
+
+    EXPECT_FALSE(state.mGrenades.empty());
+}
+
+TEST_F(SearchTest, MultipleGrenades)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 3 3 2 0",
+        "BAT1 3 1 3 3 3 5",
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    for (size_t tick = 0; tick < 3; ++tick) {
+        Search search(state, mGameDescripton, 1);
+        for (size_t i = 0; i < 3; ++i) {
+            search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::hours(100));
+        }
+
+        mSimulator->SetState(state);
+        const auto move = search.GetBestMove();
+
+        mSimulator->SetVampireMove(1, move);
+        Simulator::NewPoints newPoints;
+        std::tie(state, newPoints) = mSimulator->Tick();
+    }
+
+    mSimulator->SetState(state);
+    const auto areas = mSimulator->GetBlowAreas();
+    EXPECT_EQ(areas.size(), 1);
+    EXPECT_TRUE(areas[0].mArea.find(state.mBat1[0].mX, state.mBat1[0].mY));
+    EXPECT_TRUE(areas[0].mArea.find(state.mBat1[1].mX, state.mBat1[1].mY));
+    EXPECT_TRUE(areas[0].mArea.find(state.mBat1[2].mX, state.mBat1[2].mY));
+}
+
+TEST_F(SearchTest, MultipleGrenadesEasy)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 3 3 1 0",
+        "BAT1 2 1 2 3 2 5",
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    for (size_t tick = 0; tick < 3; ++tick) {
+        Search search(state, mGameDescripton, 1);
+        for (size_t i = 0; i < 3; ++i) {
+            search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::hours(100));
+        }
+
+        mSimulator->SetState(state);
+        const auto move = search.GetBestMove();
+
+        mSimulator->SetVampireMove(1, move);
+        Simulator::NewPoints newPoints;
+        std::tie(state, newPoints) = mSimulator->Tick();
+    }
+
+    mSimulator->SetState(state);
+    const auto areas = mSimulator->GetBlowAreas();
+    EXPECT_EQ(areas.size(), 3);
+    EXPECT_TRUE(areas[0].mArea.find(state.mBat1[0].mX, state.mBat1[0].mY));
+    EXPECT_TRUE(areas[1].mArea.find(state.mBat1[1].mX, state.mBat1[1].mY));
+    EXPECT_TRUE(areas[2].mArea.find(state.mBat1[2].mX, state.mBat1[2].mY));
 }

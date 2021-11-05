@@ -1,11 +1,12 @@
 #include "search.h"
 #include "action_sequence.h"
 #include <boost/iterator/filter_iterator.hpp>
+#include <cmath>
 #include <iostream>
 
 bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
 {
-    const int currentLevelIndex = static_cast<int>(mLevels.size());
+    [[maybe_unused]] const int currentLevelIndex = static_cast<int>(mLevels.size());
     mLevels.resize(mLevels.size() + 1);
 
     const auto& currentLevel = mLevels[mLevels.size() - 2];
@@ -113,8 +114,9 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             simulator.SetState(tick);
 
             const auto heuristicScore = Evaluate(tickDescription, newPoints, move);
-            nextLevel.emplace_back(
-                nodeIndex, tickDescription, node.mPermanentScore + newPoints.at(mPlayerId), node.mHeuristicScore + heuristicScore, action.GetId());
+            nextLevel.emplace_back(nodeIndex, tickDescription,
+                node.mPermanentScore + newPoints.at(mPlayerId) * std::pow(0.99F, static_cast<float>(currentLevelIndex)),
+                node.mHeuristicScore + heuristicScore * std::pow(0.99F, static_cast<float>(currentLevelIndex)), action.GetId());
         }
     }
 
@@ -128,16 +130,50 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
 
 Answer Search::GetBestMove()
 {
-    const auto bestIt = std::max_element(std::cbegin(mLevels.back()), std::cend(mLevels.back()), [](const TreeNode& x, const TreeNode& y) {
+    const auto printBranch = [&mLevels = mLevels](const TreeNode& node) {
+        std::vector<ActionSequence> actions;
+
+        const TreeNode* current = &node;
+        for (size_t level = mLevels.size() - 1; level > 1; --level) {
+            actions.emplace_back(current->mAction);
+            current = &mLevels[level - 1][current->mParentIndex];
+        }
+        actions.emplace_back(current->mAction);
+
+        std::reverse(std::begin(actions), std::end(actions));
+
+        std::cerr << "Permanent score: " << node.mPermanentScore << " Heuristic score: " << node.mHeuristicScore << std::endl;
+        for (const auto& a : actions) {
+            const auto answer = a.GetAnswer();
+            std::cerr << " grenade: " << answer.mPlaceGrenade << " moves: ";
+            for (const auto& s : answer.mSteps) {
+                std::cerr << s << ", ";
+            }
+            std::cerr << std::endl;
+        }
+    };
+
+    const auto bestIt = std::max_element(std::cbegin(mLevels.back()), std::cend(mLevels.back()), [&printBranch](const TreeNode& x, const TreeNode& y) {
         const auto score1 = x.mPermanentScore + x.mHeuristicScore;
         const auto score2 = y.mPermanentScore + y.mHeuristicScore;
 
-        if (score1 == score2) {
+        if (std::fabs(score1 - score2) < 0.0001F) {
+            // std::cerr << "score: " << score1 << std::endl;
+            // printBranch(x);
+            // std::cerr << std::endl;
+            // printBranch(y);
+            // std::cerr << "---------------" << std::endl;
+
             if (x.mPermanentScore != y.mPermanentScore) {
                 return x.mPermanentScore < y.mPermanentScore;
-            } else {
-                return ActionSequence(x.mAction).GetNumberOfSteps() < ActionSequence(y.mAction).GetNumberOfSteps();
             }
+            const ActionSequence xAction(x.mAction);
+            const ActionSequence yAction(y.mAction);
+
+            if (xAction.GetNumberOfSteps() != yAction.GetNumberOfSteps()) {
+                return xAction.GetNumberOfSteps() < yAction.GetNumberOfSteps();
+            }
+            return xAction.IsGrenade() < yAction.IsGrenade();
         }
 
         return score1 < score2;
@@ -150,6 +186,7 @@ Answer Search::GetBestMove()
 
     std::cerr << "Permanent score: " << bestIt->mPermanentScore << " Heuristic score: " << bestIt->mHeuristicScore
               << " last level size: " << mLevels.back().size() << std::endl;
+    // printBranch(*bestIt);
 
     return ActionSequence(current->mAction).GetAnswer();
 }
@@ -166,9 +203,11 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     float batScore = 0;
     float grenadePenalty = 0;
 
+    std::vector<int> bombedBats(tickDescription.mAllBats.size(), 0);
     for (const auto& area : areas) {
+
         if (area.mArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY)) {
-            grenadePenalty -= 48.F / static_cast<float>(area.mTickCount);
+            grenadePenalty -= 12.F / static_cast<float>(area.mTickCount);
 
             if (area.mTickCount == 1) {
                 grenadePenalty -= 96.F;
@@ -179,9 +218,12 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
             continue;
         }
 
-        for (const auto& bat : tickDescription.mAllBats) {
-            if (area.mArea.find(bat.mX, bat.mY)) {
+        for (size_t batIndex = 0; batIndex < tickDescription.mAllBats.size(); ++batIndex) {
+            const auto& bat = tickDescription.mAllBats[batIndex];
+
+            if (bombedBats[batIndex] < bat.mDensity && area.mArea.find(bat.mX, bat.mY)) {
                 batScore += 12.F / static_cast<float>(bat.mDensity);
+                bombedBats[batIndex]++;
             }
         }
     }
@@ -223,8 +265,10 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     positionScore += 0.01F * reachableArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY + 1);
     positionScore += 0.01F * reachableArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY - 1);
 
-    (void)move;
-    (void)newPoints;
+    // const float moveScore = 0.01F * static_cast<float>(move.mSteps.size());
 
-    return batScore + grenadePenalty + powerUpScore + 0.01F * static_cast<float>(move.mSteps.size()) + healthPenalty + positionScore;
+    (void)newPoints;
+    (void)move;
+
+    return batScore + grenadePenalty + powerUpScore + healthPenalty + positionScore;
 }

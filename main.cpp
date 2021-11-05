@@ -199,6 +199,10 @@ int main(int argc, char** argv)
         return 0;
     }
 
+    std::cerr.setf(std::ios::fixed, std::ios::floatfield);
+    std::cerr.precision(6);
+    std::cerr.width(6);
+
     const bool logout = argc > 1 && 0 == std::strcmp("logout", argv[1]);
     const int level = argc > 1 && argv[1][0] ? std::atoi(argv[1]) : 0;
     const bool from_console = (argc > 2 && 0 == std::strcmp("console", argv[2])) || (argc > 1 && 0 == std::strcmp("console", argv[1]));

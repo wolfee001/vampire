@@ -32,6 +32,11 @@ public:
                 != std::cend(tickDescription.mEnemyVampires);
     }
 
+    void SetBombSequence(std::vector<pos_t> sequence)
+    {
+        mBombSequence = std::move(sequence);
+    }
+
     bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     Answer GetBestMove();
@@ -61,4 +66,7 @@ public:
     const GameDescription& mGameDescription;
     int mPlayerId;
     bool mTomatoSafePlay = false;
+
+    // usual magic stuff
+    std::vector<pos_t> mBombSequence;
 };

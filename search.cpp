@@ -1,5 +1,6 @@
 #include "search.h"
 #include "action_sequence.h"
+#include "gabor_magic.h"
 #include <boost/iterator/filter_iterator.hpp>
 #include <cmath>
 #include <iostream>
@@ -202,9 +203,28 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
 
     float batScore = 0;
     float grenadePenalty = 0;
+    float bombingTargetScore = 0;
+
+    std::optional<pos_t> bombTarget;
+    if (!mBombSequence.empty()) {
+        // find uncovered bombing site
+        for (const auto& bomb : mBombSequence) {
+            const auto areaIt
+                = std::find_if(std::cbegin(areas), std::cend(areas), [&bomb](const Simulator::BlowArea& area) { return area.mArea.find(bomb.x, bomb.y); });
+            if (areaIt != std::cend(areas)) {
+                bombTarget = bomb;
+                break;
+            }
+        }
+    }
 
     std::vector<int> bombedBats(tickDescription.mAllBats.size(), 0);
     for (const auto& area : areas) {
+
+        // prioritize bombing site
+        if (bombTarget && area.mArea.find(bombTarget->x, bombTarget->y)) {
+            bombingTargetScore += 10.F;
+        }
 
         if (area.mArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY)) {
             grenadePenalty -= 12.F / static_cast<float>(area.mTickCount);
@@ -270,5 +290,5 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     (void)newPoints;
     (void)move;
 
-    return batScore + grenadePenalty + powerUpScore + healthPenalty + positionScore;
+    return batScore + grenadePenalty + powerUpScore + healthPenalty + positionScore + bombingTargetScore;
 }

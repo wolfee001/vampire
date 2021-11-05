@@ -14,6 +14,8 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<i
 {
     Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);
 
+    search.SetBombSequence(mBombSequence);
+
     const auto t1 = std::chrono::steady_clock::now();
     auto calculationTime = mTimeout;
 

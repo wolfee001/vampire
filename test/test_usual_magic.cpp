@@ -616,7 +616,7 @@ TEST(UsualMagic, BombSequence)
             "OP1-O", 
             "O O O", 
             "O   O", 
-            "OOOOO" } }, 1, 12);
+            "OOOOO" } }, 1, 6);
 
    checkbombsequence(
 		{ { 
@@ -624,21 +624,21 @@ TEST(UsualMagic, BombSequence)
             "OP2+O", 
             "O O O", 
             "O   O", 
-            "OOOOO" } }, 1, 24);
+            "OOOOO" } }, 1, 12);
     checkbombsequence(
 		{ { 
             "OOOOO", 
             "OP3*O", 
             "O O O", 
             "O   O", 
-            "OOOOO" } }, 1, 36);
+            "OOOOO" } }, 1, 18);
     checkbombsequence(
 		{ { 
             "OOOOO", 
             "OP1-O", 
             "O*O2O", 
             "O  -O", 
-            "OOOOO" } }, 1, 24);
+            "OOOOO" } }, 1, 12);
 	checkbombsequence(
 		{
 			{
@@ -650,7 +650,7 @@ TEST(UsualMagic, BombSequence)
 				"O  3- O",
 				"OOOOOOO"
 			}
-		}, 1, 36);
+		}, 1, 18);
 	checkbombsequence(
 		{
 			{
@@ -662,7 +662,7 @@ TEST(UsualMagic, BombSequence)
 				"O     O",
 				"OOOOOOO"
 			}
-		}, 1, 36);
+		}, 1, 18);
 	checkbombsequence(
 		{
 			{
@@ -674,5 +674,5 @@ TEST(UsualMagic, BombSequence)
 				"O     O",
 				"OOOOOOO"
 			}
-		}, 1, 36);
+		}, 1, 18);
 }

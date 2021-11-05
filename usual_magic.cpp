@@ -381,9 +381,6 @@ map_t gen(int n)
 	return m;
 }
 
-// todo Kovi
-// phase1 plan
-
 UsualMagic::UsualMagic(const GameDescription& gameDescription)
     : IMagic(gameDescription)
 {
@@ -446,6 +443,7 @@ pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 			}
 		}
 	}
+	reaches[start.y][start.x].step = 0;
 	if (res.empty())
 		return make_pair(cnt, other);
 	return make_pair(cnt, res);
@@ -458,20 +456,40 @@ std::chrono::time_point<std::chrono::steady_clock>  bombtimestart;
 vector<pos_t> bombseq;
 vector<pos_t> bestbombseq;
 vector<pos_t> allbombs;
+bool bombseqbatcnt = false;
+
+int batcnt(map_t& m)
+{
+	int cnt = 0;
+	FOR0(y, SZ(m)) {
+		FOR0(x, SZ(m)) {
+			char c = m[y][x];
+			if (c == '-')
+				++cnt;
+			else if (c == '+')
+				cnt += 2;
+			else if (c == '*')
+				cnt += 3;
+		}
+	}
+	return cnt;
+}
 
 void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 {
 	reach_t currreaches[23][23];
 	auto bombs = collectgoodbombpos(m, start, r);
+	sort(bombs.second.begin(), bombs.second.end());
 	if (step > bombseqmaxstep) {
-		MAXA2(bestbombseqval, (bombs.first + 1) * 100 - step, bestbombseq, bombseq);
+//		for(auto b : bombseq)
+//			cerr << b << ' ';
+		int v = (bombseqbatcnt ? batcnt(m) : (bombs.first + 1)) * 100 - step;
+//		cerr << v << endl;
+		MAXA2(bestbombseqval, v, bestbombseq, bombseq);
 		return;
 	}
 
 	memcpy(currreaches, reaches, sizeof(reaches));
-
-	if (SZ(bombs.second) > 5)
-		step += SZ(bombs.second) / 2;
 
 	// keep bombs ordered so that we dont waste on shuffles
 	vector<int> indices;
@@ -499,7 +517,12 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 		bombseq.push_back(b);
 		map_t m2 = m;
 		bomb(m2, m2, b, r, false);
-		int dst = currreaches[b.y][b.x].step + 6 * 2;
+
+		int dst = currreaches[b.y][b.x].step;
+		if (dst)
+			dst = (dst + 1) / 2;
+		dst += 6;
+
 		bombdfs(m2, b, r, step + dst, i, depth + 1);
 		bombseq.pop_back();
 		if (chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - bombtimestart).count() > bombtimeout)
@@ -541,10 +564,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick)
 		return answer;
 
-	cerr << "turn " << tickDescription.mRequest.mTick << endl;
-
 	auto& me = tickDescription.mMe;
 	pos_t mypos = pos_t(me.mY, me.mX);
+	cerr << "turn " << tickDescription.mRequest.mTick << ' ' << mypos << endl;
 	map_t m = genempty(mGameDescription.mMapSize);
 	m.bombrange = m;
 	for (const auto& bat : tickDescription.mAllBats)
@@ -614,15 +636,15 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	}
 
 	if (mInPhase1) {
+//		bombseqbatcnt = true;
 		bombtimeout = mTimeout.count();
-		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 50 * 2); // todo how many steps (not turns) ahead
+		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30); // todo how many steps (not turns) ahead
 		mPhase = PHASE1;
 		mPath = seq;
 		cerr << "phase1 seq";
 		for(auto p : seq)
 			cerr << p;
-		cerr << endl;
-		// todo Gabor: use tactical plan to follow bombing sequence
+		cerr << ' ' << bestbombseqval << endl;
 	} else {
 		vector<pos_t> targets;
 		vector<int> closestenemy;

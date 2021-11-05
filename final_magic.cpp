@@ -17,6 +17,7 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const std::map<i
     std::chrono::milliseconds start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
     mUsualMagic.mTimeout = totalAllowedTime / 4;
     mUsualMagic.Tick(tickDescription, points);
+    mGaborMagic.SetPhase(mUsualMagic.mPhase);
     if (mUsualMagic.mPhase == PHASE1) {
         mGaborMagic.SetBombSequence(mUsualMagic.mPath);
     } else if (mUsualMagic.mPhase == ITEM || mUsualMagic.mPhase == BETWEEN_ITEMS) {

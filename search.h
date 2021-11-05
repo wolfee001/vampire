@@ -37,6 +37,16 @@ public:
         mBombSequence = std::move(sequence);
     }
 
+    void SetPathSequence(std::vector<pos_t> sequence)
+    {
+        mPathSequence = std::move(sequence);
+    }
+
+    void SetPhase(phase_t phase)
+    {
+        mPhase = phase;
+    }
+
     bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     Answer GetBestMove();
@@ -68,5 +78,7 @@ public:
     bool mTomatoSafePlay = false;
 
     // usual magic stuff
+    phase_t mPhase = NONE;
     std::vector<pos_t> mBombSequence;
+    std::vector<pos_t> mPathSequence;
 };

@@ -22,13 +22,6 @@ int getdist(map_t m, int r, int stepcnt, int bombcnt, std::vector<event_t> event
 std::pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r);
 std::vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep);
 
-enum phase_t {
-	NONE,
-	PHASE1,
-	ITEM,
-	BETWEEN_ITEMS
-};
-
 class UsualMagic : public IMagic {
 public:
 	std::chrono::milliseconds mTimeout;

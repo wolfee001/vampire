@@ -658,7 +658,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		}
 		for (const auto& enemy : tickDescription.mEnemyVampires) {
 			getdist(m, vector<pos_t>(), tickDescription, enemy);
-			if (enemy.mGrenadeRange == mGameDescription.mGrenadeRadius && !enemy.mRunningShoesTick)
+			if (enemy.mGrenadeRange == mGameDescription.mGrenadeRadius && !enemy.mRunningShoesTick) // only defend vs. collector enemy
 				continue;
 			FOR0(i, SZ(targets))
 				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);

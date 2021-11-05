@@ -15,6 +15,8 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<i
     Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);
 
     search.SetBombSequence(mBombSequence);
+    search.SetPhase(mPhase);
+    search.SetPathSequence(mPathSequence);
 
     const auto t1 = std::chrono::steady_clock::now();
     auto calculationTime = mTimeout;
@@ -54,6 +56,11 @@ void GaborMagic::SetBombSequence(const std::vector<pos_t>& sequence)
 void GaborMagic::SetPathSequence(const std::vector<pos_t>& sequence)
 {
     mPathSequence = sequence;
+}
+
+void GaborMagic::SetPhase(phase_t phase)
+{
+    mPhase = phase;
 }
 
 void GaborMagic::SetTickTimeout(std::chrono::milliseconds millis)

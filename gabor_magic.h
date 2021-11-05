@@ -13,9 +13,11 @@ public:
     void SetBombSequence(const std::vector<pos_t>& sequence);
     void SetPathSequence(const std::vector<pos_t>& sequence);
     void SetTickTimeout(std::chrono::milliseconds millis);
+    void SetPhase(phase_t phase);
 
 private:
     std::chrono::milliseconds mTimeout = std::chrono::milliseconds(1000);
+    phase_t mPhase;
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
 };

@@ -172,3 +172,5 @@ struct pos_t {
         return stream << p.x << ":" << p.y << " ";
     }
 };
+
+enum phase_t { NONE, PHASE1, ITEM, BETWEEN_ITEMS };

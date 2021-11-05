@@ -205,10 +205,19 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     float batScore = 0;
     float grenadePenalty = 0;
     float bombingTargetScore = 0;
+    float pathTargetScore = 0;
 
-    if (move.mPlaceGrenade && !mBombSequence.empty() && mLevels.size() <= 5 &&
-        mBombSequence[0] == pos_t(tickDescription.mMe.mY, tickDescription.mMe.mX)) {
+    pos_t mypos(tickDescription.mMe.mY, tickDescription.mMe.mX);
+
+    if (move.mPlaceGrenade && !mBombSequence.empty() && mLevels.size() <= 5 && mBombSequence.front() == mypos) {
         bombingTargetScore = 48.0F;
+    }
+
+    if (mPhase == BETWEEN_ITEMS && mLevels.size() == 2) {
+        if (mPathSequence.empty() && move.mSteps.empty())
+            pathTargetScore = 48.0F;
+        else if (!mPathSequence.empty() && mPathSequence.back() == mypos)
+            pathTargetScore = 48.0F;
     }
 
     std::vector<int> bombedBats(tickDescription.mAllBats.size(), 0);
@@ -278,5 +287,5 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     (void)newPoints;
     (void)move;
 
-    return batScore + grenadePenalty + powerUpScore + healthPenalty + positionScore + bombingTargetScore;
+    return batScore + grenadePenalty + powerUpScore + healthPenalty + positionScore + bombingTargetScore + pathTargetScore;
 }

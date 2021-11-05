@@ -4,6 +4,7 @@
 #include <boost/iterator/filter_iterator.hpp>
 #include <cmath>
 #include <iostream>
+#include <optional>
 
 bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
 {

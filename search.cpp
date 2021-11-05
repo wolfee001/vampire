@@ -130,7 +130,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
 
 Answer Search::GetBestMove()
 {
-    const auto printBranch = [&mLevels = mLevels](const TreeNode& node) {
+    [[maybe_unused]] const auto printBranch = [&mLevels = mLevels](const TreeNode& node) {
         std::vector<ActionSequence> actions;
 
         const TreeNode* current = &node;
@@ -153,7 +153,7 @@ Answer Search::GetBestMove()
         }
     };
 
-    const auto bestIt = std::max_element(std::cbegin(mLevels.back()), std::cend(mLevels.back()), [&printBranch](const TreeNode& x, const TreeNode& y) {
+    const auto bestIt = std::max_element(std::cbegin(mLevels.back()), std::cend(mLevels.back()), [&](const TreeNode& x, const TreeNode& y) {
         const auto score1 = x.mPermanentScore + x.mHeuristicScore;
         const auto score2 = y.mPermanentScore + y.mHeuristicScore;
 

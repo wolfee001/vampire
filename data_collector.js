@@ -32,6 +32,7 @@ const main = () => {
 
     for (const [_, value] of Object.entries(data)) {
         value.scores.reverse();
+        value.labels.reverse();
     }
 
     fs.writeFileSync('score_data.js', 'const scoreData = ' + JSON.stringify(data, null, 2));

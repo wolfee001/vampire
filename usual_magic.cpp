@@ -608,6 +608,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		if (best == -1) {
 			cerr << "no target" << endl; 
 			// we gonna fall to temporary...or should we go for closest bad target
+			if (tickDescription.mRequest.mTick < 150) {
+				cerr << "than we are still in phase1" << endl; 
+				mInPhase1 = true;
+			}
 		}
 		else {
 			cerr << "closest target: " << targets[best] << endl;
@@ -669,6 +673,23 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		FOR(d11, -1, 3) {
 			int d1 = (d11 + 5) % 5;
 			pos_t p1 = mypos.GetPos(d1);
+			if (d1 == 4) {
+				int bomb = 0;
+				int block = 0;
+				FOR0(dd, 4) {
+					pos_t p2 = p1.GetPos(dd);
+					if (m[p2.y][p2.x] != ' ') {
+						++block;
+						if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9')
+							++bomb;
+					}
+					for (const auto& enemy : tickDescription.mEnemyVampires)
+						if (pos_t(enemy.mY, enemy.mX) == p2 && enemy.mPlacableGrenades >= 1)
+							++bomb;					
+				}
+				if (block >= 2 && bomb >= 1) // avoid staying at risky
+					continue;
+			}
 			if (m[p1.y][p1.x] != ' ')
 				continue;
 			dirs.clear();
@@ -702,7 +723,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 						if (closestenemy[i] > reaches[targets[i].y][targets[i].x].turn) // has to be further
 							++cnt;
 					}
-					MAXA2(best, cnt, bestdirs, dirs);
+					int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
+					cerr << p3 << ' ' << cnt << endl;
+					MAXA2(best, cnt * 100 - dq, bestdirs, dirs);
 					if (d3 != 4)
 						dirs.pop_back();
 				}

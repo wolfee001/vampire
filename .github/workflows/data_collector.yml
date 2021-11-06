@@ -1,0 +1,35 @@
+name: DataCollector
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      ref: points
+
+    - name: Install Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16
+
+    - name: Collect data
+      run: |
+        git clone http://routing_all_stars:${{ secrets.GITLAB_PASSWORD }}@git-ecosim.dyndns.org:11111/graphisoft/2021/routing_all_stars.git
+        cd routing_all_stars
+        git checkout main_log
+        cp ${{github.workspace}}/collect_commits.sh .
+        ./collect_commits.sh > commits.json
+        cp ${{github.workspace}}/data_collector.js .
+        node ./data_collector.js
+        cp score_data.js ${{github.workspace}}/
+
+    - name: Commit data
+      run: |
+        cd ${{github.workspace}}
+        git config --global user.name 'Chart Automation'
+        git config --global user.email 'wolfee001@users.noreply.github.com'
+        git add .
+        git commit -m "Refreshing data" || echo "Nothing changed"
+        git push || echo "Nothing changed"

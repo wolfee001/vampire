@@ -18,7 +18,7 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const std::map<i
     mUsualMagic.mTimeout = totalAllowedTime / 4;
     mUsualMagic.Tick(tickDescription, points);
     mGaborMagic.SetPhase(mUsualMagic.mPhase);
-    mGaborMagic.SetAvoidStay(mUsualMagic.mAvoidStay);
+    mGaborMagic.SetAvoids(mUsualMagic.mAvoids);
     if (mUsualMagic.mPhase == PHASE1) {
         mGaborMagic.SetBombSequence(mUsualMagic.mPath);
     } else if (mUsualMagic.mPhase == ITEM || mUsualMagic.mPhase == BETWEEN_ITEMS) {

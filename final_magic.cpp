@@ -1,5 +1,6 @@
 #include "final_magic.h"
 #include "models.h"
+#include "timeout.h"
 #include <chrono>
 
 FinalMagic::FinalMagic(const GameDescription& gameDescription)
@@ -12,7 +13,7 @@ FinalMagic::FinalMagic(const GameDescription& gameDescription)
 
 Answer FinalMagic::Tick(const TickDescription& tickDescription, const std::map<int, float>& points)
 {
-    std::chrono::milliseconds totalAllowedTime(300);
+    std::chrono::milliseconds totalAllowedTime(TIMEOUT);
 
     std::chrono::milliseconds start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
     mUsualMagic.mTimeout = totalAllowedTime / 4;

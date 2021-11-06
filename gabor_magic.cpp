@@ -68,8 +68,3 @@ void GaborMagic::SetAvoids(int avoids)
 {
     mAvoids = avoids;
 }
-
-void GaborMagic::SetTickTimeout(std::chrono::milliseconds millis)
-{
-    mTimeout = millis;
-}

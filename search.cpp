@@ -230,9 +230,9 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
 
     if (mPhase == BETWEEN_ITEMS && mLevels.size() == 2) {
         if (mPathSequence.empty() && move.mSteps.empty()) {
-            pathTargetScore = 48.0F;
+            pathTargetScore = 3.0F;
         } else if (!mPathSequence.empty() && mPathSequence.back() == mypos) {
-            pathTargetScore = 48.0F;
+            pathTargetScore = 3.0F;
         }
     }
 

@@ -1,9 +1,0 @@
----
-BasedOnStyle: WebKit
-ColumnLimit: '160'
-AllowShortFunctionsOnASingleLine: "false"
-AllowShortIfStatementsOnASingleLine: "false"
-AllowShortBlocksOnASingleLine: "false"
-AllowShortCaseLabelsOnASingleLine: "false"
-AllowShortLoopsOnASingleLine: "false"
-...

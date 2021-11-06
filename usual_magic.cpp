@@ -585,6 +585,22 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	int avoiddirs = 0;
 	FOR0(dd, 4) {
 		pos_t p2 = mypos.GetPos(dd);
+		int block = 0;
+		if (m[p2.y][p2.x] != ' ')
+			continue;
+		FOR0(d3, 4) {
+			pos_t p3 = p2.GetPos(d3);
+			if (m[p3.y][p3.x] != ' ')
+				++block;
+			for (const auto& enemy : tickDescription.mEnemyVampires)
+				if (pos_t(enemy.mY, enemy.mX) == p3 && enemy.mPlacableGrenades >= 1)
+					++bomb;					
+		}
+		if (block >= 2 && bomb >= 1)
+			mAvoids |= (1 << dd);
+	}
+	FOR0(dd, 4) {
+		pos_t p2 = mypos.GetPos(dd);
 		if (m[p2.y][p2.x] != ' ') {
 			++block;
 			if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9')
@@ -597,7 +613,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 			}
 	}
 	if (block >= 2 && bomb >= 1 && (!ontomato || me.mHealth == 1)) { // avoid staying at risky
-		mAvoids = 16 | avoiddirs; 
+		mAvoids |= 16 | avoiddirs; 
 	}
 
 	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick)
@@ -734,6 +750,14 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 						continue;
 					if (has[p3.y][p3.x])
 						continue;
+					int cnt = 0;
+					FOR0(d4, 3) {
+						pos_t p4 = p3.GetPos(d4);
+						if (m[p4.y][p4.x] == ' ')
+							++cnt;
+					}
+					if (cnt <= 2)
+						continue;
 					has[p3.y][p3.x] = true;
 					if (d3 != 4)
 						dirs.push_back(dirc2[d3]);
@@ -741,16 +765,16 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 					me2.mY = p3.y;
 					me2.mX = p3.x;
 					getdist(m, vector<pos_t>(), tickDescription, me2);
-					int cnt = 0;
+					cnt = 0;
 					FOR0(i, SZ(targets)) {
 						if (reaches[targets[i].y][targets[i].x].turn <= 10 || closestenemy[i] > reaches[targets[i].y][targets[i].x].turn) // has to be further
 							++cnt;
 					}
 					int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
-					cerr << p3 << ' ';
+/*					cerr << p3 << ' ';
 					for(auto c : dirs)
 						cerr << c;
-					cerr << ' ' << cnt << ' ' << dq << endl;
+					cerr << ' ' << cnt << ' ' << dq << endl; */
 					MAXA2(best, cnt * 100 - dq, bestdirs, dirs);
 					if (d3 != 4)
 						dirs.pop_back();

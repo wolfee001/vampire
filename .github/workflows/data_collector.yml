@@ -11,7 +11,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-      ref: points
+      with:
+        ref: 'points'
 
     - name: Install Node
       uses: actions/setup-node@v2

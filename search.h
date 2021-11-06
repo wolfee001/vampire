@@ -84,7 +84,7 @@ public:
 
     // usual magic stuff
     phase_t mPhase = NONE;
-    int mAvoids;
+    int mAvoids = 0;
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
 };

@@ -660,10 +660,36 @@ TEST_F(SimulateTest, Plantgrenade)
     ASSERT_EQ(newState.mGrenades[1].mX, 1);
     ASSERT_EQ(newState.mGrenades[1].mY, 3);
     ASSERT_EQ(newState.mGrenades[1].mTick, 5);
+    ASSERT_EQ(newState.mMe.mPlacableGrenades, 0);
+    ASSERT_EQ(newState.mEnemyVampires[0].mPlacableGrenades, 0);
+    ASSERT_EQ(newState.mEnemyVampires[1].mPlacableGrenades, 1);
 
     ASSERT_EQ(newPoints.at(1), 0);
     ASSERT_EQ(newPoints.at(2), 0);
     ASSERT_EQ(newPoints.at(3), 0);
+}
+
+TEST_F(SimulateTest, PlacableGrenadeRegain)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 0 2 0",
+        "VAMPIRE 2 1 1 2 0 2 0",
+        "GRENADE 1 3 3 1 1",
+        "GRENADE 2 3 3 1 1"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+
+    ASSERT_EQ(tick.mMe.mPlacableGrenades, 0);
+    ASSERT_EQ(tick.mEnemyVampires.front().mPlacableGrenades, 0);
+
+    const auto [newState, newPoints] = mSimulator->Tick();
+
+    ASSERT_EQ(newState.mMe.mPlacableGrenades, 1);
+    ASSERT_EQ(newState.mEnemyVampires.front().mPlacableGrenades, 1);
 }
 
 TEST_F(SimulateTest, PlantgrenadeAfterDeath)

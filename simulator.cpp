@@ -6,6 +6,7 @@
 #include <exception>
 #include <set>
 #include <stdexcept>
+#include <unordered_map>
 
 #include "check.h"
 
@@ -249,6 +250,23 @@ void Simulator::BlowUpGrenades(TickDescription& state)
 {
     const auto areas = GetBlowAreas(true);
 
+    std::unordered_map<int, Vampire*> vampRefs;
+    vampRefs.emplace(state.mMe.mId, &state.mMe);
+    for (auto& element : state.mEnemyVampires) {
+        vampRefs.emplace(element.mId, &element);
+    }
+
+    for (const auto& grenade : state.mGrenades) {
+        for (const auto& area : areas) {
+            if (area.mArea.find(grenade.mX, grenade.mY)) {
+                if (const auto it = vampRefs.find(grenade.mId); it != std::cend(vampRefs)) {
+                    ++it->second->mPlacableGrenades;
+                    break;
+                }
+            }
+        }
+    }
+
     state.mGrenades.erase(std::remove_if(state.mGrenades.begin(), state.mGrenades.end(),
                               [&areas](const auto& grenade) {
                                   for (const auto& area : areas) {
@@ -399,14 +417,9 @@ void Simulator::PlantGrenades(TickDescription& state)
                 if (vampire->mGhostModeTick != 0) {
                     continue;
                 }
-                int placedGrenades = 0;
-                for (const auto& grenade : state.mGrenades) {
-                    if (grenade.mId == vampire->mId) {
-                        placedGrenades++;
-                    }
-                }
-                if (placedGrenades < vampire->mPlacableGrenades) {
+                if (vampire->mPlacableGrenades > 0) {
                     state.mGrenades.push_back({ vampire->mId, vampire->mX, vampire->mY, 5, vampire->mGrenadeRange });
+                    --vampire->mPlacableGrenades;
                 }
             }
         }
@@ -496,13 +509,7 @@ bool Simulator::IsValidMove(int id, const Answer& move) const
         if (vampire->mGhostModeTick != 0) {
             return false;
         }
-        int placedGrenades = 0;
-        for (const auto& grenade : mState.mGrenades) {
-            if (grenade.mId == vampire->mId) {
-                placedGrenades++;
-            }
-        }
-        if (placedGrenades >= vampire->mPlacableGrenades) {
+        if (vampire->mPlacableGrenades < 1) {
             return false;
         }
     }

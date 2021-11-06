@@ -8,6 +8,8 @@
 
 bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
 {
+    std::cerr << "Allowed running time: " << std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now()).count() << " ms"
+              << std::endl;
     [[maybe_unused]] const int currentLevelIndex = static_cast<int>(mLevels.size());
     mLevels.resize(mLevels.size() + 1);
 
@@ -203,7 +205,7 @@ Answer Search::GetBestMove()
 
     std::cerr << "Permanent score: " << bestIt->mPermanentScore << " Heuristic score: " << bestIt->mHeuristicScore
               << " last level size: " << mLevels.back().size() << std::endl;
-    // printBranch(*bestIt);
+    printBranch(*bestIt);
 
     return ActionSequence(current->mAction).GetAnswer();
 }
@@ -239,7 +241,8 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     if (mPhase == ITEM && !mPathSequence.empty()) {
         const auto pathIt = std::find(std::cbegin(mPathSequence), std::cend(mPathSequence), mypos);
         if (pathIt != std::cend(mPathSequence)) {
-            pathTargetScore += (12.F / static_cast<float>(mPathSequence.size())) * static_cast<float>(std::distance(pathIt, std::cend(mPathSequence)));
+            pathTargetScore += (1.1F * static_cast<float>(move.mSteps.size())) * (12.F / static_cast<float>(mPathSequence.size()))
+                * static_cast<float>(std::distance(pathIt, std::cend(mPathSequence)));
         }
     }
 

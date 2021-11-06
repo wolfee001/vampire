@@ -116,14 +116,19 @@ class SearchTest : public testing::Test {
 public:
     SearchTest()
     {
-        std::vector<std::string> startInfo = {
+        SetupGame(11);
+    }
+
+    void SetupGame(const int mapSize)
+    {
+        const std::vector<std::string> startInfo = {
             "MESSAGE OK",
             "LEVEL 1",
             "GAMEID 775",
             "TEST 1",
             "MAXTICK 500",
             "GRENADERADIUS 2",
-            "SIZE 11",
+            "SIZE " + std::to_string(mapSize),
         };
         mGameDescripton = parseGameDescription(startInfo);
 
@@ -315,4 +320,77 @@ TEST_F(SearchTest, MultipleGrenadesEasy)
     EXPECT_TRUE(areas[0].mArea.find(state.mBat1[0].mX, state.mBat1[0].mY));
     EXPECT_TRUE(areas[1].mArea.find(state.mBat1[1].mX, state.mBat1[1].mY));
     EXPECT_TRUE(areas[2].mArea.find(state.mBat1[2].mX, state.mBat1[2].mY));
+}
+
+TEST_F(SearchTest, OptimalStart)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 3 1 2 0",
+        "VAMPIRE 2 9 1 3 1 2 0",
+        "VAMPIRE 3 9 9 3 1 2 0",
+        "VAMPIRE 4 1 9 3 1 2 0",
+        "BAT1 4 1 5 1 6 1 3 2 7 2 2 3 3 3 7 3 8 3 1 4 9 4 1 5 9 5 1 6 9 6 2 7 3 7 7 7 8 7 3 8 7 8 4 9 5 9 6 9",
+        "BAT2 5 2 4 3 6 3 3 4 7 4 2 5 8 5 3 6 7 6 4 7 6 7 5 8",
+        "BAT3 5 3 5 4 3 5 4 5 5 5 6 5 7 5 5 6 5 7",
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    for (size_t tick = 0; tick < 8; ++tick) {
+        Search search(state, mGameDescripton, 1);
+        for (size_t i = 0; i < 5; ++i) {
+            search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::hours(100));
+        }
+
+        mSimulator->SetState(state);
+        std::cerr << "move in tick " << tick + 1 << std::endl;
+        const auto move = search.GetBestMove();
+
+        if (state.mMe.mPlacableGrenades > 0 && tick > 1) {
+            EXPECT_TRUE(move.mPlaceGrenade);
+        }
+
+        mSimulator->SetVampireMove(1, move);
+        Simulator::NewPoints newPoints;
+        std::tie(state, newPoints) = mSimulator->Tick();
+    }
+}
+
+TEST_F(SearchTest, Light)
+{
+    SetupGame(19);
+
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 548 1",
+        "VAMPIRE 1 3 3 2 15 10 266"
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    while (state.mMe.mHealth > 0) {
+        Search search(state, mGameDescripton, 1);
+        for (size_t i = 0; i < 2; ++i) {
+            search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::hours(1000));
+        }
+
+        mSimulator->SetState(state);
+        const auto move = search.GetBestMove();
+        mSimulator->SetVampireMove(1, move);
+
+        const auto oldHealth = state.mMe.mHealth;
+
+        Simulator::NewPoints newPoints;
+        std::tie(state, newPoints) = mSimulator->Tick();
+
+        if (state.mMe.mHealth < oldHealth) {
+            ASSERT_EQ(state.mMe.mX, 9);
+            ASSERT_EQ(state.mMe.mY, 9);
+
+            ASSERT_TRUE(mSimulator->GetLitArea().find(9, 9));
+        }
+    }
+    SUCCEED();
 }

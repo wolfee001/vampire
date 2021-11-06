@@ -84,6 +84,7 @@ add_executable(unittest
     test/test_action_sequence.cpp
     test/test_usual_magic.cpp
     test/test_search.cpp
+    test/test_final.cpp
 )
 target_link_libraries(unittest
     PUBLIC project_options

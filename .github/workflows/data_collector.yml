@@ -1,5 +1,9 @@
 name: DataCollector
 
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+
 jobs:
   collect:
     runs-on: ubuntu-latest

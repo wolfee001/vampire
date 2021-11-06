@@ -16,8 +16,9 @@ const main = () => {
 
         try {
             const result = JSON.parse(fs.readFileSync('result.log', 'utf8'));
-            const dataElement = data[`${result.level}`] || { best: { score: -99999, gameID: 0, date: "" }, scores: [] };
+            const dataElement = data[`${result.level}`] || { best: { score: -99999, gameID: 0, date: "" }, scores: [], labels: [] };
             dataElement.scores.push(result.score);
+            dataElement.labels.push(result.game_id);
             if (result.score > dataElement.best.score) {
                 dataElement.best.score = result.score;
                 dataElement.best.gameID = result.game_id;

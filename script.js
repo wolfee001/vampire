@@ -1,14 +1,14 @@
 new Chart("myChart", {
     type: "line",
     data: {
-        labels: xValues,
+        labels: scoreData[1].labels,
         datasets: [{
-            label: "lofasz2",
+            label: "score",
             fill: false,
             lineTension: 0,
             backgroundColor: "rgba(0,0,255,1.0)",
             borderColor: "rgba(0,0,255,0.1)",
-            data: yValues
+            data: scoreData[1].scores
         }]
     },
     options: {

@@ -61,7 +61,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
-            if (mLevels.size() == 2 && mAvoidStay && action.GetNumberOfSteps() == 0) {
+            if (mLevels.size() == 2 && mAvoids && action.GetNumberOfSteps() == 0) {
                 continue;
             }
 
@@ -113,6 +113,17 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             const Answer move = action.GetAnswer();
             if (!simulator.IsValidMove(mPlayerId, move)) {
                 continue;
+            }
+
+            if (mLevels.size() == 2 && mAvoids && action.GetNumberOfSteps() > 0) {
+                if ((mAvoids & 1) && move.mSteps[0] == 'U')
+                    continue;
+                if ((mAvoids & 2) && move.mSteps[0] == 'R')
+                    continue;
+                if ((mAvoids & 4) && move.mSteps[0] == 'D')
+                    continue;
+                if ((mAvoids & 8) && move.mSteps[0] == 'L')
+                    continue;
             }
 
             simulator.SetVampireMove(mPlayerId, move);

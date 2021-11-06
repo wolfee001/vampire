@@ -1,0 +1,42 @@
+name: Game
+
+on:
+  schedule:
+    - cron: "* 3 * * *"
+
+jobs:
+  game:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install extra runtime
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+
+    - name: Install conan
+      uses: turtlebrowser/get-conan@main
+
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release --target vampire
+
+    - name: Test
+      run: |
+        cd ${{github.workspace}}/build/bin
+        ./vampire 1
+        ./vampire 2
+        ./vampire 3
+        ./vampire 4
+        ./vampire 5
+        ./vampire 6
+        ./vampire 7
+        ./vampire 8
+        ./vampire 9
+        ./vampire 10

@@ -47,9 +47,9 @@ public:
         mPhase = phase;
     }
 
-    void SetAvoidStay(bool avoidstay)
+    void SetAvoids(int avoids)
     {
-        mAvoidStay = avoidstay;
+        mAvoids = avoids;
     }
 
     bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
@@ -84,7 +84,7 @@ public:
 
     // usual magic stuff
     phase_t mPhase = NONE;
-    bool mAvoidStay;
+    int mAvoids = 0;
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
 };

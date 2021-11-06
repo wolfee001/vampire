@@ -16,7 +16,7 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<i
 
     search.SetBombSequence(mBombSequence);
     search.SetPhase(mPhase);
-    search.SetAvoidStay(mAvoidStay);
+    search.SetAvoids(mAvoids);
     search.SetPathSequence(mPathSequence);
 
     const auto t1 = std::chrono::steady_clock::now();
@@ -64,9 +64,9 @@ void GaborMagic::SetPhase(phase_t phase)
     mPhase = phase;
 }
 
-void GaborMagic::SetAvoidStay(bool avoidstay)
+void GaborMagic::SetAvoids(int avoids)
 {
-    mAvoidStay = avoidstay;
+    mAvoids = avoids;
 }
 
 void GaborMagic::SetTickTimeout(std::chrono::milliseconds millis)

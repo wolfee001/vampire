@@ -560,6 +560,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 {
     Answer answer;
 	mPhase = NONE;
+	mAvoids = 0;
 	mPath.clear();
 
 	auto& me = tickDescription.mMe;
@@ -581,6 +582,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 
 	int bomb = 0;
 	int block = 0;
+	int avoiddirs = 0;
 	FOR0(dd, 4) {
 		pos_t p2 = mypos.GetPos(dd);
 		if (m[p2.y][p2.x] != ' ') {
@@ -589,10 +591,14 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 				++bomb;
 		}
 		for (const auto& enemy : tickDescription.mEnemyVampires)
-			if (pos_t(enemy.mY, enemy.mX) == p2 && enemy.mPlacableGrenades >= 1)
+			if (pos_t(enemy.mY, enemy.mX) == p2 && enemy.mPlacableGrenades >= 1) {
 				++bomb;					
+				avoiddirs |= (1 << dd);
+			}
 	}
-	mAvoidStay = block >= 2 && bomb >= 1 && me.mHealth <= 2 && (!ontomato || me.mHealth == 1); // avoid staying at risky
+	if (block >= 2 && bomb >= 1 && (!ontomato || me.mHealth == 1)) { // avoid staying at risky
+		mAvoids = 16 | avoiddirs; 
+	}
 
 	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick)
 		return answer;
@@ -654,8 +660,11 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 					cerr << c;
 				cerr << endl;
 				mPhase = ITEM;
-				FORD(i, SZ(steps) - 1, 0)
-					mPath.push_back(steps[i]);
+				p = mypos;
+				FORD(i, SZ(steps) - 1, 0) {
+					p = p.GetPos(steps[i]);
+					mPath.push_back(p);
+				}
 				return answer;
 			}
 		}
@@ -698,7 +707,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		FOR(d11, -1, 3) {
 			int d1 = (d11 + 5) % 5;
 			pos_t p1 = mypos.GetPos(d1);
-			if (d1 == 4 && mAvoidStay)
+			if ((1 << d1) & mAvoids)
 				continue;
 			if (m[p1.y][p1.x] != ' ')
 				continue;

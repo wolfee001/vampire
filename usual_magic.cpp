@@ -561,8 +561,6 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
     Answer answer;
 	mPhase = NONE;
 	mPath.clear();
-	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick)
-		return answer;
 
 	auto& me = tickDescription.mMe;
 	pos_t mypos = pos_t(me.mY, me.mX);
@@ -575,6 +573,30 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		m[grenade.mY][grenade.mX] = grenade.mTick + '0';
 		m.bombrange[grenade.mY][grenade.mX] = grenade.mRange + '0';
 	}
+
+	bool ontomato = false;
+	for (const auto& powerup : tickDescription.mPowerUps)
+		if (pos_t(powerup.mY, powerup.mX) == mypos)
+			ontomato = true;
+
+	int bomb = 0;
+	int block = 0;
+	FOR0(dd, 4) {
+		pos_t p2 = mypos.GetPos(dd);
+		if (m[p2.y][p2.x] != ' ') {
+			++block;
+			if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9')
+				++bomb;
+		}
+		for (const auto& enemy : tickDescription.mEnemyVampires)
+			if (pos_t(enemy.mY, enemy.mX) == p2 && enemy.mPlacableGrenades >= 1)
+				++bomb;					
+	}
+	mAvoidStay = block >= 2 && bomb >= 1 && me.mHealth <= 2 && (!ontomato || me.mHealth == 1); // avoid staying at risky
+
+	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick)
+		return answer;
+
 	auto nextmap = sim(m);
 	if (!tickDescription.mPowerUps.empty()) {
 		mInPhase1 = false;
@@ -650,6 +672,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 			cerr << p;
 		cerr << ' ' << bestbombseqval << endl;
 	} else {
+		cerr << "between items " << endl;
 		vector<pos_t> targets;
 		vector<int> closestenemy;
 		FOR0(y, SZ(m)) {
@@ -670,26 +693,13 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		vector<char> dirs;
 		vector<char> bestdirs;
 		int best = 0;
+		bool has[23][23];
+		MSET(has, 0);
 		FOR(d11, -1, 3) {
 			int d1 = (d11 + 5) % 5;
 			pos_t p1 = mypos.GetPos(d1);
-			if (d1 == 4) {
-				int bomb = 0;
-				int block = 0;
-				FOR0(dd, 4) {
-					pos_t p2 = p1.GetPos(dd);
-					if (m[p2.y][p2.x] != ' ') {
-						++block;
-						if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9')
-							++bomb;
-					}
-					for (const auto& enemy : tickDescription.mEnemyVampires)
-						if (pos_t(enemy.mY, enemy.mX) == p2 && enemy.mPlacableGrenades >= 1)
-							++bomb;					
-				}
-				if (block >= 2 && bomb >= 1) // avoid staying at risky
-					continue;
-			}
+			if (d1 == 4 && mAvoidStay)
+				continue;
 			if (m[p1.y][p1.x] != ' ')
 				continue;
 			dirs.clear();
@@ -706,12 +716,16 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 					continue;
 				if (d2 != 4)
 					dirs.push_back(dirc2[d2]);
-				FOR0(d3, 4) {
+				FOR(d31, -1, 3) {
+					int d3 = (d31 + 5) % 5;
 					if (me.mRunningShoesTick == 0 && d3 == 0 || d2 == 4)
 						d3 = 4;
 					pos_t p3 = p2.GetPos(d3);
 					if (m[p3.y][p3.x] != ' ' || nextmap[p3.y][p3.x] == '.')
 						continue;
+					if (has[p3.y][p3.x])
+						continue;
+					has[p3.y][p3.x] = true;
 					if (d3 != 4)
 						dirs.push_back(dirc2[d3]);
 					Vampire me2 = me;
@@ -720,11 +734,14 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 					getdist(m, vector<pos_t>(), tickDescription, me2);
 					int cnt = 0;
 					FOR0(i, SZ(targets)) {
-						if (closestenemy[i] > reaches[targets[i].y][targets[i].x].turn) // has to be further
+						if (reaches[targets[i].y][targets[i].x].turn <= 10 || closestenemy[i] > reaches[targets[i].y][targets[i].x].turn) // has to be further
 							++cnt;
 					}
 					int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
-					cerr << p3 << ' ' << cnt << endl;
+					cerr << p3 << ' ';
+					for(auto c : dirs)
+						cerr << c;
+					cerr << ' ' << cnt << ' ' << dq << endl;
 					MAXA2(best, cnt * 100 - dq, bestdirs, dirs);
 					if (d3 != 4)
 						dirs.pop_back();
@@ -738,7 +755,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		if (best > 0) {
 			answer.mPlaceGrenade = false; 
 			answer.mSteps = bestdirs;
-			cerr << "idle, go closer";
+			cerr << "between items, go closer";
 			mPhase = BETWEEN_ITEMS;
 			pos_t p = mypos;
 			for(auto c : answer.mSteps) {

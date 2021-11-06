@@ -30,6 +30,7 @@ public:
     Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points);
 	phase_t mPhase; 
 	std::vector<pos_t> mPath;
+	bool mAvoidStay;
 };
 
 // clang-format on

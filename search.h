@@ -47,6 +47,11 @@ public:
         mPhase = phase;
     }
 
+    void SetAvoidStay(bool avoidstay)
+    {
+        mAvoidStay = avoidstay;
+    }
+
     bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     Answer GetBestMove();
@@ -79,6 +84,7 @@ public:
 
     // usual magic stuff
     phase_t mPhase = NONE;
+    bool mAvoidStay;
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
 };

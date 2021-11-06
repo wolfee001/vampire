@@ -61,6 +61,10 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
+            if (mLevels.size() == 2 && mAvoidStay && action.GetNumberOfSteps() == 0) {
+                continue;
+            }
+                 
             int nextX = node.mTickDescription.mMe.mX;
             int nextY = node.mTickDescription.mMe.mY;
             for (int stepIndex = 0; stepIndex < action.GetNumberOfSteps(); ++stepIndex) {

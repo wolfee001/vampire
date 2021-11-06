@@ -771,10 +771,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 							++cnt;
 					}
 					int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
-					cerr << p3 << ' ';
+/*					cerr << p3 << ' ';
 					for(auto c : dirs)
 						cerr << c;
-					cerr << ' ' << cnt << ' ' << dq << endl;
+					cerr << ' ' << cnt << ' ' << dq << endl; */
 					MAXA2(best, cnt * 100 - dq, bestdirs, dirs);
 					if (d3 != 4)
 						dirs.pop_back();

@@ -580,32 +580,36 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		if (pos_t(powerup.mY, powerup.mX) == mypos)
 			ontomato = true;
 
-	int bomb = 0;
-	int block = 0;
-	int avoiddirs = 0;
 	FOR0(dd, 4) {
 		pos_t p2 = mypos.GetPos(dd);
 		int block = 0;
-		if (m[p2.y][p2.x] != ' ')
+		int bomb = 0;
+		if (m[p2.y][p2.x] != ' ') {
+			mAvoids |= (1 << dd);
 			continue;
+		}
 		FOR0(d3, 4) {
 			pos_t p3 = p2.GetPos(d3);
-			if (m[p3.y][p3.x] != ' ')
+			if (m[p3.y][p3.x] >= '1' && m[p3.y][p3.x] <= '9')
+				++bomb;
+			else if (m[p3.y][p3.x] != ' ')
 				++block;
 			for (const auto& enemy : tickDescription.mEnemyVampires)
-				if (pos_t(enemy.mY, enemy.mX) == p3 && enemy.mPlacableGrenades >= 1)
+				if ((pos_t(enemy.mY, enemy.mX) == p3 || pos_t(enemy.mY, enemy.mX) == p2) && enemy.mPlacableGrenades >= 1)
 					++bomb;					
 		}
 		if (block >= 2 && bomb >= 1)
 			mAvoids |= (1 << dd);
 	}
+	int bomb = 0;
+	int block = 0;
+	int avoiddirs = 0;
 	FOR0(dd, 4) {
 		pos_t p2 = mypos.GetPos(dd);
-		if (m[p2.y][p2.x] != ' ') {
+		if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9')
+			++bomb;
+		else if (m[p2.y][p2.x] != ' ')
 			++block;
-			if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9')
-				++bomb;
-		}
 		for (const auto& enemy : tickDescription.mEnemyVampires)
 			if (pos_t(enemy.mY, enemy.mX) == p2 && enemy.mPlacableGrenades >= 1) {
 				++bomb;					
@@ -615,6 +619,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	if (block >= 2 && bomb >= 1 && (!ontomato || me.mHealth == 1)) { // avoid staying at risky
 		mAvoids |= 16 | avoiddirs; 
 	}
+	if ((mAvoids & 15) == 15) // danger everywhere
+		mAvoids &= ~15;
 
 	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick)
 		return answer;

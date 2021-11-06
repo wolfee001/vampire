@@ -14,8 +14,10 @@ public:
     void SetPathSequence(const std::vector<pos_t>& sequence);
     void SetPhase(phase_t phase);
     void SetAvoids(int avoidstay);
+    void SetLevelLimit(const size_t maxLevel);
 
 private:
+    size_t mMaxLevel = 10;
     phase_t mPhase;
     int mAvoids;
     std::vector<pos_t> mBombSequence;

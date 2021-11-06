@@ -33,7 +33,7 @@ protected:
     std::unique_ptr<Simulator> mSimulator;
 };
 
-TEST_F(FinalTest, DISABLED_RunToItem)
+TEST_F(FinalTest, RunToItem)
 {
     // clang-format off
     std::vector<std::string> info = {
@@ -51,6 +51,8 @@ TEST_F(FinalTest, DISABLED_RunToItem)
 
     while (!state.mPowerUps.empty()) {
         FinalMagic magic(mGameDescripton);
+        magic.SetTickTimeout(std::chrono::hours { 1000 });
+        magic.mGaborMagic.SetLevelLimit(2);
 
         mSimulator->SetState(state);
         const auto move = magic.Tick(state, points);
@@ -61,7 +63,15 @@ TEST_F(FinalTest, DISABLED_RunToItem)
 
         if (!state.mPowerUps.empty()) {
             const auto newDistance = distance(state.mMe.mX, state.mMe.mY, state.mPowerUps.front().mX, state.mPowerUps.front().mY);
-            ASSERT_EQ(newDistance, oldDistance - 3);
+            if (newDistance > 0) {
+                if (oldDistance >= 3) {
+                    ASSERT_EQ(newDistance, oldDistance - 3);
+                } else if (oldDistance >= 2) {
+                    ASSERT_EQ(newDistance, oldDistance - 2);
+                } else {
+                    ASSERT_EQ(newDistance, oldDistance - 1);
+                }
+            }
         }
     }
     SUCCEED();

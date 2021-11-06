@@ -64,7 +64,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             if (mLevels.size() == 2 && mAvoidStay && action.GetNumberOfSteps() == 0) {
                 continue;
             }
-                 
+
             int nextX = node.mTickDescription.mMe.mX;
             int nextY = node.mTickDescription.mMe.mY;
             for (int stepIndex = 0; stepIndex < action.GetNumberOfSteps(); ++stepIndex) {
@@ -211,22 +211,29 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     float bombingTargetScore = 0;
     float pathTargetScore = 0;
 
-    pos_t mypos(tickDescription.mMe.mY, tickDescription.mMe.mX);
+    const pos_t mypos(tickDescription.mMe.mY, tickDescription.mMe.mX);
 
     if (move.mPlaceGrenade && !mBombSequence.empty() && mLevels.size() <= 5 && mBombSequence.front() == mypos) {
         bombingTargetScore = 48.0F;
     }
 
     if (mPhase == BETWEEN_ITEMS && mLevels.size() == 2) {
-        if (mPathSequence.empty() && move.mSteps.empty())
+        if (mPathSequence.empty() && move.mSteps.empty()) {
             pathTargetScore = 48.0F;
-        else if (!mPathSequence.empty() && mPathSequence.back() == mypos)
+        } else if (!mPathSequence.empty() && mPathSequence.back() == mypos) {
             pathTargetScore = 48.0F;
+        }
+    }
+
+    if (mPhase == ITEM && !mPathSequence.empty()) {
+        const auto pathIt = std::find(std::cbegin(mPathSequence), std::cend(mPathSequence), mypos);
+        if (pathIt != std::cend(mPathSequence)) {
+            pathTargetScore += (12.F / static_cast<float>(mPathSequence.size())) * static_cast<float>(std::distance(pathIt, std::cend(mPathSequence)));
+        }
     }
 
     std::vector<int> bombedBats(tickDescription.mAllBats.size(), 0);
     for (const auto& area : areas) {
-
         if (area.mArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY)) {
             grenadePenalty -= 12.F / static_cast<float>(area.mTickCount);
 
@@ -245,6 +252,14 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
             if (bombedBats[batIndex] < bat.mDensity && area.mArea.find(bat.mX, bat.mY)) {
                 batScore += 12.F / static_cast<float>(bat.mDensity);
                 bombedBats[batIndex]++;
+
+                if (mPhase == ITEM) {
+                    const pos_t batPosition(bat.mY, bat.mX);
+                    const auto pathIt = std::find(std::cbegin(mPathSequence), std::cend(mPathSequence), batPosition);
+                    if (pathIt != std::cend(mPathSequence)) {
+                        batScore += 12.F;
+                    }
+                }
             }
         }
     }

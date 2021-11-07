@@ -69,7 +69,7 @@ void Simulator::SetState(const TickDescription& state)
     if (state.mRequest.mTick >= mGameDescription.mMaxTick) {
         int x = mGameDescription.mMapSize - 1;
         int y = 0;
-        for (int i = 0; i < state.mRequest.mTick - mGameDescription.mMaxTick; ++i) {
+        for (int i = 0; i < state.mRequest.mTick - (mGameDescription.mMaxTick - 1); ++i) {
             mLitArea.insert(x, y);
             mLitArea.insert(mGameDescription.mMapSize - x - 1, mGameDescription.mMapSize - y - 1);
             mLitArea.insert(y, mGameDescription.mMapSize - x - 1);

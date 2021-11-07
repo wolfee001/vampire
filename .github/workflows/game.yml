@@ -2,7 +2,7 @@ name: Game
 
 on:
   schedule:
-    - cron: "15 7 * * *"
+    - cron: "0 8 * * *"
 
 jobs:
   game:

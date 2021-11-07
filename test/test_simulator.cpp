@@ -944,12 +944,22 @@ TEST_F(SimulateTest, LightStart)
 {
     // clang-format off
     mSimulator->SetState(parseTickDescription({
-        "REQ 775 500 1",
-        "VAMPIRE 1 1 1 2 1 2 0"
+        "REQ 775 500 1"
     }));
     // clang-format on
 
     EXPECT_TRUE(mSimulator->GetLitArea().find(0, 0));
+}
+
+TEST_F(SimulateTest, LightEndCrash)
+{
+    // clang-format off
+    mSimulator->SetState(parseTickDescription({
+        "REQ 775 800 1"
+    }));
+    // clang-format on
+
+    EXPECT_EQ(mSimulator->GetLitArea().getAsVector().size(), 11 * 11);
 }
 
 TEST_F(SimulateTest, DecreaseHpByLight)

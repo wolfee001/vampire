@@ -2,7 +2,14 @@ name: Game
 
 on:
   schedule:
-    - cron: "0 8 * * *"
+    - cron: "30 1 * * *"
+
+  workflow_dispatch:
+    inputs:
+      timeout:
+        description: 'Timeout'
+        required: true
+        default: 1800
 
 jobs:
   game:
@@ -20,8 +27,13 @@ jobs:
     - name: Install conan
       uses: turtlebrowser/get-conan@main
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+    - name: Configure CMake for manual run
+      if: github.event_name == 'workflow_dispatch'
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DTICK_TIMEOUT=${{ github.event.inputs.timeout }}
+
+    - name: Configure CMake for scheduled run
+      if: github.event_name == 'schedule'
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DTICK_TIMEOUT=1500
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release --target vampire

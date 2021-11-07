@@ -63,5 +63,5 @@ jobs:
       run: |
         cd routing_all_stars
         git add .
-        git commit -m "${{ github.event.head_commit.message }}" --allow-empty
-        git push
+        git commit -m "${{ github.event.head_commit.message }}" || echo "Nothing changed"
+        git push || echo "Nothing changed"

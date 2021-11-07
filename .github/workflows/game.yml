@@ -27,8 +27,13 @@ jobs:
     - name: Install conan
       uses: turtlebrowser/get-conan@main
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DTIMEOUT=${{ github.event.inputs.timeout }}
+    - name: Configure CMake for manual run
+      if: ${{ github.event.action }} == 'workflow_dispatch'
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DTICK_TIMEOUT=${{ github.event.inputs.timeout }}
+
+    - name: Configure CMake for scheduled run
+      if: ${{ github.event.action }} == 'schedule'
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release --target vampire

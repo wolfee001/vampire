@@ -12,6 +12,10 @@ endif()
 
 add_compile_definitions(CHECK_ENABLED)
 
+if(TICK_TIMEOUT)
+    add_compile_definitions(TIMEOUT=${TICK_TIMEOUT})
+endif()
+
 #-------------- SETUPS
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)

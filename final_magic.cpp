@@ -18,13 +18,13 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const std::map<i
     mGaborMagic.SetPhase(mUsualMagic.mPhase);
     mGaborMagic.SetAvoids(mUsualMagic.mAvoids);
 
-        if (mUsualMagic.mPhase == PHASE1) {
-            mGaborMagic.SetBombSequence(mUsualMagic.mPath);
-        } else if (mUsualMagic.mPhase == ITEM) {
-            mGaborMagic.SetPathSequence(mUsualMagic.mPath);
-        } else {
-            mGaborMagic.SetPhase(NONE);
-        }
+    if (mUsualMagic.mPhase == PHASE1) {
+        mGaborMagic.SetBombSequence(mUsualMagic.mPath);
+    } else if (mUsualMagic.mPhase == ITEM) {
+        mGaborMagic.SetPathSequence(mUsualMagic.mPath);
+    } else {
+        mGaborMagic.SetPhase(NONE);
+    }
 
     std::chrono::milliseconds usualTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - start;
     mGaborMagic.SetTickTimeout(mTimeout - usualTime);

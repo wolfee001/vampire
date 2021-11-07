@@ -115,6 +115,94 @@ TEST_F(FinalTest, HangLevel7)
     EXPECT_FALSE(move.mSteps.empty());
 }
 
+TEST_F(FinalTest, Level1Suicide)
+{
+    // clang-format off
+    const std::vector<std::string> info = {
+        "REQ 6493 0 1",
+        "VAMPIRE 4 9 9 3 1 2 0",
+        "VAMPIRE 1 7 7 1 9 9 0",
+        "VAMPIRE 3 7 9 2 3 1 0",
+        "GRENADE 4 4 7 2 2",
+        "GRENADE 4 5 8 3 2",
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    FinalMagic magic(mGameDescripton);
+    magic.SetTickTimeout(std::chrono::hours { 1000 });
+    magic.mGaborMagic.SetLevelLimit(2);
+
+    Simulator simulator(mGameDescripton);
+    Simulator::NewPoints points;
+
+    const auto move = magic.Tick(state, points);
+    simulator.SetState(state);
+    simulator.SetVampireMove(1, move);
+    std::tie(state, points) = simulator.Tick();
+    EXPECT_EQ(state.mMe.mHealth, 1);
+}
+
+TEST_F(FinalTest, DISABLED_Level1Hang)
+{
+    // clang-format off
+    const std::vector<std::string> info = {
+        "REQ 6493 0 1",
+        "VAMPIRE 1 7 1 2 1 2 0",
+        "VAMPIRE 3 9 9 3 1 2 0",
+        "VAMPIRE 4 1 9 3 1 2 0",
+        "VAMPIRE 2 9 1 2 1 2 0",
+        "BAT1 9 4 9 5 9 6 2 7 3 7 7 7 8 7 3 8 7 8 4 9 5 9 6 9 3 5 7 5",
+        "BAT2 8 5 3 6 7 6 4 7 6 7 5 8",
+        "BAT3 5 4 4 5 5 5 6 5 5 6 5 7",
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    FinalMagic magic(mGameDescripton);
+    magic.SetTickTimeout(std::chrono::hours { 1000 });
+    magic.mGaborMagic.SetLevelLimit(2);
+
+    Simulator simulator(mGameDescripton);
+    Simulator::NewPoints points = { { 1, 0 } };
+
+    const auto move = magic.Tick(state, points);
+    EXPECT_NE(move.mSteps.size(), 0);
+}
+
+TEST_F(FinalTest, DISABLED_Level1SelfBombing)
+{
+    // clang-format off
+    const std::vector<std::string> info = {
+        "REQ 6493 0 1",
+        "VAMPIRE 1 9 2 3 0 2 0",
+        "VAMPIRE 3 9 9 3 1 2 0",
+        "VAMPIRE 4 1 9 3 1 2 0",
+        "VAMPIRE 2 9 1 2 1 2 0",
+        "GRENADE 1 7 3 2 2",
+        "BAT1 9 4 9 5 9 6 2 7 3 7 7 7 8 7 3 8 7 8 4 9 5 9 6 9",
+        "BAT2 8 5 3 6 7 6 4 7 6 7 5 8 3 5",
+        "BAT3 5 3 5 4 4 5 5 5 6 5 7 5 5 6 5 7",
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    for (size_t tickId = 0; tickId < 3; ++tickId) {
+        FinalMagic magic(mGameDescripton);
+        magic.SetTickTimeout(std::chrono::hours { 1000 });
+        magic.mGaborMagic.SetLevelLimit(2);
+
+        Simulator simulator(mGameDescripton);
+        Simulator::NewPoints points = { { 1, 0 } };
+
+        const auto move = magic.Tick(state, points);
+        simulator.SetState(state);
+        simulator.SetVampireMove(1, move);
+        std::tie(state, points) = simulator.Tick();
+        EXPECT_EQ(state.mMe.mHealth, 3);
+    }
+}
+
 /*
 TEST_F(FinalTest, RandomMapHang)
 {

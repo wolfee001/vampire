@@ -143,7 +143,7 @@ TEST_F(FinalTest, Level1Suicide)
     EXPECT_EQ(state.mMe.mHealth, 1);
 }
 
-TEST_F(FinalTest, DISABLED_Level1Hang)
+TEST_F(FinalTest, Level1Hang)
 {
     // clang-format off
     const std::vector<std::string> info = {

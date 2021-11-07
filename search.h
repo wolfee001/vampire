@@ -74,7 +74,7 @@ public:
         ActionSequence::ActionSequence_t mAction = std::numeric_limits<ActionSequence::ActionSequence_t>::max();
     };
 
-    float Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move) const;
+    float Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move, const bool printScores = false) const;
 
     std::vector<std::vector<TreeNode>> mLevels;
 

@@ -18,8 +18,8 @@ public:
 
 private:
     size_t mMaxLevel = 10;
-    phase_t mPhase;
-    int mAvoids;
+    phase_t mPhase = NONE;
+    int mAvoids = 0;
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
 };

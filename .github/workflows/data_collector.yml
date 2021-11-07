@@ -10,7 +10,7 @@ jobs:
 
     steps:
     - name: log
-      run: echo ${{github.event.action}}
+      run: echo "${{ github.event.action }}"
 
     - name: Checkout
       uses: actions/checkout@v2

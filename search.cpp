@@ -149,7 +149,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
 
 Answer Search::GetBestMove()
 {
-    [[maybe_unused]] const auto printBranch = [&mLevels = mLevels, this](const TreeNode& node) {
+    [[maybe_unused]] const auto printBranch = [&mLevels = mLevels](const TreeNode& node) {
         std::vector<const TreeNode*> branch;
 
         const TreeNode* current = &node;

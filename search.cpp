@@ -8,8 +8,6 @@
 
 bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
 {
-    std::cerr << "Allowed running time: " << std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now()).count() << " ms"
-              << std::endl;
     [[maybe_unused]] const int currentLevelIndex = static_cast<int>(mLevels.size());
     mLevels.resize(mLevels.size() + 1);
 
@@ -28,7 +26,8 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
         simulator.SetState(tick);
 
         for (ActionSequence::ActionSequence_t i = 0; i <= ActionSequence::MaxSequenceId; ++i) {
-            if (std::chrono::steady_clock::now() > deadline) {
+            const auto now = std::chrono::steady_clock::now();
+            if (now > deadline) {
                 mLevels.resize(mLevels.size() - 1);
                 return false;
             }
@@ -51,7 +50,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 }
 
                 if (action.GetNumberOfSteps() == 3) {
-                    const auto thirdStep = action.GetNthStep(1);
+                    const auto thirdStep = action.GetNthStep(2);
                     if ((thirdStep == 0 && secondStep == 1) || (thirdStep == 1 && secondStep == 0) || (thirdStep == 2 && secondStep == 3)
                         || (thirdStep == 3 && secondStep == 2)) {
                         continue;
@@ -140,6 +139,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
     }
 
     if (nextLevel.empty() || nextLevel.size() < currentLevel.size()) {
+        std::cerr << "next level is empty or shrinking!" << std::endl;
         mLevels.resize(mLevels.size() - 1);
         return false;
     }
@@ -239,10 +239,14 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     }
 
     if (mPhase == ITEM && !mPathSequence.empty()) {
-        const auto pathIt = std::find(std::cbegin(mPathSequence), std::cend(mPathSequence), mypos);
-        if (pathIt != std::cend(mPathSequence)) {
-            pathTargetScore += (1.1F * static_cast<float>(move.mSteps.size())) * (12.F / static_cast<float>(mPathSequence.size()))
-                * static_cast<float>(std::distance(pathIt, std::cend(mPathSequence)));
+        const auto powerUpIt = std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
+            [&mPathSequence = mPathSequence](const PowerUp& powerup) { return powerup.mX == mPathSequence.back().x && powerup.mY == mPathSequence.back().y; });
+        if (powerUpIt != std::cend(tickDescription.mPowerUps) && (powerUpIt->mType != PowerUp::Type::Tomato || !mTomatoSafePlay)) {
+            const auto pathIt = std::find(std::cbegin(mPathSequence), std::cend(mPathSequence), mypos);
+            if (pathIt != std::cend(mPathSequence)) {
+                pathTargetScore += (1.1F * static_cast<float>(move.mSteps.size())) * (12.F / static_cast<float>(mPathSequence.size()))
+                    * static_cast<float>(std::distance(pathIt, std::cend(mPathSequence)));
+            }
         }
     }
 
@@ -260,6 +264,8 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
             continue;
         }
 
+        bool hasBatTarget = false;
+
         for (size_t batIndex = 0; batIndex < tickDescription.mAllBats.size(); ++batIndex) {
             const auto& bat = tickDescription.mAllBats[batIndex];
 
@@ -274,7 +280,12 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
                         batScore += 12.F;
                     }
                 }
+                hasBatTarget = true;
             }
+        }
+
+        if (!hasBatTarget) {
+            batScore -= 12.F;
         }
     }
 

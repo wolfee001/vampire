@@ -24,7 +24,6 @@ std::vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep);
 
 class UsualMagic : public IMagic {
 public:
-	std::chrono::milliseconds mTimeout;
 	bool mInPhase1 = true;
     explicit UsualMagic(const GameDescription& gameDescription);
     Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points);

@@ -47,6 +47,7 @@ target_link_libraries(libhelper
 )
 
 add_library(libmagic
+    i_magic.cpp
     usual_magic.cpp
     gabor_magic.cpp
     final_magic.cpp

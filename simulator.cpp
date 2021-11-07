@@ -66,7 +66,7 @@ void Simulator::SetState(const TickDescription& state)
     mReachableArea.mAreas.flip();
 
     mLitArea = Area(mGameDescription.mMapSize);
-    if (state.mRequest.mTick > mGameDescription.mMaxTick) {
+    if (state.mRequest.mTick >= mGameDescription.mMaxTick) {
         int x = mGameDescription.mMapSize - 1;
         int y = 0;
         for (int i = 0; i < state.mRequest.mTick - mGameDescription.mMaxTick; ++i) {

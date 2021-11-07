@@ -22,6 +22,7 @@
 #include "usual_magic.h"
 
 #include "check.h"
+#include "timeout.h"
 
 std::vector<std::pair<int, int>> solver::line2d(std::pair<int, int> from, const std::pair<int, int>& to)
 {
@@ -74,6 +75,7 @@ void solver::startMessage(const std::vector<std::string>& startInfos)
 #else
 #pragma error "No magic defined!"
 #endif
+    mMagic->SetTickTimeout(std::chrono::milliseconds(TIMEOUT));
 }
 
 std::vector<std::string> solver::processTick(const std::vector<std::string>& infos)

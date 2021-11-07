@@ -11,7 +11,6 @@ public:
 
     Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points);
 
-private:
     UsualMagic mUsualMagic;
     GaborMagic mGaborMagic;
 };

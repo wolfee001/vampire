@@ -12,12 +12,12 @@ public:
 
     void SetBombSequence(const std::vector<pos_t>& sequence);
     void SetPathSequence(const std::vector<pos_t>& sequence);
-    void SetTickTimeout(std::chrono::milliseconds millis);
     void SetPhase(phase_t phase);
     void SetAvoids(int avoidstay);
+    void SetLevelLimit(const size_t maxLevel);
 
 private:
-    std::chrono::milliseconds mTimeout = std::chrono::milliseconds(1000);
+    size_t mMaxLevel = 10;
     phase_t mPhase;
     int mAvoids;
     std::vector<pos_t> mBombSequence;

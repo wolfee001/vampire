@@ -10,6 +10,11 @@ GaborMagic::GaborMagic(const GameDescription& gameDescription)
     // Maybe some constructor magic? :)
 }
 
+void GaborMagic::SetLevelLimit(const size_t maxLevel)
+{
+    mMaxLevel = maxLevel;
+}
+
 Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<int, float>& points)
 {
     Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);
@@ -26,7 +31,7 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<i
         calculationTime = mTimeout / 2;
     }
 
-    for (size_t i = 0; i < 10; ++i) {
+    for (size_t i = 0; i < mMaxLevel; ++i) {
         if (!search.CalculateNextLevel(t1 + calculationTime)) {
             std::cerr << "Calculation timeout at level " << i << std::endl;
             break;
@@ -67,9 +72,4 @@ void GaborMagic::SetPhase(phase_t phase)
 void GaborMagic::SetAvoids(int avoids)
 {
     mAvoids = avoids;
-}
-
-void GaborMagic::SetTickTimeout(std::chrono::milliseconds millis)
-{
-    mTimeout = millis;
 }

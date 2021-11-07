@@ -49,35 +49,37 @@ Simulator::Simulator(const GameDescription& gameDescription)
 void Simulator::SetState(const TickDescription& state)
 {
     mState = state;
-    mReachableArea = Area(mGameDescription.mMapSize);
-    for (const auto& bat : state.mAllBats) {
-        mReachableArea.insert(bat.mX, bat.mY);
-    }
-    for (const auto& grenade : state.mGrenades) {
-        mReachableArea.insert(grenade.mX, grenade.mY);
-    }
-    for (int x = 0; x < mGameDescription.mMapSize; ++x) {
-        for (int y = 0; y < mGameDescription.mMapSize; ++y) {
-            if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
-                mReachableArea.insert(x, y);
+    if (mGameDescription.mMapSize != 0) {
+        mReachableArea = Area(mGameDescription.mMapSize);
+        for (const auto& bat : state.mAllBats) {
+            mReachableArea.insert(bat.mX, bat.mY);
+        }
+        for (const auto& grenade : state.mGrenades) {
+            mReachableArea.insert(grenade.mX, grenade.mY);
+        }
+        for (int x = 0; x < mGameDescription.mMapSize; ++x) {
+            for (int y = 0; y < mGameDescription.mMapSize; ++y) {
+                if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
+                    mReachableArea.insert(x, y);
+                }
             }
         }
-    }
-    mReachableArea.mAreas.flip();
+        mReachableArea.mAreas.flip();
 
-    mLitArea = Area(mGameDescription.mMapSize);
-    if (state.mRequest.mTick >= mGameDescription.mMaxTick) {
-        int x = mGameDescription.mMapSize - 1;
-        int y = 0;
-        for (int i = 0; i < state.mRequest.mTick - (mGameDescription.mMaxTick - 1); ++i) {
-            mLitArea.insert(x, y);
-            mLitArea.insert(mGameDescription.mMapSize - x - 1, mGameDescription.mMapSize - y - 1);
-            mLitArea.insert(y, mGameDescription.mMapSize - x - 1);
-            mLitArea.insert(mGameDescription.mMapSize - y - 1, x);
-            x--;
-            if (x == y) {
-                y++;
-                x = mGameDescription.mMapSize - 1 - y;
+        mLitArea = Area(mGameDescription.mMapSize);
+        if (state.mRequest.mTick >= mGameDescription.mMaxTick) {
+            int x = mGameDescription.mMapSize - 1;
+            int y = 0;
+            for (int i = 0; i < state.mRequest.mTick - (mGameDescription.mMaxTick - 1); ++i) {
+                mLitArea.insert(x, y);
+                mLitArea.insert(mGameDescription.mMapSize - x - 1, mGameDescription.mMapSize - y - 1);
+                mLitArea.insert(y, mGameDescription.mMapSize - x - 1);
+                mLitArea.insert(mGameDescription.mMapSize - y - 1, x);
+                x--;
+                if (x == y) {
+                    y++;
+                    x = mGameDescription.mMapSize - 1 - y;
+                }
             }
         }
     }

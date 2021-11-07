@@ -563,6 +563,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	mAvoids = 0;
 	mPath.clear();
 
+	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick) // no hint for now with lights
+		return answer;
+
 	auto& me = tickDescription.mMe;
 	pos_t mypos = pos_t(me.mY, me.mX);
 	cerr << "turn " << tickDescription.mRequest.mTick << ' ' << mypos << endl;
@@ -621,9 +624,6 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	}
 	if ((mAvoids & 15) == 15) // danger everywhere
 		mAvoids &= ~15;
-
-	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick)
-		return answer;
 
 	auto nextmap = sim(m);
 	if (!tickDescription.mPowerUps.empty()) {

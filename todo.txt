@@ -8,3 +8,5 @@ lower impact (parszaz pont)
 -menjunk ahhoz a targyhoz ahova az egyetlen gyujtogeto is valoszinuleg megy, meg akkor is ha messzebb van (de meg elerheto) - es akkor 2 targyat tudunk szerezni, mert a tobbiek nem csinalnak semmit
 -vegjatekban oles: ...
 
+
+-megakadalyozni hogy mas is felvegyen targyat (ha kevesebb bombaja van, kevesbe tudjak egymast olni) - ha mar korabban odaerunk, rakjunk ra bombat

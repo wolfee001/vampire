@@ -248,7 +248,7 @@ int getdist(map_t& m, pos_t start, vector<pos_t> targets, int r, int stepcnt, in
 				return reaches[firsttargetreached.y][firsttargetreached.x].turn;
 			}
 		}
-		if (qi.step == stepcnt - 1) {
+		if (qi.step >= stepcnt - 1) {
 			++qi.turn;
 			if (qi.turn >= MAXTURN) {
 				return -1;

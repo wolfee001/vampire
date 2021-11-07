@@ -16,9 +16,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: log
-      run: echo "${{ github.event_name }}"
-
     - name: Checkout
       uses: actions/checkout@v2
 
@@ -31,11 +28,11 @@ jobs:
       uses: turtlebrowser/get-conan@main
 
     - name: Configure CMake for manual run
-      if: ${{ github.event.action }} == 'workflow_dispatch'
+      if: github.event_name == 'workflow_dispatch'
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DTICK_TIMEOUT=${{ github.event.inputs.timeout }}
 
     - name: Configure CMake for scheduled run
-      if: ${{ github.event.action }} == 'schedule'
+      if: github.event_name == 'schedule'
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DTICK_TIMEOUT=1500
 
     - name: Build

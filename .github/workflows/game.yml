@@ -33,7 +33,7 @@ jobs:
 
     - name: Configure CMake for scheduled run
       if: ${{ github.event.action }} == 'schedule'
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release -DTICK_TIMEOUT=1500
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config Release --target vampire

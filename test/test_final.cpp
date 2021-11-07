@@ -164,7 +164,7 @@ TEST_F(FinalTest, DISABLED_Level1Hang)
     magic.mGaborMagic.SetLevelLimit(2);
 
     Simulator simulator(mGameDescripton);
-    Simulator::NewPoints points = { { 1, 0 } };
+    Simulator::NewPoints points = { { 1, 0.F } };
 
     const auto move = magic.Tick(state, points);
     EXPECT_NE(move.mSteps.size(), 0);
@@ -193,7 +193,7 @@ TEST_F(FinalTest, DISABLED_Level1SelfBombing)
         magic.mGaborMagic.SetLevelLimit(2);
 
         Simulator simulator(mGameDescripton);
-        Simulator::NewPoints points = { { 1, 0 } };
+        Simulator::NewPoints points = { { 1, 0.F } };
 
         const auto move = magic.Tick(state, points);
         simulator.SetState(state);

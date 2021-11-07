@@ -364,7 +364,7 @@ TEST_F(SearchTest, Light)
 
     // clang-format off
     std::vector<std::string> info = {
-        "REQ 775 548 1",
+        "REQ 775 547 1",
         "VAMPIRE 1 3 3 2 15 10 266"
     };
     // clang-format on

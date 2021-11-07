@@ -17,11 +17,19 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const std::map<i
     mUsualMagic.Tick(tickDescription, points);
     mGaborMagic.SetPhase(mUsualMagic.mPhase);
     mGaborMagic.SetAvoids(mUsualMagic.mAvoids);
-    if (mUsualMagic.mPhase == PHASE1) {
-        mGaborMagic.SetBombSequence(mUsualMagic.mPath);
-    } else if (mUsualMagic.mPhase == ITEM || mUsualMagic.mPhase == BETWEEN_ITEMS) {
+    /*
+        if (mUsualMagic.mPhase == PHASE1) {
+            mGaborMagic.SetBombSequence(mUsualMagic.mPath);
+        } else if (mUsualMagic.mPhase == ITEM || mUsualMagic.mPhase == BETWEEN_ITEMS) {
+            mGaborMagic.SetPathSequence(mUsualMagic.mPath);
+        }
+    */
+    if (mUsualMagic.mPhase == ITEM) {
         mGaborMagic.SetPathSequence(mUsualMagic.mPath);
+    } else {
+        mGaborMagic.SetPhase(NONE);
     }
+
     std::chrono::milliseconds usualTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - start;
     mGaborMagic.SetTickTimeout(mTimeout - usualTime);
     const auto& retVal = mGaborMagic.Tick(tickDescription, points);

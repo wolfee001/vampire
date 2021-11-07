@@ -239,10 +239,14 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     }
 
     if (mPhase == ITEM && !mPathSequence.empty()) {
-        const auto pathIt = std::find(std::cbegin(mPathSequence), std::cend(mPathSequence), mypos);
-        if (pathIt != std::cend(mPathSequence)) {
-            pathTargetScore += (1.1F * static_cast<float>(move.mSteps.size())) * (12.F / static_cast<float>(mPathSequence.size()))
-                * static_cast<float>(std::distance(pathIt, std::cend(mPathSequence)));
+        const auto powerUpIt = std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
+            [&mPathSequence = mPathSequence](const PowerUp& powerup) { return powerup.mX == mPathSequence.back().x && powerup.mY == mPathSequence.back().y; });
+        if (powerUpIt != std::cend(tickDescription.mPowerUps) && (powerUpIt->mType != PowerUp::Type::Tomato || !mTomatoSafePlay)) {
+            const auto pathIt = std::find(std::cbegin(mPathSequence), std::cend(mPathSequence), mypos);
+            if (pathIt != std::cend(mPathSequence)) {
+                pathTargetScore += (1.1F * static_cast<float>(move.mSteps.size())) * (12.F / static_cast<float>(mPathSequence.size()))
+                    * static_cast<float>(std::distance(pathIt, std::cend(mPathSequence)));
+            }
         }
     }
 

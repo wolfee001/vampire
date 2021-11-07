@@ -62,7 +62,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
-            if (mLevels.size() == 2 && mAvoids && action.GetNumberOfSteps() == 0) {
+            if (mLevels.size() == 2 && (mAvoids & 16) && action.GetNumberOfSteps() == 0) {
                 continue;
             }
 

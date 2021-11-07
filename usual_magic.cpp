@@ -577,6 +577,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		m[grenade.mY][grenade.mX] = grenade.mTick + '0';
 		m.bombrange[grenade.mY][grenade.mX] = grenade.mRange + '0';
 	}
+	m = sim(m, false); // just go on after bombs
+	auto nextmap = sim(m);
 
 	bool ontomato = false;
 	for (const auto& powerup : tickDescription.mPowerUps)
@@ -587,7 +589,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		pos_t p2 = mypos.GetPos(dd);
 		int block = 0;
 		int bomb = 0;
-		if (m[p2.y][p2.x] != ' ') {
+		if (m[p2.y][p2.x] != ' ' || nextmap[p2.y][p2.x] == '.') {
 			mAvoids |= (1 << dd);
 			continue;
 		}
@@ -625,7 +627,6 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 	if ((mAvoids & 15) == 15) // danger everywhere
 		mAvoids &= ~15;
 
-	auto nextmap = sim(m);
 	if (!tickDescription.mPowerUps.empty()) {
 		mInPhase1 = false;
 

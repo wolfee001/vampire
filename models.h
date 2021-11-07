@@ -169,7 +169,7 @@ struct pos_t {
     }
     friend std::ostream& operator<<(std::ostream& stream, const pos_t& p)
     {
-        return stream << p.x << ":" << p.y << " ";
+        return stream << p.y << "(y):" << p.x << "(x) ";
     }
 };
 

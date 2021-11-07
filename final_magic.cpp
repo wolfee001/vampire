@@ -20,7 +20,7 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const std::map<i
 
     if (mUsualMagic.mPhase == PHASE1) {
         mGaborMagic.SetBombSequence(mUsualMagic.mPath);
-    } else if (mUsualMagic.mPhase == ITEM) {
+    } else if (mUsualMagic.mPhase == ITEM || mUsualMagic.mPhase == BETWEEN_ITEMS) {
         mGaborMagic.SetPathSequence(mUsualMagic.mPath);
     } else {
         mGaborMagic.SetPhase(NONE);

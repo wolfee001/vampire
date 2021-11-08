@@ -81,11 +81,6 @@ target_link_libraries(vampire
 
 #-------------- TEST BUILD
 enable_testing()
-if(TARGET CONAN_PKG::gtest)
-    set(CONAN_PKG_GTEST CONAN_PKG::gtest)
-elseif(TARGET CONAN_PKG::GTest)
-    set(CONAN_PKG_GTEST CONAN_PKG::GTest)
-endif()
 
 add_executable(unittest
     test/main.cpp
@@ -100,7 +95,7 @@ target_link_libraries(unittest
     PUBLIC project_options
     PRIVATE project_warnings
     PRIVATE libsolver
-    PRIVATE CONAN_PKG_GTEST
+    PRIVATE CONAN_PKG::GTest
 )
 
 include(GoogleTest)

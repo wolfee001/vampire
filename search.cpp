@@ -290,7 +290,7 @@ float Search::Evaluate(
             const auto& bat = tickDescription.mAllBats[batIndex];
 
             if (bombedBats[batIndex] < bat.mDensity && area.mArea.find(bat.mX, bat.mY)) {
-                batScore += 12.F / static_cast<float>(bat.mDensity);
+                batScore += 12.F;
                 bombedBats[batIndex]++;
 
                 if (mPhase == ITEM) {

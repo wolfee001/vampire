@@ -21,6 +21,7 @@ map_t sim(map_t& m, bool dot = true);
 int getdist(map_t m, int r, int stepcnt, int bombcnt, std::vector<event_t> events);
 std::pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r);
 std::vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep);
+int collectavoids(map_t& m, map_t& nextmap, pos_t player, std::vector<pos_t> enemieswithbomb);
 
 class UsualMagic : public IMagic {
 public:

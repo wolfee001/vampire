@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 
 #include "gui.h"

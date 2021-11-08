@@ -149,9 +149,15 @@ struct pos_t {
         }
         return -1;
     }
-    int GetDist(const pos_t& o) const
+    int GetDist(const pos_t& o) const // rough distance
     {
-        return abs(x - o.x) + abs(y - o.y);
+        int dx = abs(x - o.x);
+        int dy = abs(y - o.y);
+        if (dx == 0 && x % 2 == 0)
+            dx += 2;
+        if (dy == 0 && y % 2 == 0)
+            dy += 2;
+        return dx + dy;
     }
     bool operator==(const pos_t& o) const
     {

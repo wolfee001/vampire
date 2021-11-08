@@ -556,6 +556,126 @@ int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescript
     return getdist(m, pos_t(vampire.mY, vampire.mX), targets, vampire.mGrenadeRange, vampire.mRunningShoesTick > 0 ? 3 : 2, vampire.mGhostModeTick ? 0 : vampire.mPlacableGrenades, events);
 }
 
+int blockcnt(map_t& m, pos_t p)
+{
+	int cnt = 0;
+	FOR0(d, 4) {
+		pos_t p2 = p.GetPos(d);
+		if (m[p2.y][p2.x] != ' ')
+			++cnt;
+	}
+	return cnt;
+}
+
+// if entrance is accessible by enemy with bomb
+int avoidsack(map_t& m, pos_t entrance, pos_t p)
+{
+	int avoids = 0;
+	FOR0(d, 4) {
+		pos_t neck = entrance.GetPos(d);
+		if (m[neck.y][neck.x] != ' ')
+			continue;
+		int block = blockcnt(m, neck);
+		if (block < 2)
+			continue;
+		if (block == 2) {
+			pos_t sack = neck.GetPos(d);
+			if (m[sack.y][sack.x] != ' ' || blockcnt(m, sack) < 3) 
+				continue;
+			if (p == neck)
+				avoids |= (1 << d);
+			avoids |= 16;
+		}
+		if (p == entrance)
+			avoids |= (1 << d);
+		else if (p == neck)
+			avoids |= 16;
+	}
+	return avoids;
+}
+
+int avoidsack(map_t& m, pos_t player, vector<pos_t> enemieswithbomb)
+{
+	int avoids = 0;
+	FOR0(d, 4) {
+		pos_t entrance = player;
+		FOR0(i, 2) {
+			if (i > 0 || d > 0)
+				entrance = entrance.GetPos(d);
+			if (m[entrance.y][entrance.x] != ' ' || blockcnt(m, entrance) > 2)
+				break;
+			for (auto e : enemieswithbomb) {
+				if (e.GetDist(entrance) <= 2) {
+					avoids |= avoidsack(m, entrance, player);
+					break;
+				}
+			}
+		}
+	}
+	return avoids;
+}
+
+int avoidtoward(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemieswithbomb)
+{
+	int avoids = 0;
+	FOR0(dd, 4) {
+		pos_t p2 = player.GetPos(dd);
+		int block = 0;
+		int bomb = 0;
+		if (m[p2.y][p2.x] != ' ' || nextmap[p2.y][p2.x] == '.') {
+			avoids |= (1 << dd);
+			continue;
+		}
+		FOR0(d3, 4) {
+			pos_t p3 = p2.GetPos(d3);
+			if (m[p3.y][p3.x] >= '1' && m[p3.y][p3.x] <= '9')
+				++bomb;
+			else if (m[p3.y][p3.x] != ' ')
+				++block;
+			for (auto enemy : enemieswithbomb)
+				if (enemy == p3 || enemy == p2)
+					++bomb;					
+		}
+		if (block >= 2 && bomb >= 1)
+			avoids |= (1 << dd);
+	}
+	return avoids;
+}
+
+int avoidstay(map_t& m, pos_t player, vector<pos_t> enemieswithbomb)
+{
+	int bomb = 0;
+	int block = 0;
+	int avoiddirs = 0;
+	FOR0(dd, 4) {
+		pos_t p2 = player.GetPos(dd);
+		if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9')
+			++bomb;
+		else if (m[p2.y][p2.x] != ' ')
+			++block;
+		for (auto enemy : enemieswithbomb)
+			if (enemy == p2) {
+				++bomb;					
+				avoiddirs |= (1 << dd);
+			}
+	}
+	if (block >= 2 && bomb >= 1)
+		return 16 | avoiddirs; 
+	return 0;
+}
+
+int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemieswithbomb)
+{
+	int avoids = avoidtoward(m, nextmap, player, enemieswithbomb);
+	avoids |= avoidstay(m, player, enemieswithbomb);
+	avoids |= avoidsack(m, player, enemieswithbomb);
+
+	if ((avoids & 15) == 15) // danger everywhere = no danger at all (we still avoid stay)
+		avoids = 0;
+
+	return avoids;
+}
+
 Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<int, float>& points)
 {
     Answer answer;
@@ -585,47 +705,15 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		if (pos_t(powerup.mY, powerup.mX) == mypos)
 			ontomato = true;
 
-	FOR0(dd, 4) {
-		pos_t p2 = mypos.GetPos(dd);
-		int block = 0;
-		int bomb = 0;
-		if (m[p2.y][p2.x] != ' ' || nextmap[p2.y][p2.x] == '.') {
-			mAvoids |= (1 << dd);
-			continue;
-		}
-		FOR0(d3, 4) {
-			pos_t p3 = p2.GetPos(d3);
-			if (m[p3.y][p3.x] >= '1' && m[p3.y][p3.x] <= '9')
-				++bomb;
-			else if (m[p3.y][p3.x] != ' ')
-				++block;
-			for (const auto& enemy : tickDescription.mEnemyVampires)
-				if ((pos_t(enemy.mY, enemy.mX) == p3 || pos_t(enemy.mY, enemy.mX) == p2) && enemy.mPlacableGrenades >= 1)
-					++bomb;					
-		}
-		if (block >= 2 && bomb >= 1)
-			mAvoids |= (1 << dd);
-	}
-	int bomb = 0;
-	int block = 0;
-	int avoiddirs = 0;
-	FOR0(dd, 4) {
-		pos_t p2 = mypos.GetPos(dd);
-		if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9')
-			++bomb;
-		else if (m[p2.y][p2.x] != ' ')
-			++block;
-		for (const auto& enemy : tickDescription.mEnemyVampires)
-			if (pos_t(enemy.mY, enemy.mX) == p2 && enemy.mPlacableGrenades >= 1) {
-				++bomb;					
-				avoiddirs |= (1 << dd);
-			}
-	}
-	if (block >= 2 && bomb >= 1 && (!ontomato || me.mHealth == 1)) { // avoid staying at risky
-		mAvoids |= 16 | avoiddirs; 
-	}
-	if ((mAvoids & 15) == 15) // danger everywhere
-		mAvoids &= ~15;
+	vector<pos_t> enemieswithbomb;
+	for (const auto& enemy : tickDescription.mEnemyVampires)
+		if (enemy.mPlacableGrenades >= 1)
+			enemieswithbomb.push_back(pos_t(enemy.mY, enemy.mX));
+
+	mAvoids = collectavoids(m, nextmap, mypos, enemieswithbomb);
+	
+	if ((mAvoids & 16) && ontomato && me.mHealth == 2) // with 2 health, it can be more or less ok to stay (no matter what the timings are)
+		mAvoids &= ~16;
 
 	if (!tickDescription.mPowerUps.empty()) {
 		mInPhase1 = false;

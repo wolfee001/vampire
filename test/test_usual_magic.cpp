@@ -676,3 +676,140 @@ TEST(UsualMagic, BombSequence)
 			}
 		}, 1, 18);
 }
+
+int checkavoid(map_t m)
+{
+	pos_t start;
+	std::vector<pos_t> enemies;
+	for(size_t y = 0; y < m.size(); ++y) {
+		for(size_t x = 0; x < m.size(); ++x) {
+			if (m[y][x] == 'P') {
+				m[y][x] = ' ';
+				start = pos_t(static_cast<int>(y), static_cast<int>(x));
+			}
+			else if (m[y][x] == 'E') {
+				m[y][x] = ' ';
+				enemies.push_back(pos_t(static_cast<int>(y), static_cast<int>(x)));
+			}
+		}
+	}
+	auto nextmap = sim(m);
+	int res = collectavoids(m, nextmap, start, enemies);
+	return res;
+}
+
+TEST(UsualMagic, Avoids)
+{
+	ASSERT_EQ(checkavoid(
+		{ { 
+            "OOOOO", 
+            "O P2O", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }) & 16, 16);
+	ASSERT_EQ(checkavoid(
+		{ { 
+            "OOOOO", 
+            "O  EO", 
+            "O OPO", 
+            "O   O", 
+            "OOOOO" } }) & 16, 16);
+	ASSERT_EQ(checkavoid(
+		{ { 
+            "OOOOO", 
+            "O  EO", 
+            "O OPO", 
+            "O   O", 
+            "OOOOO" } }) & 1, 1);
+	ASSERT_EQ(checkavoid(
+		{ { 
+            "OOOOO", 
+            "O  EO", 
+            "O OPO", 
+            "O 2 O", 
+            "OOOOO" } }), 0);
+	ASSERT_EQ(checkavoid(
+		{
+			{
+				"OOOOOOO",
+				"O     O",
+				"O O O O",
+				"OE  P-O",
+				"O O O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}) & 26, 18);
+	ASSERT_EQ(checkavoid(
+		{
+			{
+				"OOOOOOO",
+				"O     O",
+				"OEO-O O",
+				"O  P -O",
+				"O O-O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}) & 26, 18);
+	ASSERT_EQ(checkavoid(
+		{
+			{
+				"OOOOOOO",
+				"O     O",
+				"O O-O O",
+				"OE  P-O",
+				"O O-O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}) & 26, 18);
+	ASSERT_EQ(checkavoid(
+		{
+			{
+				"OOOOOOO",
+				"O     O",
+				"O O-O O",
+				"O E P-O",
+				"O O-O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}) & 24, 0);
+	ASSERT_EQ(checkavoid(
+		{
+			{
+				"OOOOOOO",
+				"O     O",
+				"OEO O O",
+				"O   P-O",
+				"O O O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}) & 24, 0);
+	ASSERT_EQ(checkavoid(
+		{
+			{
+				"OOOOOOO",
+				"O  -  O",
+				"O O O O",
+				"O -P- O",
+				"OEO O O",
+				"O     O",
+				"OOOOOOO"
+			}
+		}) & 21, 0);
+	ASSERT_EQ(checkavoid(
+		{
+			{
+				"OOOOOOO",
+				"O  -  O",
+				"O O O O",
+				"O -P- O",
+				"O O O O",
+				"O E   O",
+				"OOOOOOO"
+			}
+		}) & 21, 17);
+}

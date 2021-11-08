@@ -698,6 +698,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		m.bombrange[grenade.mY][grenade.mX] = grenade.mRange + '0';
 	}
 	m = sim(m, false); // just go on after bombs
+
 	auto nextmap = sim(m);
 
 	bool ontomato = false;
@@ -711,7 +712,19 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 			enemieswithbomb.push_back(pos_t(enemy.mY, enemy.mX));
 
 	mAvoids = collectavoids(m, nextmap, mypos, enemieswithbomb);
-	
+
+	for (const auto& enemy : tickDescription.mEnemyVampires) {
+		if (enemy.mPlacableGrenades >= 1 && nextmap[enemy.mY][enemy.mX] == '.') {
+			map_t test = m;
+			test.bombrange.clear();
+			bomb(test, test, pos_t(enemy.mY, enemy.mX), enemy.mGrenadeRange);
+			if (test[mypos.y][mypos.x] == '.') {
+				mAvoids |= 16;
+				mAvoids |= mypos.y == enemy.mY ? (mypos.x < enemy.mX ? 2 : 8) : (mypos.y < enemy.mY ? 1 : 4);
+			}
+		}
+	}
+
 	if ((mAvoids & 16) && ontomato && me.mHealth == 2) // with 2 health, it can be more or less ok to stay (no matter what the timings are)
 		mAvoids &= ~16;
 

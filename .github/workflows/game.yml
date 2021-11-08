@@ -25,7 +25,10 @@ jobs:
         sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
 
     - name: Install conan
-      uses: turtlebrowser/get-conan@main
+      run: |
+        pip3 install wheel setuptools
+        pip3 install conan==1.41
+        echo "/home/runner/.local/bin" >> $GITHUB_PATH
 
     - name: Configure CMake for manual run
       if: github.event_name == 'workflow_dispatch'

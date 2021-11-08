@@ -1,0 +1,23 @@
+#pragma once
+
+#include "../models.h"
+#include "../simulator.h"
+
+#include "levels.h"
+
+class Game {
+public:
+    Game(const Level& level, int playerCount);
+    void SetVampireMove(int id, const Answer& move);
+    std::pair<TickDescription, std::vector<std::pair<int, float>>> Tick();
+
+private:
+    void GeneratePowerups(TickDescription& tick);
+
+private:
+    Level mLevel;
+    GameDescription mGameDescription;
+    Simulator mSimulator;
+    std::map<int, float> mCumulatedPoints;
+    int mNextPowerupTick = 40;
+};

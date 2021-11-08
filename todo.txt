@@ -10,3 +10,9 @@ lower impact (parszaz pont)
 
 
 -megakadalyozni hogy mas is felvegyen targyat (ha kevesebb bombaja van, kevesbe tudjak egymast olni) - ha mar korabban odaerunk, rakjunk ra bombat
+
+-insta chain kill (ha az utolso elete)
+-insta next kill (ha tudjuk hogy nem tudja elkerulni)
+
+csak dontobe:
+-avoid 16 - bomba lerakassal ki lehet vedeni (kiveve ha avoid 32 - korbevesznek)

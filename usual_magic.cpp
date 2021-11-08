@@ -633,11 +633,14 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		vector<pos_t> targets;
 		vector<int> closestenemy;
 		int waitturn = 0;
+		int lastturn = 0;
 		for (const auto& powerup : tickDescription.mPowerUps) {
 			targets.push_back(pos_t(powerup.mY, powerup.mX));
 			closestenemy.push_back(MAXTURN + 1);
 			if (powerup.mRemainingTick < 0)
-				waitturn = -powerup.mRemainingTick;
+				waitturn = -powerup.mRemainingTick - 1;
+			else
+				lastturn = powerup.mRemainingTick - 1;
 		}
 		for (const auto& enemy : tickDescription.mEnemyVampires) {
 			getdist(m, targets, tickDescription, enemy);
@@ -652,7 +655,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<i
 		int closest = MAXTURN + 1;
 		FOR0(i, SZ(targets)) {
 			int reach = reaches[targets[i].y][targets[i].x].turn;
-			if (closestenemy[i] >= reach || reach <= waitturn)
+			if ((closestenemy[i] >= reach || reach <= waitturn) && lastturn >= reach)
 				MINA2(closest, reach, best, i);
 		}
 

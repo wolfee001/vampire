@@ -95,7 +95,7 @@ target_link_libraries(unittest
     PUBLIC project_options
     PRIVATE project_warnings
     PRIVATE libsolver
-    PRIVATE CONAN_PKG::gtest
+    PRIVATE CONAN_PKG::GTest
 )
 
 include(GoogleTest)

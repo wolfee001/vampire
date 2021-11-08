@@ -181,7 +181,7 @@ void Simulator::RecalculateTicks(TickDescription& state)
         if (powerup.mRemainingTick < -1) {
             powerup.mRemainingTick++;
         } else if (powerup.mRemainingTick == -1) {
-            powerup.mRemainingTick = 10;
+            powerup.mRemainingTick = powerup.mKeepAliveHint == -1 ? 10 : powerup.mKeepAliveHint;
         } else {
             powerup.mRemainingTick--;
         }

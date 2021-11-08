@@ -69,6 +69,8 @@ struct PowerUp {
     int mX = -1;
     int mY = -1;
 
+    int mKeepAliveHint = -1;
+
     bool operator==(const PowerUp& other) const
     {
         return mType == other.mType && mRemainingTick == other.mRemainingTick && mX == other.mX && mY == other.mY;

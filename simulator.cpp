@@ -289,10 +289,8 @@ void Simulator::BlowUpGrenades(TickDescription& state)
         for (const auto& area : areas) {
             if (area.mArea.find(bat.mX, bat.mY)) {
                 injured++;
-                if (bat.mDensity <= injured) {
-                    for (const auto& vId : area.mVampireIds) {
-                        mNewPoints[vId] += 12.F / static_cast<float>(area.mVampireIds.size());
-                    }
+                for (const auto& vId : area.mVampireIds) {
+                    mNewPoints[vId] += 12.F / static_cast<float>(area.mVampireIds.size());
                 }
             }
         }

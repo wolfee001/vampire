@@ -91,11 +91,17 @@ add_executable(unittest
     test/test_search.cpp
     test/test_final.cpp
 )
+target_link_directories(unittest
+    PRIVATE ${CONAN_LIB_DIRS}
+)
 target_link_libraries(unittest
     PUBLIC project_options
-    PRIVATE project_warnings
+    # PRIVATE project_warnings
     PRIVATE libsolver
-    PRIVATE CONAN_PKG::GTest
+    PRIVATE ${CONAN_LIBS_GTEST}
+)
+target_include_directories(unittest
+    PRIVATE ${CONAN_INCLUDE_DIRS}
 )
 
 include(GoogleTest)

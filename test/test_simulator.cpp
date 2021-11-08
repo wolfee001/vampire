@@ -372,6 +372,7 @@ TEST_F(SimulateTest, BlowUpGrenadeKillBats)
     ASSERT_EQ(newState.mBat1[1].mY, 4);
     ASSERT_EQ(newState.mBat2[0].mX, 3);
     ASSERT_EQ(newState.mBat2[0].mY, 5);
+    ASSERT_EQ(newPoints.at(1), 24.F);
 }
 
 TEST_F(SimulateTest, BlowUpGrenadeKillVampires)

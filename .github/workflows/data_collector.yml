@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: "*/10 * * * *"
 
+  workflow_dispatch: {}
+
 jobs:
   collect:
     runs-on: ubuntu-latest
@@ -27,8 +29,10 @@ jobs:
         cp ${{github.workspace}}/collect_commits.sh .
         ./collect_commits.sh > commits.json
         cp ${{github.workspace}}/data_collector.js .
+        mkdir logs
         node ./data_collector.js
         cp score_data.js ${{github.workspace}}/
+        cp -R logs ../logs
 
     - name: Commit data
       run: |
@@ -37,4 +41,8 @@ jobs:
         git config --global user.email 'wolfee001@users.noreply.github.com'
         git add score_data.js
         git commit -m "Refreshing data" || echo "Nothing changed"
+        git push || echo "Nothing changed"
+        git checkout master
+        git add logs/*
+        git commit -m "Refreshing logs" || echo "Nothing changed"
         git push || echo "Nothing changed"

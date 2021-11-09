@@ -9,7 +9,7 @@ class FinalMagic : public IMagic {
 public:
     explicit FinalMagic(const GameDescription& gameDescription);
 
-    Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points);
+    Answer Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points);
 
     UsualMagic mUsualMagic;
     GaborMagic mGaborMagic;

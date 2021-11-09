@@ -15,7 +15,7 @@ void GaborMagic::SetLevelLimit(const size_t maxLevel)
     mMaxLevel = maxLevel;
 }
 
-Answer GaborMagic::Tick(const TickDescription& tickDescription, const std::map<int, float>& points)
+Answer GaborMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
     Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);
 

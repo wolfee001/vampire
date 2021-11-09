@@ -8,7 +8,7 @@ class GaborMagic : public IMagic {
 public:
     explicit GaborMagic(const GameDescription& gameDescription);
 
-    Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points);
+    Answer Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points);
 
     void SetBombSequence(const std::vector<pos_t>& sequence);
     void SetPathSequence(const std::vector<pos_t>& sequence);

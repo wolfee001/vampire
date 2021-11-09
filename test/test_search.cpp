@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -317,9 +318,17 @@ TEST_F(SearchTest, MultipleGrenadesEasy)
     mSimulator->SetState(state);
     const auto areas = mSimulator->GetBlowAreas();
     EXPECT_EQ(areas.size(), 3);
-    EXPECT_TRUE(areas[0].mArea.find(state.mBat1[0].mX, state.mBat1[0].mY));
-    EXPECT_TRUE(areas[1].mArea.find(state.mBat1[1].mX, state.mBat1[1].mY));
-    EXPECT_TRUE(areas[2].mArea.find(state.mBat1[2].mX, state.mBat1[2].mY));
+    const auto it1
+        = std::find_if(areas.begin(), areas.end(), [&state](const auto& element) { return element.mArea.find(state.mBat1[0].mX, state.mBat1[0].mY); });
+    const auto it2
+        = std::find_if(areas.begin(), areas.end(), [&state](const auto& element) { return element.mArea.find(state.mBat1[1].mX, state.mBat1[1].mY); });
+    const auto it3
+        = std::find_if(areas.begin(), areas.end(), [&state](const auto& element) { return element.mArea.find(state.mBat1[2].mX, state.mBat1[2].mY); });
+    EXPECT_TRUE(it1 != areas.end());
+    EXPECT_TRUE(it2 != areas.end());
+    EXPECT_TRUE(it3 != areas.end());
+    EXPECT_TRUE(it1 != it2);
+    EXPECT_TRUE(it2 != it3);
 }
 
 TEST_F(SearchTest, OptimalStart)

@@ -8,12 +8,11 @@ add_executable(server
     multi_server.cpp
     parser.cpp
     server.cpp
-    ../simulator.cpp
-    ../parser.cpp
 )
 target_link_libraries(server
-    project_options 
-    sockpp-static 
+    project_options
+    sockpp-static
+    libhelper
     CONAN_PKG::fmt
     libimguibindings
     CONAN_PKG::imgui

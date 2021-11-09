@@ -27,7 +27,7 @@ class UsualMagic : public IMagic {
 public:
 	bool mInPhase1 = true;
     explicit UsualMagic(const GameDescription& gameDescription);
-    Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points);
+    Answer Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points);
 	phase_t mPhase; 
 	std::vector<pos_t> mPath;
 	int mAvoids;

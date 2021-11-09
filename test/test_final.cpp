@@ -45,7 +45,7 @@ TEST_F(FinalTest, RunToItem)
     };
     // clang-format on
     TickDescription state = parseTickDescription(info);
-    const std::map<int, float> points;
+    const Simulator::NewPoints points;
     Simulator::NewPoints newPoints;
 
     const auto distance2 = [](int x, int y) -> float { return static_cast<float>(std::max(x, y) - std::min(x, y)); };

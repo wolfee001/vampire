@@ -2,6 +2,7 @@
 #include "models.h"
 #include <algorithm>
 #include <bitset>
+#include <boost/functional/hash.hpp>
 #include <cstddef>
 #include <exception>
 #include <set>
@@ -18,6 +19,12 @@ bool Simulator::Area::find(int x, int y) const
 void Simulator::Area::insert(int x, int y)
 {
     mAreas.set(static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x));
+    mVectorIsValid = false;
+}
+
+void Simulator::Area::clear(int x, int y)
+{
+    mAreas.reset(static_cast<size_t>(y) * mMapSize + static_cast<size_t>(x));
     mVectorIsValid = false;
 }
 
@@ -49,6 +56,7 @@ Simulator::Simulator(const GameDescription& gameDescription)
 void Simulator::SetState(const TickDescription& state)
 {
     mState = state;
+    mValid = true;
     if (mGameDescription.mMapSize != 0) {
         mReachableArea = Area(mGameDescription.mMapSize);
         for (const auto& bat : state.mAllBats) {
@@ -103,7 +111,7 @@ void Simulator::SetVampireMove(int id, const Answer& move)
 
 std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
 {
-    if (mState.mRequest.mTick == -1) {
+    if (mState.mRequest.mTick == -1 || !mValid) {
         CHECK(false, "Calling tick without setting state!");
     }
 
@@ -121,7 +129,7 @@ std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
         }
     }
 
-    TickDescription retVal = mState;
+    mValid = false;
     mNewPoints = {};
     mNewPoints.emplace(mState.mMe.mId, 0.F);
     for (const auto& v : mState.mEnemyVampires) {
@@ -138,46 +146,33 @@ std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
 
     // Implementation:
     // 1) recalculate ticks
-    RecalculateTicks(retVal);
+    RecalculateTicks();
     // 2) remove disappeared powerups
-    RemoveDisappearedPowerups(retVal);
+    RemoveDisappearedPowerups();
     // 3) (b) powerup pick up
-    PowerupPickUp(retVal);
+    PowerupPickUp();
     // 4) (c) blow up grenades recursively and calculate grenade damage
-    BlowUpGrenades(retVal);
+    BlowUpGrenades();
     // 5) (d) calculate light damage
-    HitLight(retVal);
+    HitLight();
     // 7) (e) plant grenades
-    PlantGrenades(retVal);
+    PlantGrenades();
     // 7) (f) move
-    Move(retVal);
+    Move();
 
-    mState = TickDescription();
     mVampireMoves.clear();
 
-    return std::make_pair(retVal, mNewPoints);
+    return std::make_pair(mState, mNewPoints);
 }
 
-void Simulator::RecalculateTicks(TickDescription& state)
+void Simulator::RecalculateTicks()
 {
-    state.mRequest.mTick++;
-    /*
-        if (state.mRequest.mTick == mGameDescription.mMaxTick) {
-            if (state.mMe.mHealth > 0) {
-                mNewPoints[state.mMe.mId] += 144.;
-            }
-            for (const auto& v : state.mEnemyVampires) {
-                if (v.mHealth > 0) {
-                    mNewPoints[v.mId] += 144.;
-                }
-            }
-        }
-    */
-    for (auto& grenade : state.mGrenades) {
+    mState.mRequest.mTick++;
+    for (auto& grenade : mState.mGrenades) {
         grenade.mTick--;
     }
 
-    for (auto& powerup : state.mPowerUps) {
+    for (auto& powerup : mState.mPowerUps) {
         if (powerup.mRemainingTick < -1) {
             powerup.mRemainingTick++;
         } else if (powerup.mRemainingTick == -1) {
@@ -187,31 +182,31 @@ void Simulator::RecalculateTicks(TickDescription& state)
         }
     }
 
-    state.mMe.mRunningShoesTick = std::max(state.mMe.mRunningShoesTick - 1, 0);
-    state.mMe.mGhostModeTick = std::max(state.mMe.mGhostModeTick - 1, 0);
-    for (auto& vampire : state.mEnemyVampires) {
+    mState.mMe.mRunningShoesTick = std::max(mState.mMe.mRunningShoesTick - 1, 0);
+    mState.mMe.mGhostModeTick = std::max(mState.mMe.mGhostModeTick - 1, 0);
+    for (auto& vampire : mState.mEnemyVampires) {
         vampire.mRunningShoesTick = std::max(vampire.mRunningShoesTick - 1, 0);
         vampire.mGhostModeTick = std::max(vampire.mGhostModeTick - 1, 0);
     }
 }
 
-void Simulator::RemoveDisappearedPowerups(TickDescription& state)
+void Simulator::RemoveDisappearedPowerups()
 {
-    state.mPowerUps.erase(
-        std::remove_if(state.mPowerUps.begin(), state.mPowerUps.end(), [](const auto& element) { return element.mRemainingTick == 0; }), state.mPowerUps.end());
+    mState.mPowerUps.erase(std::remove_if(mState.mPowerUps.begin(), mState.mPowerUps.end(), [](const auto& element) { return element.mRemainingTick == 0; }),
+        mState.mPowerUps.end());
 }
 
-void Simulator::PowerupPickUp(TickDescription& state)
+void Simulator::PowerupPickUp()
 {
     std::vector<Vampire*> vampRefs;
-    vampRefs.push_back(&state.mMe);
-    for (auto& element : state.mEnemyVampires) {
+    vampRefs.push_back(&mState.mMe);
+    for (auto& element : mState.mEnemyVampires) {
         vampRefs.push_back(&element);
     }
 
     std::vector<PowerUp> survivors;
 
-    for (const auto& pu : state.mPowerUps) {
+    for (const auto& pu : mState.mPowerUps) {
         bool shouldDelete = false;
         if (pu.mRemainingTick > 0) {
             for (auto* vampire : vampRefs) {
@@ -246,22 +241,23 @@ void Simulator::PowerupPickUp(TickDescription& state)
         }
     }
 
-    state.mPowerUps = survivors;
+    mState.mPowerUps = survivors;
 }
 
-void Simulator::BlowUpGrenades(TickDescription& state)
+void Simulator::BlowUpGrenades()
 {
     const auto areas = GetBlowAreas(true);
 
     std::unordered_map<int, Vampire*> vampRefs;
-    vampRefs.emplace(state.mMe.mId, &state.mMe);
-    for (auto& element : state.mEnemyVampires) {
+    vampRefs.emplace(mState.mMe.mId, &mState.mMe);
+    for (auto& element : mState.mEnemyVampires) {
         vampRefs.emplace(element.mId, &element);
     }
 
-    for (const auto& grenade : state.mGrenades) {
+    for (const auto& grenade : mState.mGrenades) {
         for (const auto& area : areas) {
             if (area.mArea.find(grenade.mX, grenade.mY)) {
+                mReachableArea.insert(grenade.mX, grenade.mY);
                 if (const auto it = vampRefs.find(grenade.mId); it != std::cend(vampRefs)) {
                     ++it->second->mPlacableGrenades;
                     break;
@@ -270,20 +266,20 @@ void Simulator::BlowUpGrenades(TickDescription& state)
         }
     }
 
-    state.mGrenades.erase(std::remove_if(state.mGrenades.begin(), state.mGrenades.end(),
-                              [&areas](const auto& grenade) {
-                                  for (const auto& area : areas) {
-                                      if (area.mArea.find(grenade.mX, grenade.mY)) {
-                                          return true;
-                                      }
-                                  }
-                                  return false;
-                              }),
-        state.mGrenades.end());
+    mState.mGrenades.erase(std::remove_if(mState.mGrenades.begin(), mState.mGrenades.end(),
+                               [&areas](const auto& grenade) {
+                                   for (const auto& area : areas) {
+                                       if (area.mArea.find(grenade.mX, grenade.mY)) {
+                                           return true;
+                                       }
+                                   }
+                                   return false;
+                               }),
+        mState.mGrenades.end());
 
     std::vector<BatSquad> survivorBats;
 
-    for (const auto& bat : state.mAllBats) {
+    for (const auto& bat : mState.mAllBats) {
         int injured = 0;
 
         for (const auto& area : areas) {
@@ -297,19 +293,21 @@ void Simulator::BlowUpGrenades(TickDescription& state)
 
         if (bat.mDensity > injured) {
             survivorBats.emplace_back(bat).mDensity -= injured;
+        } else {
+            mReachableArea.clear(bat.mX, bat.mY);
         }
     }
-    state.mAllBats = survivorBats;
-    state.mBat1.clear();
-    state.mBat2.clear();
-    state.mBat3.clear();
-    for (const auto& bat : state.mAllBats) {
+    mState.mAllBats = survivorBats;
+    mState.mBat1.clear();
+    mState.mBat2.clear();
+    mState.mBat3.clear();
+    for (const auto& bat : mState.mAllBats) {
         if (bat.mDensity == 1) {
-            state.mBat1.push_back(bat);
+            mState.mBat1.push_back(bat);
         } else if (bat.mDensity == 2) {
-            state.mBat2.push_back(bat);
+            mState.mBat2.push_back(bat);
         } else if (bat.mDensity == 3) {
-            state.mBat3.push_back(bat);
+            mState.mBat3.push_back(bat);
         } else {
             CHECK(false, "Some calculation is wrong...");
         }
@@ -317,8 +315,8 @@ void Simulator::BlowUpGrenades(TickDescription& state)
 
     std::vector<Vampire> survivorVampires;
 
-    std::vector<Vampire*> vampires = { &state.mMe };
-    for (auto& vampire : state.mEnemyVampires) {
+    std::vector<Vampire*> vampires = { &mState.mMe };
+    for (auto& vampire : mState.mEnemyVampires) {
         vampires.push_back(&vampire);
     }
 
@@ -336,13 +334,13 @@ void Simulator::BlowUpGrenades(TickDescription& state)
                     isDead = vampire.mHealth == 1;
 
                     if (!alreadyDamaged && vampire.mHealth >= 2 && vampire.mGhostModeTick == 0) {
-                        if (vampire.mId != state.mMe.mId) {
+                        if (vampire.mId != mState.mMe.mId) {
                             auto& v = survivorVampires.emplace_back(vampire);
                             v.mHealth--;
                             v.mGhostModeTick = 3;
                         } else {
-                            state.mMe.mHealth--;
-                            state.mMe.mGhostModeTick = 3;
+                            mState.mMe.mHealth--;
+                            mState.mMe.mGhostModeTick = 3;
                         }
                         alreadyDamaged = true;
                     }
@@ -351,7 +349,7 @@ void Simulator::BlowUpGrenades(TickDescription& state)
                 }
             }
 
-            if ((areas.empty() || vampiresDamaging.empty()) && vampire.mId != state.mMe.mId) {
+            if ((areas.empty() || vampiresDamaging.empty()) && vampire.mId != mState.mMe.mId) {
                 survivorVampires.emplace_back(vampire);
             }
 
@@ -374,38 +372,34 @@ void Simulator::BlowUpGrenades(TickDescription& state)
                 }
             }
         } else {
-            if (vampire.mId != state.mMe.mId) {
+            if (vampire.mId != mState.mMe.mId) {
                 survivorVampires.push_back(vampire);
             }
         }
     }
-    state.mEnemyVampires = survivorVampires;
+    mState.mEnemyVampires = survivorVampires;
 }
 
-void Simulator::HitLight(TickDescription& state)
+void Simulator::HitLight()
 {
-    if (mState.mMe.mId != -1 && state.mMe.mHealth == mState.mMe.mHealth) {
-        if (mLitArea.find(state.mMe.mX, state.mMe.mY)) {
-            state.mMe.mHealth--;
+    if (mState.mMe.mId != -1 && mState.mMe.mGhostModeTick != 3) {
+        if (mLitArea.find(mState.mMe.mX, mState.mMe.mY)) {
+            mState.mMe.mHealth--;
         }
     }
 
-    for (auto& vampire : state.mEnemyVampires) {
-        const auto oldVamp
-            = std::find_if(mState.mEnemyVampires.begin(), mState.mEnemyVampires.end(), [&vampire](const auto& element) { return element.mId == vampire.mId; });
-        if (vampire.mHealth == oldVamp->mHealth) {
-            if (mLitArea.find(vampire.mX, vampire.mY)) {
-                vampire.mHealth--;
-            }
+    for (auto& vampire : mState.mEnemyVampires) {
+        if (vampire.mGhostModeTick != 3 && mLitArea.find(vampire.mX, vampire.mY)) {
+            vampire.mHealth--;
         }
     }
 }
 
-void Simulator::PlantGrenades(TickDescription& state)
+void Simulator::PlantGrenades()
 {
     std::vector<Vampire*> vampRefs;
-    vampRefs.push_back(&state.mMe);
-    for (auto& element : state.mEnemyVampires) {
+    vampRefs.push_back(&mState.mMe);
+    for (auto& element : mState.mEnemyVampires) {
         vampRefs.push_back(&element);
     }
 
@@ -419,37 +413,20 @@ void Simulator::PlantGrenades(TickDescription& state)
                     continue;
                 }
                 if (vampire->mPlacableGrenades > 0) {
-                    state.mGrenades.push_back({ vampire->mId, vampire->mX, vampire->mY, 5, vampire->mGrenadeRange });
+                    mState.mGrenades.push_back({ vampire->mId, vampire->mX, vampire->mY, 5, vampire->mGrenadeRange });
                     --vampire->mPlacableGrenades;
+                    mReachableArea.clear(vampire->mX, vampire->mY);
                 }
             }
         }
     }
 }
 
-void Simulator::Move(TickDescription& state)
+void Simulator::Move()
 {
-    std::bitset<23 * 23> restrictedAreas;
-    restrictedAreas.reset();
-    size_t mapSize = static_cast<size_t>(mGameDescription.mMapSize);
-
-    for (size_t x = 0; x < mapSize; ++x) {
-        for (size_t y = 0; y < mapSize; ++y) {
-            if (x == 0 || y == 0 || x == mapSize - 1 || y == mapSize - 1 || (!(x % 2) && !(y % 2))) {
-                restrictedAreas.set(y * mapSize + x);
-            }
-        }
-    }
-    for (const auto& grenade : state.mGrenades) {
-        restrictedAreas.set(static_cast<size_t>(grenade.mY) * mapSize + static_cast<size_t>(grenade.mX));
-    }
-    for (const auto& bat : state.mAllBats) {
-        restrictedAreas.set(static_cast<size_t>(bat.mY) * mapSize + static_cast<size_t>(bat.mX));
-    }
-
     std::vector<Vampire*> vampRefs;
-    vampRefs.push_back(&state.mMe);
-    for (auto& element : state.mEnemyVampires) {
+    vampRefs.push_back(&mState.mMe);
+    for (auto& element : mState.mEnemyVampires) {
         vampRefs.push_back(&element);
     }
 
@@ -477,7 +454,7 @@ void Simulator::Move(TickDescription& state)
                 default:
                     CHECK(false, "Invalid direction!");
                 }
-                if (restrictedAreas[newY * mapSize + newX]) {
+                if (!mReachableArea.find(static_cast<int>(newX), static_cast<int>(newY))) {
                     break;
                 }
                 vampire->mX = static_cast<int>(newX);
@@ -548,12 +525,12 @@ bool Simulator::IsValidMove(int id, const Answer& move) const
 std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= false*/)
 {
     std::vector<Simulator::BlowArea> retVal;
-    std::map<std::pair<int, int>, std::pair<const Grenade*, bool>> grenadesByPos;
+    std::unordered_map<std::pair<int, int>, std::pair<const Grenade*, bool>, boost::hash<std::pair<int, int>>> grenadesByPos;
     for (const auto& grenade : mState.mGrenades) {
         grenadesByPos[{ grenade.mX, grenade.mY }] = { &grenade, false };
     }
     for (const auto& [_, grenadeDesc] : grenadesByPos) {
-        if (blowNow && grenadeDesc.first->mTick != 1) {
+        if (blowNow && grenadeDesc.first->mTick != 0) {
             continue;
         }
 
@@ -569,7 +546,7 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
             grenadesToProcess.pop_back();
 
             grenadesByPos[{ grenade.mX, grenade.mY }].second = true;
-            Simulator::Area area = GetBlowArea(grenade, mState);
+            Simulator::Area area = GetBlowArea(grenade);
             for (const auto& position : area.getAsVector()) {
                 ba.mArea.insert(position.first, position.second);
                 if (position == std::pair<int, int> { grenade.mX, grenade.mY }) {
@@ -595,15 +572,15 @@ std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= 
     return retVal;
 }
 
-Simulator::Area Simulator::GetBlowArea(const Grenade& grenade, const TickDescription& state)
+Simulator::Area Simulator::GetBlowArea(const Grenade& grenade)
 {
     Area area(mGameDescription.mMapSize);
-    const auto checkExplosion = [&state, &mGameDescription = mGameDescription, &area](const int px, const int py) {
+    const auto checkExplosion = [&mState = mState, &mGameDescription = mGameDescription, &area](const int px, const int py) {
         if (px == 0 || py == 0 || px == mGameDescription.mMapSize - 1 || py == mGameDescription.mMapSize - 1 || (!(px % 2) && !(py % 2))) {
             return false;
         }
         area.insert(px, py);
-        for (const auto& bat : state.mAllBats) {
+        for (const auto& bat : mState.mAllBats) {
             if (bat.mX == px && bat.mY == py) {
                 return false;
             }

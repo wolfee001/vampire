@@ -10,7 +10,7 @@ FinalMagic::FinalMagic(const GameDescription& gameDescription)
     // Maybe some constructor magic? :)
 }
 
-Answer FinalMagic::Tick(const TickDescription& tickDescription, const std::map<int, float>& points)
+Answer FinalMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
     std::chrono::milliseconds start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
     mUsualMagic.SetTickTimeout(mTimeout / 4);

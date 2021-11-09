@@ -676,7 +676,7 @@ int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemiesw
 	return avoids;
 }
 
-Answer UsualMagic::Tick(const TickDescription& tickDescription, const std::map<int, float>& points)
+Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
     Answer answer;
 	mPhase = NONE;

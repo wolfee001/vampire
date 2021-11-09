@@ -1,8 +1,8 @@
 #pragma once
 
 #include "models.h"
+#include "simulator.h"
 #include <chrono>
-#include <map>
 
 class IMagic {
 public:
@@ -13,7 +13,7 @@ public:
 
     virtual ~IMagic() = default;
 
-    virtual Answer Tick(const TickDescription& tickDescription, const std::map<int, float>& points) = 0;
+    virtual Answer Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points) = 0;
     void SetTickTimeout(std::chrono::milliseconds millis);
 
 protected:

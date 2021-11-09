@@ -5,6 +5,8 @@
 
 #include "levels.h"
 
+#include <map>
+
 class Game {
 public:
     Game(const Level& level, int playerCount);

@@ -31,6 +31,7 @@ public:
 	phase_t mPhase; 
 	std::vector<pos_t> mPath;
 	int mAvoids;
+	int mPreferGrenade;
 };
 
 // clang-format on

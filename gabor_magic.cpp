@@ -22,6 +22,7 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const Simulator:
     search.SetBombSequence(mBombSequence);
     search.SetPhase(mPhase);
     search.SetAvoids(mAvoids);
+    search.SetPreferGrenade(mPreferGrenade);
     search.SetPathSequence(mPathSequence);
 
     const auto t1 = std::chrono::steady_clock::now();
@@ -73,4 +74,9 @@ void GaborMagic::SetPhase(phase_t phase)
 void GaborMagic::SetAvoids(int avoids)
 {
     mAvoids = avoids;
+}
+
+void GaborMagic::SetPreferGrenade(int prefer)
+{
+    mPreferGrenade = prefer;
 }

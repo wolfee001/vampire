@@ -235,13 +235,15 @@ float Search::Evaluate(
     const pos_t mypos(tickDescription.mMe.mY, tickDescription.mMe.mX);
 
     if (mPhase == PHASE1 && !mBombSequence.empty()) {
+        Simulator::Area grenadeArea(mGameDescription.mMapSize);
+        for (const auto& g : tickDescription.mGrenades) {
+            grenadeArea.insert(g.mX, g.mY);
+        }
+
         for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
             const auto& bombingPlace = mBombSequence[bombIndex];
 
-            const auto gIt = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
-                [&bombingPlace](const Grenade& grenade) { return bombingPlace.x == grenade.mX && bombingPlace.y == grenade.mY; });
-
-            if (gIt != std::cend(tickDescription.mGrenades)) {
+            if (grenadeArea.find(bombingPlace.x, bombingPlace.y)) {
                 // reward earch covered bombing place, prioritize the first one
                 bombingTargetScore += 12.F * (bombIndex == 0 ? 1.F : 0.2F);
             }
@@ -268,10 +270,31 @@ float Search::Evaluate(
         }
     }
 
-    std::vector<int> bombedBats(tickDescription.mAllBats.size(), 0);
-    for (const auto& area : areas) {
-        const auto v = area.mArea.getAsVector();
+    Simulator::Area bat1(mGameDescription.mMapSize);
+    Simulator::Area bat2(mGameDescription.mMapSize);
+    Simulator::Area bat3(mGameDescription.mMapSize);
+    Simulator::Area batAll(mGameDescription.mMapSize);
 
+    for (const auto& bat : tickDescription.mAllBats) {
+        switch (bat.mDensity) {
+        case 1:
+            bat1.insert(bat.mX, bat.mY);
+            break;
+        case 2:
+            bat2.insert(bat.mX, bat.mY);
+            break;
+        case 3:
+            bat3.insert(bat.mX, bat.mY);
+            break;
+        }
+    }
+    batAll.mAreas = bat1.mAreas | bat2.mAreas | bat3.mAreas;
+
+    Simulator::Area bombedOnce(mGameDescription.mMapSize);
+    Simulator::Area bombedTwice(mGameDescription.mMapSize);
+    Simulator::Area bombedThreeTimes(mGameDescription.mMapSize);
+
+    for (const auto& area : areas) {
         if (area.mArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY)) {
             grenadePenalty -= 12.F / static_cast<float>(area.mTickCount);
 
@@ -284,31 +307,58 @@ float Search::Evaluate(
             continue;
         }
 
-        bool hasBatTarget = false;
-
-        for (size_t batIndex = 0; batIndex < tickDescription.mAllBats.size(); ++batIndex) {
-            const auto& bat = tickDescription.mAllBats[batIndex];
-
-            if (bombedBats[batIndex] < bat.mDensity && area.mArea.find(bat.mX, bat.mY)) {
-                batScore += 12.F;
-                bombedBats[batIndex]++;
-
-                if (mPhase == ITEM) {
-                    const pos_t batPosition(bat.mY, bat.mX);
-                    const auto pathIt = std::find(std::cbegin(mPathSequence), std::cend(mPathSequence), batPosition);
-                    if (pathIt != std::cend(mPathSequence)) {
-                        batScore += 12.F;
-                    }
-                }
-                hasBatTarget = true;
-            }
-        }
-
-        if (!hasBatTarget) {
+        if ((area.mArea.mAreas & batAll.mAreas).count() == 0) {
             batScore -= 12.F;
         }
+
+        const auto alreadyBombedOnce = bombedOnce.mAreas & area.mArea.mAreas;
+        const auto alreadyBombedTwice = bombedTwice.mAreas & area.mArea.mAreas;
+
+        bombedOnce.mAreas |= area.mArea.mAreas;
+        bombedTwice.mAreas |= alreadyBombedOnce;
+        bombedThreeTimes.mAreas |= alreadyBombedTwice;
     }
 
+    const auto bombedBats1 = bat1.mAreas & bombedOnce.mAreas;
+    const auto bombedBats2 = bat2.mAreas & bombedTwice.mAreas;
+    const auto bombedBats3 = bat3.mAreas & bombedThreeTimes.mAreas;
+
+    batScore
+        += static_cast<float>(bombedBats1.count()) * 12.F + static_cast<float>(bombedBats2.count()) * 24.F + static_cast<float>(bombedBats3.count()) * 36.F;
+
+    /*
+        std::vector<int> bombedBats(tickDescription.mAllBats.size(), 0);
+        for (const auto& area : areas) {
+            if (area.mArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY)) {
+                grenadePenalty -= 12.F / static_cast<float>(area.mTickCount);
+
+                if (area.mTickCount == 1) {
+                    grenadePenalty -= 96.F;
+                }
+            }
+
+            if (std::find(std::cbegin(area.mVampireIds), std::cend(area.mVampireIds), mPlayerId) == std::cend(area.mVampireIds)) {
+                continue;
+            }
+
+            for (size_t batIndex = 0; batIndex < tickDescription.mAllBats.size(); ++batIndex) {
+                const auto& bat = tickDescription.mAllBats[batIndex];
+
+                if (bombedBats[batIndex] < bat.mDensity && area.mArea.find(bat.mX, bat.mY)) {
+                    batScore += 12.F;
+                    bombedBats[batIndex]++;
+
+                    if (mPhase == ITEM) {
+                        const pos_t batPosition(bat.mY, bat.mX);
+                        const auto pathIt = std::find(std::cbegin(mPathSequence), std::cend(mPathSequence), batPosition);
+                        if (pathIt != std::cend(mPathSequence)) {
+                            batScore += 12.F;
+                        }
+                    }
+                }
+            }
+        }
+    */
     const auto closestBatIt = std::min_element(
         std::cbegin(tickDescription.mAllBats), std::cend(tickDescription.mAllBats), [&distance, &tickDescription](const BatSquad& x, const BatSquad& y) {
             return distance(x.mX, x.mY, tickDescription.mMe.mX, tickDescription.mMe.mY) < distance(y.mX, y.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);

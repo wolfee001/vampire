@@ -22,37 +22,33 @@ jobs:
       with:
         path: master
 
-    - name: log
-      run: ls -la ${{github.workspace}}
+    - name: Install Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16
 
+    - name: Collect data
+      run: |
+        git clone http://routing_all_stars:${{ secrets.GITLAB_PASSWORD }}@git-ecosim.dyndns.org:11111/graphisoft/2021/routing_all_stars.git
+        cd routing_all_stars
+        git checkout main_log
+        cp ${{github.workspace}}/points/collect_commits.sh .
+        ./collect_commits.sh > commits.json
+        cp ${{github.workspace}}/points/data_collector.js .
+        mkdir logs
+        node ./data_collector.js
+        cp score_data.js ${{github.workspace}}/points
+        cp -R logs ${{github.workspace}}/master/logs
 
-    # - name: Install Node
-    #   uses: actions/setup-node@v2
-    #   with:
-    #     node-version: 16
-
-    # - name: Collect data
-    #   run: |
-    #     git clone http://routing_all_stars:${{ secrets.GITLAB_PASSWORD }}@git-ecosim.dyndns.org:11111/graphisoft/2021/routing_all_stars.git
-    #     cd routing_all_stars
-    #     git checkout main_log
-    #     cp ${{github.workspace}}/collect_commits.sh .
-    #     ./collect_commits.sh > commits.json
-    #     cp ${{github.workspace}}/data_collector.js .
-    #     mkdir logs
-    #     node ./data_collector.js
-    #     cp score_data.js ${{github.workspace}}/
-    #     cp -R logs ../logs
-
-    # - name: Commit data
-    #   run: |
-    #     cd ${{github.workspace}}
-    #     git config --global user.name 'Chart Automation'
-    #     git config --global user.email 'wolfee001@users.noreply.github.com'
-    #     git add score_data.js
-    #     git commit -m "Refreshing data" || echo "Nothing changed"
-    #     git push || echo "Nothing changed"
-    #     git checkout master
-    #     git add logs/*
-    #     git commit -m "Refreshing logs" || echo "Nothing changed"
-    #     git push || echo "Nothing changed"
+    - name: Commit data
+      run: |
+        git config --global user.name 'Chart Automation'
+        git config --global user.email 'wolfee001@users.noreply.github.com'
+        cd ${{github.workspace}}/points
+        git add score_data.js
+        git commit -m "Refreshing data" || echo "Nothing changed"
+        git push || echo "Nothing changed"
+        cd ${{github.workspace}}/master
+        git add logs/*
+        git commit -m "Refreshing logs" || echo "Nothing changed"
+        git push || echo "Nothing changed"

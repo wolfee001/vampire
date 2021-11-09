@@ -258,6 +258,14 @@ float Search::Evaluate(
         }
     }
 
+#if 0
+    if (mLevels.size() == 2 && mPreferGrenade && move.mPlaceGrenade)
+        bombingTargetScore += 48;
+
+    if (mLevels.size() == 3 && mPreferGrenade == 2 && move.mPlaceGrenade)
+        bombingTargetScore += 24;
+#endif
+
     if (mPhase == ITEM && !mPathSequence.empty()) {
         const auto powerUpIt = std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
             [&mPathSequence = mPathSequence](const PowerUp& powerup) { return powerup.mX == mPathSequence.back().x && powerup.mY == mPathSequence.back().y; });

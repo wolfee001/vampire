@@ -2,4 +2,4 @@
 
 #include "levels.h"
 
-void Run(int playerCount, const Level& level);
+void RunGame(int playerCount, const Level& level);

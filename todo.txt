@@ -4,8 +4,8 @@ high impact (ezer pont): survive and let them survive
 -phase1, betweenitems <3 eletu ellenfeltol tavolra rakjunk bombat
 
 lower impact (parszaz pont)
--paradicsomot is vigyuk el, ha mas nem akarja/tudja (mar lejar), vagy eppen elviszi (-1 idopillanatban rajta all)
--menjunk ahhoz a targyhoz ahova az egyetlen gyujtogeto is valoszinuleg megy, meg akkor is ha messzebb van (de meg elerheto) - es akkor 2 targyat tudunk szerezni, mert a tobbiek nem csinalnak semmit
+~paradicsomot is vigyuk el, ha mas nem akarja/tudja (mar lejar), vagy eppen elviszi (-1 idopillanatban rajta all)
+~menjunk ahhoz a targyhoz ahova az egyetlen gyujtogeto is valoszinuleg megy, meg akkor is ha messzebb van (de meg elerheto) - es akkor 2 targyat tudunk szerezni, mert a tobbiek nem csinalnak semmit
 -vegjatekban oles: ...
 
 
@@ -16,3 +16,11 @@ lower impact (parszaz pont)
 
 csak dontobe:
 -avoid 16 - bomba lerakassal ki lehet vedeni (kiveve ha avoid 32 - korbevesznek)
+-paradicsomkedvezmeny: nincs
+-tamadas: van
+-ne induljunk el a targyert ha az ellenfel hamarabb er oda
+
+
+bug
+-defense bomb>=1 && bomb+block>=3
+-targy jol szamoljuk hogy mikor erunk oda?

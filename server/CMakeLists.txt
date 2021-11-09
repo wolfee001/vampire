@@ -16,4 +16,9 @@ target_link_libraries(server
     CONAN_PKG::fmt
     libimguibindings
     CONAN_PKG::imgui
+    CONAN_PKG::stb
+    CONAN_PKG::fmt
 )
+
+target_compile_definitions(server PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(server PRIVATE GL_SILENCE_DEPRECATION)

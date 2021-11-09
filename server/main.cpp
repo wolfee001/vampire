@@ -22,11 +22,11 @@ int main(int argc, char** argv)
         PrintHelp(argv[0]);
         return 0;
     } else if (argc == 1 || (argc > 1 && 0 == std::strcmp("gui", argv[1]))) {
-        gui();
+        GUI::GetInstance().Run();
         return 0;
     } else if (argc == 3) {
         Levels levels;
-        Run(std::atoi(argv[2]), levels.mLevels[std::atoi(argv[1]) - 1]);
+        RunGame(std::atoi(argv[2]), levels.mLevels[std::atoi(argv[1]) - 1]);
         return 0;
     } else {
         PrintHelp(argv[0]);

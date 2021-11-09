@@ -25,11 +25,12 @@ public:
 
         mTomatoSafePlay = tickDescription.mMe.mHealth == 3
             && std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
-                   [](const PowerUp& powerup) { return powerup.mType == PowerUp::Type::Tomato; })
+                   [](const PowerUp& powerup) { return powerup.mType == PowerUp::Type::Tomato && 
+                (powerup.mRemainingTick < 0 || powerup.mRemainingTick > 10); })
                 != std::cend(tickDescription.mPowerUps)
             && std::find_if(
                    std::cbegin(tickDescription.mEnemyVampires), std::cend(tickDescription.mEnemyVampires), [](const Vampire& v) { return v.mHealth == 1; })
-                != std::cend(tickDescription.mEnemyVampires);
+                != std::cend(tickDescription.mEnemyVampires) && tickDescription.mEnemyVampires.size() <= 2;
     }
 
     void SetBombSequence(std::vector<pos_t> sequence)
@@ -50,6 +51,11 @@ public:
     void SetAvoids(int avoids)
     {
         mAvoids = avoids;
+    }
+
+    void SetPreferGrenade(int prefer)
+    {
+        mPreferGrenade = prefer;
     }
 
     bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
@@ -85,6 +91,7 @@ public:
     // usual magic stuff
     phase_t mPhase = NONE;
     int mAvoids = 0;
+    int mPreferGrenade = 0;
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
 };

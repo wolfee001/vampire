@@ -38,7 +38,7 @@ jobs:
         mkdir logs
         node ./data_collector.js
         cp score_data.js ${{github.workspace}}/points
-        cp -R logs ${{github.workspace}}/master/logs
+        cp -R logs ${{github.workspace}}/master
 
     - name: Commit data
       run: |

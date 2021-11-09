@@ -3,6 +3,7 @@
 #include "../models.h"
 #include <filesystem>
 #include <map>
+#include <mutex>
 #include <string>
 
 class GUI {

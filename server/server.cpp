@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <fmt/format.h>
 
-void Run(int playerCount, const Level& level)
+void RunGame(int playerCount, const Level& level)
 {
     GameDescription gd = parseGameDescription(level.mGameDescription);
     TickDescription tick = parseTickDescription(level.mZeroTick);

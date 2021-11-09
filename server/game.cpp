@@ -1,6 +1,7 @@
 #include "game.h"
 
 #include "../parser.h"
+#include "gui.h"
 #include <algorithm>
 
 Game::Game(const Level& level, int playerCount)
@@ -12,6 +13,9 @@ Game::Game(const Level& level, int playerCount)
         std::remove_if(tick.mEnemyVampires.begin(), tick.mEnemyVampires.end(), [&playerCount](const auto& vampire) { return vampire.mId > playerCount; }),
         tick.mEnemyVampires.end());
     mSimulator.SetState(tick);
+
+    GUI::GetInstance().SetGameDescription(mGameDescription);
+    GUI::GetInstance().Update(tick, mCumulatedPoints);
 }
 
 void Game::SetVampireMove(int id, const Answer& move)
@@ -25,6 +29,8 @@ std::pair<TickDescription, std::vector<std::pair<int, float>>> Game::Tick()
     for (const auto& [id, point] : tickResp.second) {
         mCumulatedPoints[id] += point;
     }
+
+    GUI::GetInstance().Update(tickResp.first, mCumulatedPoints);
 
     std::pair<TickDescription, std::vector<std::pair<int, float>>> retVal = { tickResp.first, {} };
 

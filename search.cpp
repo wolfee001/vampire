@@ -250,7 +250,7 @@ float Search::Evaluate(
         }
     }
 
-    if (mPhase == BETWEEN_ITEMS && mLevels.size() == 2) {
+    if ((mPhase == BETWEEN_ITEMS || mPhase == CHARGE) && mLevels.size() == 2) {
         if (mPathSequence.empty() && move.mSteps.empty()) {
             pathTargetScore = 3.0F;
         } else if (!mPathSequence.empty() && mPathSequence.back() == mypos) {
@@ -258,12 +258,12 @@ float Search::Evaluate(
         }
     }
 
-#if 0
+#if 1
     if (mLevels.size() == 2 && mPreferGrenade && move.mPlaceGrenade)
-        bombingTargetScore += 48;
+        bombingTargetScore += 96;
 
     if (mLevels.size() == 3 && mPreferGrenade == 2 && move.mPlaceGrenade)
-        bombingTargetScore += 24;
+        bombingTargetScore += 48;
 #endif
 
     if (mPhase == ITEM && !mPathSequence.empty()) {

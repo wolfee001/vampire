@@ -735,9 +735,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 
 	bool wantcharge = false;
 #if 1
-	if ((tickDescription.mEnemyVampires.size() > 2 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 300) ||
-		(tickDescription.mEnemyVampires.size() > 1 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 200) ||
-		tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 100) {
+	if ((tickDescription.mEnemyVampires.size() > 2 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 150) ||
+		(tickDescription.mEnemyVampires.size() > 1 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 100) ||
+		(tickDescription.mEnemyVampires.size() == 1 && tickDescription.mEnemyVampires[0].mHealth > 1 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 50) ||
+		tickDescription.mRequest.mTick > mGameDescription.mMaxTick) {
 		if (me.mPlacableGrenades >= 1 && m[mypos.y][mypos.x] == ' ') {
 			if (nextmap[mypos.y][mypos.x] == '.') {
 				map_t test = m;
@@ -791,11 +792,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		if (!mPreferGrenade && tickDescription.mPowerUps.empty() && !mInPhase1)
 			wantcharge = true;
 	}
-#endif
-
+#else
 	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick) // no hint for now with lights
 		return answer;
-
+#endif
 
 	if (!tickDescription.mPowerUps.empty()) {
 
@@ -884,7 +884,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			cerr << p;
 		cerr << ' ' << bestbombseqval << endl;
 	} else {
-		cerr << "between items " << endl;
+		cerr << "between items or charge" << endl;
 		vector<pos_t> targets;
 		vector<int> closestenemy;
 		FOR0(y, SZ(m)) {
@@ -955,6 +955,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 						int val = 0;
 						for(auto& enemy : tickDescription.mEnemyVampires) {
 							int d = p3.GetDist(pos_t(enemy.mY, enemy.mX));
+							if (d == 0)
+								d = 2;
 							MAXA(val, 100 - d);
 						}
 						MAXA2(best, val, bestdirs, dirs);
@@ -985,10 +987,14 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			answer.mPlaceGrenade = false; 
 			answer.mSteps = bestdirs;
 			if (wantcharge) {
-				cerr << "charge!";
+				cerr << "charge! ";
 				mPhase = CHARGE;
+				if (best >= 97 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick && randn0(4) == 0) {
+					mPreferGrenade = true;
+					cerr << "with grenade ";
+				}
 			} else {
-				cerr << "between items, go closer";
+				cerr << "between items, go closer ";
 				mPhase = BETWEEN_ITEMS;
 			}
 			pos_t p = mypos;

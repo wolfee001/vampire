@@ -101,14 +101,16 @@ void Framework::Render()
                 mPlayBook.mGameLoader = GameLoader(result[0]);
                 mVampireCumulatedPoints.clear();
 
-                std::thread t([&mPlayBook = mPlayBook]() {
+                std::thread t([&mPlayBook = mPlayBook, &mRecordGame = mRecordGame]() {
+                    bool oldRecord = mRecordGame;
+                    mRecordGame = false;
                     mPlayBook.mSolver.startMessage(mPlayBook.mGameLoader.GetDescription().mMessage);
                     GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                     const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                     if (resp != step.mAnswerMessage) {
                         mPlayBook.mIsCorrupted = true;
-                        return;
                     }
+                    mRecordGame = oldRecord;
                 });
                 t.detach();
             }

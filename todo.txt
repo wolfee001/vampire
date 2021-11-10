@@ -21,3 +21,13 @@ csak dontobe:
 -tamadas: van. de folyamatosan?
 -ne induljunk el a targyert ha az ellenfel hamarabb er oda
 -megakadalyozni hogy mas is felvegyen targyat? - ha mar korabban odaerunk, vagy mi mar ott vagyunk, rakjunk ra bombat
+ -akadalyozo bomba
+
+-predikcio: melyik bot buta
+-pl. bekerites ellen vedekezik
+-kiismeres ellen: kevert strat
+
+-miniatura
+-1 item, 1 ellenfel, es random kornyezet
+
+-nextmap '-' = blokkol!

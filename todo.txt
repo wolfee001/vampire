@@ -1,26 +1,23 @@
 high impact (ezer pont): survive and let them survive
--avoid entraped by bombs/blocks (and vampire with bomb)
--utilize pathseq
++avoid entraped by bombs/blocks (and vampire with bomb)
++utilize pathseq
 -phase1, betweenitems <3 eletu ellenfeltol tavolra rakjunk bombat
 
 lower impact (parszaz pont)
 ~paradicsomot is vigyuk el, ha mas nem akarja/tudja (mar lejar), vagy eppen elviszi (-1 idopillanatban rajta all)
-~menjunk ahhoz a targyhoz ahova az egyetlen gyujtogeto is valoszinuleg megy, meg akkor is ha messzebb van (de meg elerheto) - es akkor 2 targyat tudunk szerezni, mert a tobbiek nem csinalnak semmit
--vegjatekban oles: ...
-
-
--megakadalyozni hogy mas is felvegyen targyat (ha kevesebb bombaja van, kevesbe tudjak egymast olni) - ha mar korabban odaerunk, rakjunk ra bombat
-
--insta chain kill (ha az utolso elete)
--insta next kill (ha tudjuk hogy nem tudja elkerulni)
++menjunk ahhoz a targyhoz ahova az egyetlen gyujtogeto is valoszinuleg megy, meg akkor is ha messzebb van (de meg elerheto) - es akkor 2 targyat tudunk szerezni, mert a tobbiek nem csinalnak semmit
++vegjatekban oles: ...
++insta chain kill (ha az utolso elete)
++insta next kill (ha tudjuk hogy nem tudja elkerulni)
 
 csak dontobe:
--avoid 16 - bomba lerakassal ki lehet vedeni (kiveve ha avoid 32 - korbevesznek)
+
+-hogyan tudunk 4 jatekost egymas ellen: 
+ referencia-verzio(k!)
+ setup 1 vs. 3, 2 vs. 2 egymas mellett, 2 vs 2 atlosan!
+
+-avoid 16 - bomba lerakassal IS ki lehet vedeni (kiveve ha avoid 32 - korbevesznek)
 -paradicsomkedvezmeny: nincs
--tamadas: van
+-tamadas: van. de folyamatosan?
 -ne induljunk el a targyert ha az ellenfel hamarabb er oda
-
-
-bug
--defense bomb>=1 && bomb+block>=3
--targy jol szamoljuk hogy mikor erunk oda?
+-megakadalyozni hogy mas is felvegyen targyat? - ha mar korabban odaerunk, vagy mi mar ott vagyunk, rakjunk ra bombat

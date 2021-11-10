@@ -40,8 +40,8 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const Simulator:
     }
     auto move = search.GetBestMove();
 
-    std::cerr << "Calculation took " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t1).count()
-              << " ms, ended with level " << search.mLevels.size() << std::endl;
+    std::cerr << "Calculation took " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t1).count() << " ms"
+              << std::endl;
 
     std::cerr << "Avoids: " << mAvoids << std::endl;
     std::cerr << " grenade: " << move.mPlaceGrenade << " moves: ";

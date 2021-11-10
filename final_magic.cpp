@@ -21,7 +21,7 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const Simulator:
 
     if (mUsualMagic.mPhase == PHASE1) {
         mGaborMagic.SetBombSequence(mUsualMagic.mPath);
-    } else if (mUsualMagic.mPhase == ITEM || mUsualMagic.mPhase == BETWEEN_ITEMS) {
+    } else if (mUsualMagic.mPhase == ITEM || mUsualMagic.mPhase == BETWEEN_ITEMS || mUsualMagic.mPhase == CHARGE) {
         mGaborMagic.SetPathSequence(mUsualMagic.mPath);
     } else {
         mGaborMagic.SetPhase(NONE);

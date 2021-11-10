@@ -708,9 +708,6 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	mPreferGrenade = false;
 	mPath.clear();
 
-	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick) // no hint for now with lights
-		return answer;
-
 	auto& me = tickDescription.mMe;
 	pos_t mypos = pos_t(me.mY, me.mX);
 	cerr << "turn " << tickDescription.mRequest.mTick << ' ' << mypos << endl;
@@ -736,58 +733,68 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	if ((mAvoids & 16) && ontomato && me.mHealth == 2) // with 2 health, it can be more or less ok to stay (no matter what the timings are)
 		mAvoids &= ~16;
 
-#if 0
-//	if ((tickDescription.mEnemyVampires.size() == 3 || tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 100))
-//  maybe we dont want to battle while getting items?
-	if (me.mPlacableGrenades >= 1 && m[mypos.y][mypos.x] == ' ')
-	{
-		if (nextmap[mypos.y][mypos.x] == '.') {
-			map_t test = m;
-			test.bombrange.clear();
-			bomb(test, test, mypos, me.mGrenadeRange);
-			for (const auto& enemy : tickDescription.mEnemyVampires) {
-				pos_t p(enemy.mY, enemy.mX);
-				if (nextmap[p.y][p.x] != '.' && test[p.y][p.x] == '.') {
-					mPreferGrenade = 1;
-					cerr << "chainkill" << endl;
-					break;
-				}
-			}
-		}
-		// todo: how to detected sackable enemy with me on neck?
-		if (!mPreferGrenade && m[mypos.y][mypos.x] == ' ') {
-			for (const auto& enemy : tickDescription.mEnemyVampires) {
-				pos_t p(enemy.mY, enemy.mX);
-				int block = blockcnt(m, p);
-				if (p.GetDist(mypos) == 1 && block >= 2) {
-					if (block == 3) { // force move to other side to finish encapsulation?
+	bool wantcharge = false;
+#if 1
+	if ((tickDescription.mEnemyVampires.size() > 2 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 150) ||
+		(tickDescription.mEnemyVampires.size() > 1 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 100) ||
+		(tickDescription.mEnemyVampires.size() == 1 && tickDescription.mEnemyVampires[0].mHealth > 1 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 50) ||
+		tickDescription.mRequest.mTick > mGameDescription.mMaxTick) {
+		if (me.mPlacableGrenades >= 1 && m[mypos.y][mypos.x] == ' ') {
+			if (nextmap[mypos.y][mypos.x] == '.') {
+				map_t test = m;
+				test.bombrange.clear();
+				bomb(test, test, mypos, me.mGrenadeRange);
+				for (const auto& enemy : tickDescription.mEnemyVampires) {
+					pos_t p(enemy.mY, enemy.mX);
+					if (nextmap[p.y][p.x] != '.' && test[p.y][p.x] == '.') {
 						mPreferGrenade = 1;
-						cerr << "encircled" << endl;
+						cerr << "chainkill" << endl;
+						break;
 					}
-					else { // force move to other side to finish encapsulation?
-						int dirtoward = mypos.y == enemy.mY ? (mypos.x < enemy.mX ? 1 : 3) : (mypos.y > enemy.mY ? 0 : 2);
-						int dirtshift = (1 << dirtoward);
-						pos_t p2 = p.GetPos(dirtoward);
-						if (m[p2.y][p2.x] == ' ' && blockcnt(m, p2) == 3) {
-							cerr << "encircled with sacked";
-							mPreferGrenade = 1;
-						} else {
-							if (me.mPlacableGrenades == 1)
-								continue;
-							if ((mAvoids & dirtshift) == dirtshift)
-								continue;
-							mPreferGrenade = 2;
-							cerr << "encircle attempt" << endl;
-							mAvoids = 16;
-							mAvoids |= (15 - dirtshift);
-						}
-					}
-					break;
 				}
-				// sack is only chance do not force it?
+			}
+			// todo: how to detected sackable enemy with me on neck?
+			if (!mPreferGrenade && m[mypos.y][mypos.x] == ' ') {
+				for (const auto& enemy : tickDescription.mEnemyVampires) {
+					pos_t p(enemy.mY, enemy.mX);
+					int block = blockcnt(m, p);
+					if (p.GetDist(mypos) == 1 && block >= 2) {
+						if (block == 3) { 
+							mPreferGrenade = 1;
+							cerr << "encircled" << endl;
+						}
+						else { // force move to other side to finish encapsulation?
+							int dirtoward = mypos.y == enemy.mY ? (mypos.x < enemy.mX ? 1 : 3) : (mypos.y > enemy.mY ? 0 : 2);
+							int dirtshift = (1 << dirtoward);
+							pos_t p2 = p.GetPos(dirtoward);
+							if (m[p2.y][p2.x] == ' ' && blockcnt(m, p2) == 3) {
+								cerr << "encircled with sacked";
+								mPreferGrenade = 1;
+							} else {
+								if (me.mPlacableGrenades == 1)
+									continue;
+	//							if (enemy.mPlacableGrenades > 0)
+	//								continue;
+								if ((mAvoids & dirtshift) == dirtshift)
+									continue;
+								mPreferGrenade = 2;
+								cerr << "encircle attempt" << endl;
+								mAvoids = 16;
+								mAvoids |= (15 - dirtshift);
+							}
+						}
+						break;
+					}
+					// sack is only chance do not force it?
+				}
 			}
 		}
+		if (!mPreferGrenade && tickDescription.mPowerUps.empty() && !mInPhase1)
+			wantcharge = true;
 	}
+#else
+	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick) // no hint for now with lights
+		return answer;
 #endif
 
 	if (!tickDescription.mPowerUps.empty()) {
@@ -825,7 +832,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		}
 		FOR0(i, SZ(targets)) {
 			int reach = reaches[targets[i].y][targets[i].x].turn;
-			if ((closestenemy[i] >= reach || reach <= waitturn) && lastturn >= reach)
+			if ((closestenemy[i] >= reach && lastturn >= reach) || reach <= waitturn)
 				MINA2(closest, bothreachableinwait ? closestenemy[i] : reach, best, i);
 		}
 
@@ -877,7 +884,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			cerr << p;
 		cerr << ' ' << bestbombseqval << endl;
 	} else {
-		cerr << "between items " << endl;
+		cerr << "between items or charge" << endl;
 		vector<pos_t> targets;
 		vector<int> closestenemy;
 		FOR0(y, SZ(m)) {
@@ -944,18 +951,29 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					Vampire me2 = me;
 					me2.mY = p3.y;
 					me2.mX = p3.x;
-					getdist(m, vector<pos_t>(), tickDescription, me2);
-					cnt = 0;
-					FOR0(i, SZ(targets)) {
-						if (reaches[targets[i].y][targets[i].x].turn <= 10 || closestenemy[i] > reaches[targets[i].y][targets[i].x].turn) // has to be further
-							++cnt;
+					if (wantcharge) {
+						int val = 0;
+						for(auto& enemy : tickDescription.mEnemyVampires) {
+							int d = p3.GetDist(pos_t(enemy.mY, enemy.mX));
+							if (d == 0)
+								d = 2;
+							MAXA(val, 100 - d);
+						}
+						MAXA2(best, val, bestdirs, dirs);
+					} else {
+						getdist(m, vector<pos_t>(), tickDescription, me2);
+						cnt = 0;
+						FOR0(i, SZ(targets)) {
+							if (reaches[targets[i].y][targets[i].x].turn <= 10 || closestenemy[i] > reaches[targets[i].y][targets[i].x].turn) // has to be further
+								++cnt;
+						}
+						int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
+	/*					cerr << p3 << ' ';
+						for(auto c : dirs)
+							cerr << c;
+						cerr << ' ' << cnt << ' ' << dq << endl; */
+						MAXA2(best, cnt * 100 - dq, bestdirs, dirs);
 					}
-					int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
-/*					cerr << p3 << ' ';
-					for(auto c : dirs)
-						cerr << c;
-					cerr << ' ' << cnt << ' ' << dq << endl; */
-					MAXA2(best, cnt * 100 - dq, bestdirs, dirs);
 					if (d3 != 4)
 						dirs.pop_back();
 				}
@@ -968,8 +986,17 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		if (best > 0) {
 			answer.mPlaceGrenade = false; 
 			answer.mSteps = bestdirs;
-			cerr << "between items, go closer";
-			mPhase = BETWEEN_ITEMS;
+			if (wantcharge) {
+				cerr << "charge! ";
+				mPhase = CHARGE;
+				if (best >= 97 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick && randn0(4) == 0) {
+					mPreferGrenade = true;
+					cerr << "with grenade ";
+				}
+			} else {
+				cerr << "between items, go closer ";
+				mPhase = BETWEEN_ITEMS;
+			}
 			pos_t p = mypos;
 			for(auto c : answer.mSteps) {
 				p = p.GetPos(c == 'U' ? 0 : c == 'R' ? 1 : c == 'D' ? 2 : 3);

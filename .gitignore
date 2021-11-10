@@ -5,6 +5,8 @@
 .devcontainer
 build
 data
+node_modules
 target
 
 compile_commands.json
+package-lock.json

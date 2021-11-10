@@ -1,0 +1,16 @@
+{
+  "name": "old_boys",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": "./index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "wolfee",
+  "license": "MIT",
+  "dependencies": {
+    "inquirer": "^8.2.0",
+    "node-fetch": "^2.6.6"
+  }
+}

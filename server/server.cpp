@@ -7,13 +7,16 @@
 #include "parser.h"
 
 #include <algorithm>
+#include <ctime>
 #include <fmt/format.h>
 #include <sstream>
 
 void RunGame(int playerCount, const Level& level)
 {
     GameDescription gd = parseGameDescription(level.mGameDescription);
+    gd.mGameId = std::time(nullptr);
     TickDescription tick = parseTickDescription(level.mZeroTick);
+    tick.mRequest.mGameId = gd.mGameId;
 
     tick.mEnemyVampires.erase(
         std::remove_if(tick.mEnemyVampires.begin(), tick.mEnemyVampires.end(), [&playerCount](const auto& vampire) { return vampire.mId > playerCount; }),
@@ -26,10 +29,10 @@ void RunGame(int playerCount, const Level& level)
         std::string s;
         ss >> s >> s;
         GUI::GetInstance().SetVampireName(i + 1, s);
-        ms.SendToConnection(i, CreateMessage(level.mGameDescription));
+        ms.SendToConnection(i, CreateMessage(CreateGameDescription(gd)));
     }
 
-    Game game(level, playerCount);
+    Game game(gd, tick, playerCount);
 
     while (true) {
         for (int p = 0; p < playerCount; ++p) {

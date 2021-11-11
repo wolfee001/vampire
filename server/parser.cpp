@@ -36,6 +36,19 @@ std::vector<std::string> ParseMessage(const std::string& message)
     return {};
 }
 
+std::vector<std::string> CreateGameDescription(const GameDescription& description)
+{
+    std::vector<std::string> retVal;
+    retVal.push_back("MESSAGE OK");
+    retVal.push_back(fmt::format("LEVEL {}", description.mLevelId));
+    retVal.push_back(fmt::format("GAMEID {}", description.mGameId));
+    retVal.push_back("TEST 1");
+    retVal.push_back(fmt::format("MAXTICK {}", description.mMaxTick));
+    retVal.push_back(fmt::format("GRENADERADIUS {}", description.mGrenadeRadius));
+    retVal.push_back(fmt::format("SIZE {}", description.mMapSize));
+    return retVal;
+}
+
 std::vector<std::string> CreateInfo(const TickDescription& tick, int player)
 {
     std::vector<std::string> retVal;

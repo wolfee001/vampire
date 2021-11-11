@@ -9,7 +9,7 @@
 
 class Game {
 public:
-    Game(const Level& level, int playerCount);
+    Game(const GameDescription& gd, const TickDescription& zeroTick, int playerCount);
     void SetVampireMove(int id, const Answer& move);
     std::pair<TickDescription, std::vector<std::pair<int, float>>> Tick();
 

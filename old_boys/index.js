@@ -45,7 +45,7 @@ const main = async () => {
             }
             for (let i = 0; i < answers.players; ++i) {
                 try {
-                    exec(`${binary} 1 localhost 6789`, { stdio: 'inherit' }).on('exit', code => {
+                    exec(`${binary} 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }).on('exit', code => {
                         console.log(`vampire exited with code ${code}`);
                     });
                 } catch (err) {

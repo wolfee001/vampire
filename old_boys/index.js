@@ -28,7 +28,7 @@ const main = async () => {
                 type: 'list',
                 name: 'players',
                 message: 'Select number of players',
-                choices: ['1', '2', '3'],
+                choices: ['1', '2', '3', '4'],
                 default: '2'
             }
         ])
@@ -40,13 +40,12 @@ const main = async () => {
             }
             const binary = `${folder}/build/bin/vampire${process.platform === 'win32' ? '.exe' : ''}`;
             if (!fs.existsSync(binary)) {
-                execSync(`cmake -B ${folder}/build ${folder} -DTICK_TIMEOUT=${answers.time}`, { stdio: 'inherit' });
+                execSync(`cmake -B ${folder}/build ${folder} -DTICK_TIMEOUT=${answers.time} -DPLAYER_TOKEN=${answers.tag}@${answers.time}`, { stdio: 'inherit' });
                 execSync(`cmake --build ${folder}/build --target vampire`, { stdio: 'inherit' });
             }
-            const children = [];
             for (let i = 0; i < answers.players; ++i) {
                 try {
-                    exec(`${binary} 1 localhost 6789`).on('exit', code => {
+                    exec(`${binary} 1 localhost 6789`, { stdio: 'inherit' }).on('exit', code => {
                         console.log(`vampire exited with code ${code}`);
                     });
                 } catch (err) {

@@ -1,12 +1,14 @@
 #include "../parser.h"
 
 #include "game.h"
+#include "gui.h"
 #include "levels.h"
 #include "multi_server.h"
 #include "parser.h"
 
 #include <algorithm>
 #include <fmt/format.h>
+#include <sstream>
 
 void RunGame(int playerCount, const Level& level)
 {
@@ -20,7 +22,10 @@ void RunGame(int playerCount, const Level& level)
     MultiServer ms(6789);
     ms.WaitForConnections(playerCount);
     for (int i = 0; i < playerCount; ++i) {
-        ms.ReadFromConnection(i);
+        std::stringstream ss(ms.ReadFromConnection(i));
+        std::string s;
+        ss >> s >> s;
+        GUI::GetInstance().SetVampireName(i + 1, s);
         ms.SendToConnection(i, CreateMessage(level.mGameDescription));
     }
 

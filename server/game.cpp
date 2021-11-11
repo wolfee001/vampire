@@ -14,6 +14,8 @@ Game::Game(const GameDescription& gd, const TickDescription& zeroTick, int playe
         tick.mEnemyVampires.end());
     mSimulator.SetState(tick);
 
+    mNextPowerupTick = mGameDescription.mMapSize * mGameDescription.mMapSize / 3;
+
     GUI::GetInstance().SetGameDescription(mGameDescription);
     GUI::GetInstance().Update(tick, mCumulatedPoints);
 }
@@ -76,11 +78,14 @@ void Game::GeneratePowerups(TickDescription& tick)
             type = PowerUp::Type::Tomato;
         }
 
-        tick.mPowerUps.push_back({ type, -10, position.first, position.second, 20 });
-        tick.mPowerUps.push_back({ type, -10, mGameDescription.mMapSize - position.first - 1, mGameDescription.mMapSize - position.second - 1, 20 });
+        const int pre = 5 + rand() % 6;
+        const int duration = 10 + rand() % 11;
+
+        tick.mPowerUps.push_back({ type, -pre, position.first, position.second, duration });
+        tick.mPowerUps.push_back({ type, -pre, mGameDescription.mMapSize - position.first - 1, mGameDescription.mMapSize - position.second - 1, duration });
     }
     if (!tick.mPowerUps.empty()) {
         return;
     }
-    mNextPowerupTick = tick.mRequest.mTick + 20;
+    mNextPowerupTick = tick.mRequest.mTick + 10 + rand() % 11;
 }

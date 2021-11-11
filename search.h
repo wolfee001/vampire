@@ -23,6 +23,8 @@ public:
 
         mLevels.emplace_back().emplace_back(std::numeric_limits<uint32_t>::max(), tickDescription, 0.F, heuristicScore, action.GetId());
 
+        mMyOriginalPos = pos_t(tickDescription.mMe.mY, tickDescription.mMe.mX);
+
         mTomatoSafePlay = tickDescription.mMe.mHealth == 3
             && std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
                    [](const PowerUp& powerup) { return powerup.mType == PowerUp::Type::Tomato && 
@@ -94,4 +96,5 @@ public:
     int mPreferGrenade = 0;
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
+    pos_t mMyOriginalPos;
 };

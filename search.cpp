@@ -59,7 +59,10 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             }
 
             if (action.IsGrenade() && action.GetNumberOfSteps() < 2) {
-                continue;
+                if (mLevels.size() > 2 || !mPreferGrenade || action.GetNumberOfSteps() == 1)
+                    continue;
+                if (mPreferGrenade)
+                    std::cerr << "boo" << std::endl;
             }
 
             if (mLevels.size() == 2 && (mAvoids & 16) && action.GetNumberOfSteps() == 0) {
@@ -256,13 +259,20 @@ float Search::Evaluate(
         }
     }
 
-#if 1
-    if (mLevels.size() == 2 && mPreferGrenade && move.mPlaceGrenade)
-        bombingTargetScore += 96;
-
-    if (mLevels.size() == 3 && mPreferGrenade == 2 && move.mPlaceGrenade)
-        bombingTargetScore += 48;
-#endif
+    if (mPreferGrenade) {
+        if (mLevels.size() == 2 && move.mPlaceGrenade) {
+            bombingTargetScore += 96;
+        } else if (mLevels.size() == 3 && mPreferGrenade == 2 && move.mPlaceGrenade) {
+            bombingTargetScore += 48;
+        } else if (mLevels.size() >= 3) {
+            auto p = mMyOriginalPos;
+            const auto gIt = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
+                [&p](const Grenade& grenade) { return p.x == grenade.mX && p.y == grenade.mY; });
+            if (gIt != std::cend(tickDescription.mGrenades)) {
+                bombingTargetScore += 24;
+            }
+        }
+    }
 
     if (mPhase == ITEM && !mPathSequence.empty()) {
         const auto powerUpIt = std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),

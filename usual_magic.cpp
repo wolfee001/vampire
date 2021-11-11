@@ -660,7 +660,7 @@ int avoidstay(map_t& m, pos_t player, vector<pos_t> enemieswithbomb)
 			}
 	}
 	if (bomb + block >= 3 && bomb >= 1)
-		return 16 | avoiddirs; 
+		return 16 | 32 | avoiddirs; 
 	return 0;
 }
 
@@ -668,7 +668,10 @@ int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemiesw
 {
 	int avoids = avoidtoward(m, nextmap, player, enemieswithbomb);
 	avoids |= avoidstay(m, player, enemieswithbomb);
-	avoids |= avoidsack(m, player, enemieswithbomb);
+	int sackavoids = avoidsack(m, player, enemieswithbomb);
+	if ((avoids & 32) && (sackavoids & 16))
+		avoids &= ~32;
+	avoids |= sackavoids;
 
 	if ((avoids & 15) == 15) // danger everywhere = no danger at all (we still avoid stay)
 		avoids = 0;
@@ -723,22 +726,28 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 
 	auto nextmap = sim(m);
 
+	bool onitem = false;
 	bool ontomato = false;
-	for (const auto& powerup : tickDescription.mPowerUps)
-		if (pos_t(powerup.mY, powerup.mX) == mypos)
-			ontomato = true;
+	for (const auto& powerup : tickDescription.mPowerUps) {
+		if (pos_t(powerup.mY, powerup.mX) == mypos && powerup.mRemainingTick < -1) {
+			onitem = true;
+			if (powerup.mType == PowerUp::Type::Tomato)
+				ontomato = true;
+		}
+	}
 
 	mAvoids = collectavoids(m, nextmap, mypos, tickDescription.mEnemyVampires);
 
-	if ((mAvoids & 16) && ontomato && me.mHealth == 2) // with 2 health, it can be more or less ok to stay (no matter what the timings are)
+	if ((mAvoids & 48) == 48 && me.mPlacableGrenades > 0 && onitem) {
+		mAvoids &= ~48;
+		mPreferGrenade = 1;
+	}
+	else if ((mAvoids & 16) && ontomato && me.mHealth == 2) // with 2 health, it can be more or less ok to stay (no matter what the timings are)
 		mAvoids &= ~16;
 
 	bool wantcharge = false;
 #if 1
-	if ((tickDescription.mEnemyVampires.size() > 2 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 150) ||
-		(tickDescription.mEnemyVampires.size() > 1 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 100) ||
-		(tickDescription.mEnemyVampires.size() == 1 && tickDescription.mEnemyVampires[0].mHealth > 1 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick - 50) ||
-		tickDescription.mRequest.mTick > mGameDescription.mMaxTick) {
+	if (true) {
 		if (me.mPlacableGrenades >= 1 && m[mypos.y][mypos.x] == ' ') {
 			if (nextmap[mypos.y][mypos.x] == '.') {
 				map_t test = m;
@@ -789,8 +798,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				}
 			}
 		}
-		if (!mPreferGrenade && tickDescription.mPowerUps.empty() && !mInPhase1)
-			wantcharge = true;
+//		if (!mPreferGrenade && tickDescription.mPowerUps.empty())
+//			wantcharge = true;
 	}
 #else
 	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick) // no hint for now with lights
@@ -808,17 +817,16 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		for (const auto& powerup : tickDescription.mPowerUps) {
 			targets.push_back(pos_t(powerup.mY, powerup.mX));
 			closestenemy.push_back(MAXTURN + 1);
-			if (powerup.mRemainingTick < 0)
+			if (powerup.mRemainingTick < 0) {
 				waitturn = -powerup.mRemainingTick - 1;
-			else
+				lastturn = waitturn + 15;
+			} else
 				lastturn = powerup.mRemainingTick - 1;
 		}
 		for (const auto& enemy : tickDescription.mEnemyVampires) {
 			getdist(m, targets, tickDescription, enemy);
-			FOR0(i, SZ(targets)) {
-				if (reaches[targets[i].y][targets[i].x].turn == 0) // we only compete with very close bot
-					MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
-			}
+			FOR0(i, SZ(targets))
+				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
 		}
 		getdist(m, targets, tickDescription, me);
 
@@ -833,7 +841,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		FOR0(i, SZ(targets)) {
 			int reach = reaches[targets[i].y][targets[i].x].turn;
 			if ((closestenemy[i] >= reach && lastturn >= reach) || reach <= waitturn)
-				MINA2(closest, bothreachableinwait ? closestenemy[i] : reach, best, i);
+				MINA2(closest, reach, best, i);
 		}
 
 		if (best == -1) {
@@ -867,6 +875,19 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				FORD(i, SZ(steps) - 1, 0) {
 					p = p.GetPos(steps[i]);
 					mPath.push_back(p);
+				}
+				if (mypos == targets[best]) {
+					if (closestenemy[best] == 0 && me.mPlacableGrenades > 0 && 
+						m[mypos.y][mypos.x] == ' ' && waitturn > 0 && waitturn < 5) {
+						for (const auto& enemy : tickDescription.mEnemyVampires) {
+							pos_t p(enemy.mY, enemy.mX); 
+							if (p != mypos && p.GetDist(mypos) <= (enemy.mRunningShoesTick ? 3 : 2)) {
+								mPreferGrenade = 1;
+								cerr << "prefer grenade to protect item" << endl;
+								break;
+							}
+						}
+					}
 				}
 				return answer;
 			}
@@ -964,7 +985,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 						getdist(m, vector<pos_t>(), tickDescription, me2);
 						cnt = 0;
 						FOR0(i, SZ(targets)) {
-							if (reaches[targets[i].y][targets[i].x].turn <= 10 || closestenemy[i] > reaches[targets[i].y][targets[i].x].turn) // has to be further
+							int reach = reaches[targets[i].y][targets[i].x].turn;
+							if (closestenemy[i] > reach)
+								cnt += 2;
+							else if (closestenemy[i] == reach || reach <= 5)
 								++cnt;
 						}
 						int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
@@ -972,7 +996,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 						for(auto c : dirs)
 							cerr << c;
 						cerr << ' ' << cnt << ' ' << dq << endl; */
-						MAXA2(best, cnt * 100 - dq, bestdirs, dirs);
+						MAXA2(best, cnt * 1000 - dq, bestdirs, dirs);
 					}
 					if (d3 != 4)
 						dirs.pop_back();

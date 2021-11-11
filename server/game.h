@@ -21,5 +21,5 @@ private:
     GameDescription mGameDescription;
     Simulator mSimulator;
     std::map<int, float> mCumulatedPoints;
-    int mNextPowerupTick = 40;
+    int mNextPowerupTick = 0;
 };

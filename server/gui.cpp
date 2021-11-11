@@ -1,6 +1,7 @@
 #include "gui.h"
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <ctime>
 #include <fmt/core.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -137,7 +138,7 @@ void GUI::Run()
                 std::thread t([&gameIsRunning, &mapSelector, &playerCount]() {
                     gameIsRunning = true;
                     Levels levels;
-                    RunGame(playerCount + 1, levels.mLevels[mapSelector]);
+                    RunGame(playerCount + 1, levels.mLevels[mapSelector], time(nullptr));
                     gameIsRunning = false;
                 });
                 t.detach();

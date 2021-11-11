@@ -40,8 +40,9 @@ std::pair<TickDescription, std::vector<std::pair<int, float>>> Game::Tick()
         retVal.second.emplace_back(1, mCumulatedPoints[1]);
     }
     for (int i = 2; i < 5; ++i) {
-        if (std::find_if(tickResp.first.mEnemyVampires.begin(), tickResp.first.mEnemyVampires.end(), [i](const auto& element) { return element.mId == i; })
-            == tickResp.first.mEnemyVampires.end()) {
+        if (std::find_if(tickResp.first.mEnemyVampires.begin(), tickResp.first.mEnemyVampires.end(),
+                [i](const auto& element) { return element.mId == i && element.mHealth < 1; })
+            != tickResp.first.mEnemyVampires.end()) {
             retVal.second.emplace_back(i, mCumulatedPoints[i]);
         }
     }

@@ -16,6 +16,10 @@ if(TICK_TIMEOUT)
     add_compile_definitions(TIMEOUT=${TICK_TIMEOUT})
 endif()
 
+if(PLAYER_TOKEN)
+    add_compile_definitions(TOKEN="${PLAYER_TOKEN}")
+endif()
+
 #-------------- SETUPS
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)

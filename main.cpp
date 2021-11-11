@@ -1,6 +1,7 @@
 #include "console_connector.h"
 #include "socket_connector.h"
 #include "solver.h"
+#include "token.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -210,7 +211,7 @@ int main(int argc, char** argv)
     /* config area */
     const char* host_name = from_console ? "" : argc < 3 ? "itechchallenge.dyndns.org" : argv[argc - 2];
     const unsigned short port = from_console ? 0 : (argc < 3 && argv[argc - 1][0]) ? 11224 : std::atoi(argv[argc - 1]);
-    const char token[] = "QUe7rUkh";
+    const char token[] = TOKEN;
 
     try {
         client(from_console ? std::unique_ptr<connector>(std::make_unique<console_connector>()) : std::make_unique<socket_connector>(host_name, port),

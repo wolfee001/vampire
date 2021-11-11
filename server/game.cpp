@@ -4,11 +4,11 @@
 #include "gui.h"
 #include <algorithm>
 
-Game::Game(const Level& level, int playerCount)
-    : mGameDescription(parseGameDescription(level.mGameDescription))
+Game::Game(const GameDescription& gd, const TickDescription& zeroTick, int playerCount)
+    : mGameDescription(gd)
     , mSimulator(mGameDescription)
 {
-    auto tick = parseTickDescription(level.mZeroTick);
+    auto tick = zeroTick;
     tick.mEnemyVampires.erase(
         std::remove_if(tick.mEnemyVampires.begin(), tick.mEnemyVampires.end(), [&playerCount](const auto& vampire) { return vampire.mId > playerCount; }),
         tick.mEnemyVampires.end());

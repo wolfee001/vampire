@@ -122,7 +122,7 @@ std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
     }
 
     for (const auto& element : mState.mEnemyVampires) {
-        if (const auto it = mVampireMoves.find(mState.mMe.mId); it != mVampireMoves.end()) {
+        if (const auto it = mVampireMoves.find(element.mId); it != mVampireMoves.end()) {
             if (it->second.mSteps.size() > 2 && element.mRunningShoesTick <= 0) {
                 CHECK(false, "Stepping more than 2 but there are no running shoes!");
             }

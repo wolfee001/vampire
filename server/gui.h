@@ -11,6 +11,7 @@ public:
     static GUI& GetInstance();
 
     void SetGameDescription(const GameDescription& description);
+    void SetVampireName(int id, const std::string& name);
     void Update(const TickDescription& description, const std::map<int, float>& points);
 
     void Run();

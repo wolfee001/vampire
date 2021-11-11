@@ -44,6 +44,11 @@ void GUI::SetGameDescription(const GameDescription& description)
     mRenderLock.unlock();
 }
 
+void GUI::SetVampireName(int id, const std::string& name)
+{
+    mVampireNames[id] = name;
+}
+
 void GUI::Update(const TickDescription& description, const std::map<int, float>& points)
 {
     mRenderLock.lock();
@@ -128,6 +133,7 @@ void GUI::Run()
                 mGameDescription = {};
                 mTickDescription = {};
                 mCumulatedPoints = {};
+                mVampireNames = {};
                 std::thread t([&gameIsRunning, &mapSelector, &playerCount]() {
                     gameIsRunning = true;
                     Levels levels;
@@ -154,11 +160,12 @@ void GUI::Run()
                 }
             }
             ImGui::SetNextWindowPos({ 0, 123 });
-            ImGui::SetNextWindowSize({ 278, 390 });
+            ImGui::SetNextWindowSize({ 278, 455 });
             ImGui::Begin("Vampires###ServerVampires", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
             for (const auto& vampire : vamps) {
                 ImGui::BeginGroup();
+                ImGui::Text("Version: %s", mVampireNames[vampire.mId].c_str());
                 ImGui::BeginGroup();
                 ImGui::Image(mAssets["vampire" + std::to_string(vampire.mId)], ImVec2(64, 64));
                 ImGui::EndGroup();

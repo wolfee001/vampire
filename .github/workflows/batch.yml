@@ -37,6 +37,8 @@ jobs:
         cd ..
         cd github_batches
         batch_runner ${{ github.event.inputs.descriptor }}
+        git config --global user.name 'Batch Runner'
+        git config --global user.email 'wolfee001@users.noreply.github.com'
         git add .
         git commit -m "Batch run data" || echo "Nothing changed"
         git push || echo "Nothing changed"

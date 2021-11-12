@@ -6,6 +6,41 @@
 #include <iostream>
 #include <optional>
 
+Search::Search(const TickDescription& tickDescription, const GameDescription& gameDescription, int playerId)
+    : mGameDescription(gameDescription)
+    , mPlayerId(playerId)
+{
+    const auto heuristicScore = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0.F } }, {}, 1);
+    mLevels.reserve(10);
+
+    const auto grenadeIt
+        = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades), [&playerId](const auto& x) { return x.mId == playerId; });
+
+    const ActionSequence action(Answer { grenadeIt != std::cend(tickDescription.mGrenades), {} });
+
+    auto& firstNode = mLevels.emplace_back().emplace_back(std::numeric_limits<uint32_t>::max(), tickDescription, 0.F, heuristicScore, action.GetId());
+    auto& firstTick = firstNode.mTickDescription;
+
+    firstTick.mPowerUps.erase(std::remove_if(std::begin(firstTick.mPowerUps), std::end(firstTick.mPowerUps),
+                                  [&firstTick](const PowerUp& powerUp) {
+                                      return powerUp.mRemainingTick >= -1
+                                          && std::find_if(std::cbegin(firstTick.mEnemyVampires), std::cend(firstTick.mEnemyVampires),
+                                                 [&powerUp](const Vampire& vampire) { return vampire.mX == powerUp.mX && vampire.mY == powerUp.mY; })
+                                          != std::cend(firstTick.mEnemyVampires);
+                                  }),
+        std::cend(firstTick.mPowerUps));
+
+    mMyOriginalPos = pos_t(tickDescription.mMe.mY, tickDescription.mMe.mX);
+
+    mTomatoSafePlay = tickDescription.mMe.mHealth == 3
+        && std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
+               [](const PowerUp& powerup) { return powerup.mType == PowerUp::Type::Tomato && (powerup.mRemainingTick < 0 || powerup.mRemainingTick > 10); })
+            != std::cend(tickDescription.mPowerUps)
+        && std::find_if(std::cbegin(tickDescription.mEnemyVampires), std::cend(tickDescription.mEnemyVampires), [](const Vampire& v) { return v.mHealth == 1; })
+            != std::cend(tickDescription.mEnemyVampires)
+        && tickDescription.mEnemyVampires.size() <= 2;
+}
+
 bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
 {
     [[maybe_unused]] const auto currentLevelIndex = mLevels.size();
@@ -255,7 +290,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
         }
     }
 
-    if ((mPhase == BETWEEN_ITEMS || mPhase == CHARGE) && level == 2) {
+    if ((mPhase == BETWEEN_ITEMS || mPhase == CHARGE) && level == 1) {
         if (mPathSequence.empty() && move.mSteps.empty()) {
             pathTargetScore = 3.0F;
         } else if (!mPathSequence.empty() && mPathSequence.back() == mypos) {
@@ -341,12 +376,13 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
 
     const auto& reachableArea = simulator.GetReachableArea();
 
-    const std::function<bool(const PowerUp&)> filter = [&reachableArea, mMyOriginalPos = mMyOriginalPos](const PowerUp& powerUp) {
+    const std::function<bool(const PowerUp&)> isValidPowerUp = [&reachableArea, mMyOriginalPos = mMyOriginalPos](const PowerUp& powerUp) {
+        // ha nincs bat vagy gránát alatta, kivéve ha már rajta vagyok, akkor lehet alattam gránát
         return reachableArea.find(powerUp.mX, powerUp.mY) || (powerUp.mX == mMyOriginalPos.x && powerUp.mY == mMyOriginalPos.y);
     };
 
-    const auto beginIt = boost::make_filter_iterator(filter, std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
-    const auto endIt = boost::make_filter_iterator(filter, std::cend(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
+    const auto beginIt = boost::make_filter_iterator(isValidPowerUp, std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
+    const auto endIt = boost::make_filter_iterator(isValidPowerUp, std::cend(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
 
     float powerUpScore = 0;
 
@@ -355,11 +391,10 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     });
     if (powerUpIt != endIt && (!mTomatoSafePlay || powerUpIt->mType != PowerUp::Type::Tomato)) {
         const auto d = distance(powerUpIt->mX, powerUpIt->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
-        const auto maxDistance = 2.F * static_cast<float>(mGameDescription.mMapSize);
         if (powerUpIt->mRemainingTick > 0) {
             powerUpScore -= 48.F * static_cast<float>(std::distance(beginIt, endIt));
         } else {
-            powerUpScore += 48.F * (1.F - (d / maxDistance));
+            powerUpScore += 48.F / (1.F + d);
         }
     }
 

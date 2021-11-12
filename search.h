@@ -9,31 +9,7 @@
 
 class Search {
 public:
-    Search(const TickDescription& tickDescription, const GameDescription& gameDescription, int playerId)
-        : mGameDescription(gameDescription)
-        , mPlayerId(playerId)
-    {
-        const auto heuristicScore = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0.F } }, {}, 1);
-        mLevels.reserve(10);
-
-        const auto grenadeIt = std::find_if(
-            std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades), [&playerId](const auto& x) { return x.mId == playerId; });
-
-        const ActionSequence action(Answer { grenadeIt != std::cend(tickDescription.mGrenades), {} });
-
-        mLevels.emplace_back().emplace_back(std::numeric_limits<uint32_t>::max(), tickDescription, 0.F, heuristicScore, action.GetId());
-
-        mMyOriginalPos = pos_t(tickDescription.mMe.mY, tickDescription.mMe.mX);
-
-        mTomatoSafePlay = tickDescription.mMe.mHealth == 3
-            && std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
-                   [](const PowerUp& powerup) { return powerup.mType == PowerUp::Type::Tomato && (powerup.mRemainingTick < 0 || powerup.mRemainingTick > 10); })
-                != std::cend(tickDescription.mPowerUps)
-            && std::find_if(
-                   std::cbegin(tickDescription.mEnemyVampires), std::cend(tickDescription.mEnemyVampires), [](const Vampire& v) { return v.mHealth == 1; })
-                != std::cend(tickDescription.mEnemyVampires)
-            && tickDescription.mEnemyVampires.size() <= 2;
-    }
+    Search(const TickDescription& tickDescription, const GameDescription& gameDescription, int playerId);
 
     void SetBombSequence(std::vector<pos_t> sequence)
     {

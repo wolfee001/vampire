@@ -84,7 +84,7 @@ void RunGame(int playerCount, const Level& level, int seed)
         if (survivors.empty()) {
             break;
         }
-        if (survivors.size() == 1) {
+        if (survivors.size() == 1 && playerCount != 1) {
             players[survivors[0]->mId].score = game.GetPoint(survivors[0]->mId) + 144.F;
             ms.SendToConnection(survivors[0]->mId - 1, fmt::format("END {} Survivor\n.\n", players[survivors[0]->mId].score));
             ms.CloseConnection(survivors[0]->mId - 1);

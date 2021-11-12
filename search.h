@@ -13,7 +13,7 @@ public:
         : mGameDescription(gameDescription)
         , mPlayerId(playerId)
     {
-        const auto heuristicScore = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0.F } }, {});
+        const auto heuristicScore = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0.F } }, {}, 1);
         mLevels.reserve(10);
 
         const auto grenadeIt = std::find_if(
@@ -27,12 +27,12 @@ public:
 
         mTomatoSafePlay = tickDescription.mMe.mHealth == 3
             && std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
-                   [](const PowerUp& powerup) { return powerup.mType == PowerUp::Type::Tomato && 
-                (powerup.mRemainingTick < 0 || powerup.mRemainingTick > 10); })
+                   [](const PowerUp& powerup) { return powerup.mType == PowerUp::Type::Tomato && (powerup.mRemainingTick < 0 || powerup.mRemainingTick > 10); })
                 != std::cend(tickDescription.mPowerUps)
             && std::find_if(
                    std::cbegin(tickDescription.mEnemyVampires), std::cend(tickDescription.mEnemyVampires), [](const Vampire& v) { return v.mHealth == 1; })
-                != std::cend(tickDescription.mEnemyVampires) && tickDescription.mEnemyVampires.size() <= 2;
+                != std::cend(tickDescription.mEnemyVampires)
+            && tickDescription.mEnemyVampires.size() <= 2;
     }
 
     void SetBombSequence(std::vector<pos_t> sequence)
@@ -82,7 +82,8 @@ public:
         ActionSequence::ActionSequence_t mAction = std::numeric_limits<ActionSequence::ActionSequence_t>::max();
     };
 
-    float Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move, const bool printScores = false) const;
+    float Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move, const size_t level,
+        const bool printScores = false) const;
 
     std::vector<std::vector<TreeNode>> mLevels;
 

@@ -8,7 +8,7 @@
 
 bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
 {
-    [[maybe_unused]] const int currentLevelIndex = static_cast<int>(mLevels.size());
+    [[maybe_unused]] const auto currentLevelIndex = mLevels.size();
     mLevels.resize(mLevels.size() + 1);
 
     const auto& currentLevel = mLevels[mLevels.size() - 2];
@@ -92,7 +92,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             if (action.GetNumberOfSteps() > 0) {
                 const TreeNode* searchNode = &node;
                 bool sameAsPreviousStatus = false;
-                for (int level = currentLevelIndex - 2; level >= 1; --level) {
+                for (int level = static_cast<int>(currentLevelIndex) - 2; level >= 1; --level) {
                     searchNode = &(mLevels[static_cast<size_t>(level)][searchNode->mParentIndex]);
                     if (ActionSequence(searchNode->mAction).IsGrenade()) {
                         break;
@@ -134,7 +134,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             const auto [tickDescription, newPoints] = simulator.Tick();
             simulator.SetState(tick);
 
-            const auto heuristicScore = Evaluate(tickDescription, newPoints, move);
+            const auto heuristicScore = Evaluate(tickDescription, newPoints, move, currentLevelIndex);
             nextLevel.emplace_back(nodeIndex, tickDescription,
                 node.mPermanentScore + newPoints.at(mPlayerId) * std::pow(0.99F, static_cast<float>(currentLevelIndex)),
                 node.mHeuristicScore + heuristicScore * std::pow(0.99F, static_cast<float>(currentLevelIndex)), action.GetId());
@@ -152,7 +152,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
 
 Answer Search::GetBestMove()
 {
-    [[maybe_unused]] const auto printBranch = [&mLevels = mLevels](const TreeNode& node) {
+    [[maybe_unused]] const auto printBranch = [&mLevels = mLevels, this](const TreeNode& node, const bool debug) {
         std::vector<const TreeNode*> branch;
 
         const TreeNode* current = &node;
@@ -165,15 +165,19 @@ Answer Search::GetBestMove()
         std::reverse(std::begin(branch), std::end(branch));
 
         std::cerr << "Permanent score: " << node.mPermanentScore << " Heuristic score: " << node.mHeuristicScore << std::endl;
+        size_t level = 1;
         for (const auto& currentNode : branch) {
             const auto answer = ActionSequence(currentNode->mAction).GetAnswer();
-            std::cerr << " grenade: " << answer.mPlaceGrenade << " moves: ";
+            std::cerr << "Level " << level << " grenade: " << answer.mPlaceGrenade << " moves: ";
             for (const auto& s : answer.mSteps) {
                 std::cerr << s << ", ";
             }
             std::cerr << std::endl;
 
-            // Evaluate(currentNode->mTickDescription, Simulator::NewPoints {}, ActionSequence(currentNode->mAction).GetAnswer(), true);
+            if (debug) {
+                Evaluate(currentNode->mTickDescription, Simulator::NewPoints {}, ActionSequence(currentNode->mAction).GetAnswer(), level, true);
+            }
+            ++level;
         }
     };
 
@@ -210,7 +214,7 @@ Answer Search::GetBestMove()
 
     std::cerr << "Permanent score: " << bestIt->mPermanentScore << " Heuristic score: " << bestIt->mHeuristicScore
               << " last level size: " << mLevels.back().size() << std::endl;
-    printBranch(*bestIt);
+    printBranch(*bestIt, false);
     /*
         for (size_t i = 0; i < mLevels.back().size(); ++i) {
             std::cerr << i << std::endl;
@@ -220,8 +224,8 @@ Answer Search::GetBestMove()
     return ActionSequence(current->mAction).GetAnswer();
 }
 
-float Search::Evaluate(
-    const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move, const bool printScores /*= false*/) const
+float Search::Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move, const size_t level,
+    const bool printScores /*= false*/) const
 {
     const auto distance2 = [](int x, int y) -> float { return static_cast<float>(std::max(x, y) - std::min(x, y)); };
     const auto distance = [&distance2](int x1, int y1, int x2, int y2) -> float { return distance2(x1, x2) + distance2(y1, y2); };
@@ -251,7 +255,7 @@ float Search::Evaluate(
         }
     }
 
-    if ((mPhase == BETWEEN_ITEMS || mPhase == CHARGE) && mLevels.size() == 2) {
+    if ((mPhase == BETWEEN_ITEMS || mPhase == CHARGE) && level == 2) {
         if (mPathSequence.empty() && move.mSteps.empty()) {
             pathTargetScore = 3.0F;
         } else if (!mPathSequence.empty() && mPathSequence.back() == mypos) {
@@ -260,16 +264,16 @@ float Search::Evaluate(
     }
 
     if (mPreferGrenade) {
-        if (mLevels.size() == 2 && move.mPlaceGrenade) {
-            bombingTargetScore += 96;
-        } else if (mLevels.size() == 3 && mPreferGrenade == 2 && move.mPlaceGrenade) {
-            bombingTargetScore += 48;
-        } else if (mLevels.size() >= 3) {
+        if (level == 1 && move.mPlaceGrenade) {
+            bombingTargetScore += 96.F;
+        } else if (level == 2 && mPreferGrenade == 2 && move.mPlaceGrenade) {
+            bombingTargetScore += 48.F;
+        } else if (level >= 2) {
             auto p = mMyOriginalPos;
             const auto gIt = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
                 [&p](const Grenade& grenade) { return p.x == grenade.mX && p.y == grenade.mY; });
             if (gIt != std::cend(tickDescription.mGrenades)) {
-                bombingTargetScore += 24;
+                bombingTargetScore += 24.F;
             }
         }
     }
@@ -288,7 +292,6 @@ float Search::Evaluate(
 
     std::vector<int> bombedBats(tickDescription.mAllBats.size(), 0);
     for (const auto& area : areas) {
-        const auto v = area.mArea.getAsVector();
 
         if (area.mArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY)) {
             grenadePenalty -= 12.F / static_cast<float>(area.mTickCount);
@@ -336,29 +339,33 @@ float Search::Evaluate(
         batScore += 0.01F / d;
     }
 
-    const std::function<bool(const PowerUp&)> filter
-        = [&simulator](const PowerUp& powerUp) { return simulator.GetReachableArea().find(powerUp.mX, powerUp.mY); };
+    const auto& reachableArea = simulator.GetReachableArea();
+
+    const std::function<bool(const PowerUp&)> filter = [&reachableArea, mMyOriginalPos = mMyOriginalPos](const PowerUp& powerUp) {
+        return reachableArea.find(powerUp.mX, powerUp.mY) || (powerUp.mX == mMyOriginalPos.x && powerUp.mY == mMyOriginalPos.y);
+    };
 
     const auto beginIt = boost::make_filter_iterator(filter, std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
     const auto endIt = boost::make_filter_iterator(filter, std::cend(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
 
     float powerUpScore = 0;
+
     const auto powerUpIt = std::min_element(beginIt, endIt, [&distance, &tickDescription](const PowerUp& x, const PowerUp& y) {
         return distance(x.mX, x.mY, tickDescription.mMe.mX, tickDescription.mMe.mY) < distance(y.mX, y.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
     });
     if (powerUpIt != endIt && (!mTomatoSafePlay || powerUpIt->mType != PowerUp::Type::Tomato)) {
         const auto d = distance(powerUpIt->mX, powerUpIt->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
-        powerUpScore += 48.F / (d + 1.F);
+        const auto maxDistance = 2.F * static_cast<float>(mGameDescription.mMapSize);
         if (powerUpIt->mRemainingTick > 0) {
             powerUpScore -= 48.F * static_cast<float>(std::distance(beginIt, endIt));
+        } else {
+            powerUpScore += 48.F * (1.F - (d / maxDistance));
         }
     }
 
     const float healthPenalty = -96.F * static_cast<float>(3 - tickDescription.mMe.mHealth);
 
     float positionScore = 0.F;
-    const auto& reachableArea = simulator.GetReachableArea();
-
     positionScore += 0.01F * reachableArea.find(tickDescription.mMe.mX + 1, tickDescription.mMe.mY);
     positionScore += 0.01F * reachableArea.find(tickDescription.mMe.mX - 1, tickDescription.mMe.mY);
     positionScore += 0.01F * reachableArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY + 1);

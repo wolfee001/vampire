@@ -28,11 +28,8 @@ const runMatch = async (level, data, rng, batchFolderName) => {
     await (new Promise(resolve => setTimeout(resolve, 2000)));
     console.log('hopefully ok');
 
-    for (let i = 0; i < data.localPlayers; ++i) {
-        promises.push(exec(`to_delete/local/build/bin/vampire 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }));
-    }
-    for (const v of data.enemyVampires) {
-        const folder = `to_delete/${v}__${data.timeout}`;
+    for (const v of data.versions) {
+        const folder = `to_delete/${v}`;
         promises.push(exec(`${folder}/build/bin/vampire 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }));
     }
 
@@ -50,25 +47,14 @@ const main = async () => {
 
     let data = {};
 
-    data = {
-        ...data, ...(await inquirer.prompt([
-            {
-                type: 'list',
-                name: 'localPlayers',
-                message: 'Select number of "local" players',
-                choices: array(4),
-            }
-        ]))
-    };
-
-    data.enemyVampires = [];
-    for (let i = 0; i < 4 - data.localPlayers; ++i) {
-        data.enemyVampires.push((await inquirer.prompt([
+    data.versions = [];
+    for (let i = 0; i < 4; ++i) {
+        data.versions.push((await inquirer.prompt([
             {
                 type: 'list',
                 name: 'version',
-                message: `Select opponent #${i + 1} version`,
-                choices: gitTags,
+                message: `Select vampire #${i + 1} version`,
+                choices: ['local', ...gitTags]
             }
         ])).version);
     }
@@ -114,8 +100,11 @@ const main = async () => {
 
     console.log('Collecting enemy versions and building them...');
 
-    for (const version of new Set(data.enemyVampires)) {
-        const folder = `to_delete/${version}__${data.timeout}`;
+    for (const version of new Set(data.versions)) {
+        if (version === 'local') {
+            continue;
+        }
+        const folder = `to_delete/${version}`;
         execSync(`git clone https://github.com/wolfee001/vampire.git ${folder}`, { stdio: 'inherit' });
         execSync(`git checkout ${version}`, { stdio: 'inherit', cwd: folder });
         execSync(`cmake -B ${folder}/build ${folder} -DTICK_TIMEOUT=${data.timeout} -DPLAYER_TOKEN=${version}@${data.timeout}`, { stdio: 'inherit' });

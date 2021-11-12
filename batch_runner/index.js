@@ -9,6 +9,8 @@ const fetch = require('node-fetch');
 const seedrandom = require('seedrandom');
 const dateformat = require('dateformat')
 
+const summary = [];
+
 const runMatch = async (level, runCount, data, rng, batchFolderName) => {
     const promises = [];
 
@@ -36,6 +38,14 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
     }
 
     await Promise.all(promises);
+
+    const result = JSON.parse(fs.readFileSync(`${cwd}/result.json`, 'utf8'));
+
+    let row = `${result.game.id},${result.game.level},${result.game.maxTick},${result.game.seed},${result.game.size}`;
+    for (const element of result.results) {
+        row += `,${element.player},${element.version},${element.lastTick},${element.score}`;
+    }
+    summary.push(row);
 }
 
 const main = async () => {
@@ -166,6 +176,14 @@ const main = async () => {
         await runMatch(level, runCount, data, rng, batchFolderName);
         console.log('Finished!');
     }
+
+    let header = 'g_id,g_level,g_maxTick,g_seed,g_size';
+    for (let i = 1; i < 5; ++i) {
+        header += `,p${i}_id,p${i}_version,p${i}_lastTick,p${i}_score`;
+    }
+    header += '\n';
+
+    fs.writeFileSync(`${batchFolderName}/summary.csv`, header + summary.join('\n'));
 
     fs.rmSync('to_delete', { recursive: true });
 }

@@ -94,27 +94,6 @@ void RunGame(int playerCount, const Level& level, int seed)
         tick = gameState.first;
     }
 
-    std::ofstream file(std::to_string(gd.mGameId));
-
-    file << "Game" << std::endl;
-    file << "\tId: " << gd.mGameId << std::endl;
-    file << "\tLevel: " << gd.mLevelId << std::endl;
-    file << "\tSeed: " << seed << std::endl;
-    file << "------------------------------" << std::endl;
-    file << std::endl;
-    file << std::endl;
-
-    for (const auto& [id, player] : players) {
-        file << "Player " << id << std::endl;
-        file << "\tVersion: " << player.name << std::endl;
-        file << "\tLast tick: " << player.lastTick << std::endl;
-        file << "\tScore: " << player.score << std::endl;
-        file << "------------------------------" << std::endl;
-        file << std::endl;
-    }
-
-    file.close();
-
     nlohmann::json gameJson;
     gameJson["id"] = gd.mGameId;
     gameJson["level"] = gd.mLevelId;
@@ -136,7 +115,7 @@ void RunGame(int playerCount, const Level& level, int seed)
     root["game"] = gameJson;
     root["results"] = results;
 
-    std::ofstream json(std::to_string(gd.mGameId) + ".json");
+    std::ofstream json("result.json");
     json << std::setw(2) << root;
     json.close();
 }

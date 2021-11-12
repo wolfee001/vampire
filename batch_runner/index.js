@@ -54,91 +54,97 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
 }
 
 const main = async () => {
-    const array = (n) => Array.from({ length: n }, (_, i) => i + 1);
-
-    const gitTags = (await (await fetch('https://api.github.com/repos/wolfee001/vampire/tags')).json()).map(element => element.name);
-
-    if (fs.existsSync('to_delete')) {
-        fs.rmSync('to_delete', { recursive: true });
-    }
+    const args = process.argv.slice(2);
 
     let data = {};
 
-    const setup = (await inquirer.prompt([
-        {
-            type: 'list',
-            name: 'setup',
-            message: 'Setup mode',
-            choices: ['from console', 'from json']
-        }
-    ])).setup;
-
-    if (setup === 'from json') {
-        data = JSON.parse((await inquirer.prompt([
-            {
-                type: 'editor',
-                name: 'data',
-                message: 'Press enter to open text editor'
-            }
-        ])).data)
+    if (args.length) {
+        data = JSON.parse(fs.readFileSync(args[0], 'utf8'));
     } else {
-        data.versions = [];
-        for (let i = 0; i < 4; ++i) {
-            data.versions.push((await inquirer.prompt([
-                {
-                    type: 'list',
-                    name: 'version',
-                    message: `Select vampire #${i + 1} version`,
-                    choices: ['local', ...gitTags]
-                }
-            ])).version);
+        const array = (n) => Array.from({ length: n }, (_, i) => i + 1);
+
+        const gitTags = (await (await fetch('https://api.github.com/repos/wolfee001/vampire/tags')).json()).map(element => element.name);
+
+        if (fs.existsSync('to_delete')) {
+            fs.rmSync('to_delete', { recursive: true });
         }
 
-        data = {
-            ...data, ...(await inquirer.prompt([
-                {
-                    type: 'list',
-                    name: 'timeout',
-                    message: 'Select timeot value',
-                    choices: ['100', '300', '600', '1000', '1500'],
-                    default: '300'
-                }
-            ]))
-        };
+        const setup = (await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'setup',
+                message: 'Setup mode',
+                choices: ['from console', 'from json']
+            }
+        ])).setup;
 
-        data = {
-            ...data, ...(await inquirer.prompt([
+        if (setup === 'from json') {
+            data = JSON.parse((await inquirer.prompt([
                 {
-                    type: 'checkbox',
-                    name: 'levels',
-                    message: 'Select levels',
-                    choices: array(10),
-                    loop: false
+                    type: 'editor',
+                    name: 'data',
+                    message: 'Press enter to open text editor'
                 }
-            ]))
-        };
+            ])).data)
+        } else {
+            data.versions = [];
+            for (let i = 0; i < 4; ++i) {
+                data.versions.push((await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'version',
+                        message: `Select vampire #${i + 1} version`,
+                        choices: ['local', ...gitTags]
+                    }
+                ])).version);
+            }
 
-        data = {
-            ...data, ...(await inquirer.prompt([
-                {
-                    type: 'input',
-                    name: 'totalRun',
-                    message: 'Number of total runs',
-                    default: '100'
-                }
-            ]))
-        };
+            data = {
+                ...data, ...(await inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'timeout',
+                        message: 'Select timeot value',
+                        choices: ['100', '300', '600', '1000', '1500'],
+                        default: '300'
+                    }
+                ]))
+            };
 
-        data = {
-            ...data, ...(await inquirer.prompt([
-                {
-                    type: 'input',
-                    name: 'seed',
-                    message: 'Set seed',
-                    default: (Math.random() * 1000).toFixed(0)
-                }
-            ]))
-        };
+            data = {
+                ...data, ...(await inquirer.prompt([
+                    {
+                        type: 'checkbox',
+                        name: 'levels',
+                        message: 'Select levels',
+                        choices: array(10),
+                        loop: false
+                    }
+                ]))
+            };
+
+            data = {
+                ...data, ...(await inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'totalRun',
+                        message: 'Number of total runs',
+                        default: '100'
+                    }
+                ]))
+            };
+
+            data = {
+                ...data, ...(await inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'seed',
+                        message: 'Set seed',
+                        default: (Math.random() * 1000).toFixed(0)
+                    }
+                ]))
+            };
+        }
     }
 
     const batchFolderName = dateformat(new Date(), "yyyy-mm-dd-HH-MM-ss");

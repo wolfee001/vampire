@@ -5,7 +5,7 @@
         "semifinal",
         "semifinal"
     ],
-    "timeout": "500",
+    "timeout": "300",
     "levels": [
         1,
         2,

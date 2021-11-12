@@ -33,3 +33,9 @@ csak dontobe:
 -1 item, 1 ellenfel, es random kornyezet
 
 -nextmap '-' = blokkol!
+
+-additional bomb for trapped opponent (to share kill score)
+
+-item-en levo ellenfel nem fog akarni bekeriteni minket? (de ez nem biztos, az is 48 pont)
+
+-item mellett levo ellenfelet bekeriteni a targyon?

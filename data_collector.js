@@ -67,10 +67,6 @@ const main = () => {
     commitsText = commitsText.replaceAll('},]', '}]');
     const commits = JSON.parse(commitsText);
     for (const commit of commits) {
-        if (!commit.subject.startsWith('logs for')) {
-            continue;
-        }
-
         execSync(`git checkout ${commit.commit}`);
 
         collectPointData(commit);

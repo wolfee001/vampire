@@ -33,10 +33,10 @@ jobs:
       run: |
         cd batch_runner
         npm install .
-        sudo npm intall -g .
+        sudo npm install -g .
         cd ..
         cd github_batches
-        batch_runner ${{ github.event.inputs.timeout }}
+        batch_runner ${{ github.event.inputs.descriptor }}
         git add .
         git commit -m "Batch run data" || echo "Nothing changed"
         git push || echo "Nothing changed"

@@ -244,7 +244,7 @@ int getdist(map_t& m, pos_t start, vector<pos_t> targets, int r, int stepcnt, in
 				}
 			}
 			if (targets.empty()) {
-				show(m, start, firsttargetreached);
+//				show(m, start, firsttargetreached);
 				return reaches[firsttargetreached.y][firsttargetreached.x].turn;
 			}
 		}
@@ -400,7 +400,7 @@ pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 		FOR0(x, SZ(m))
 			reaches[y][x].step = 1000;
 	reaches[start.y][start.x].step = 0;
-	int lastturn = 0;
+	int lastturn = 0;	
 	pos_t firsttargetreached;
 	int cnt = 0;
 	while (!q.empty()) {
@@ -745,6 +745,18 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	else if ((mAvoids & 16) && ontomato && me.mHealth == 2) // with 2 health, it can be more or less ok to stay (no matter what the timings are)
 		mAvoids &= ~16;
 
+	FOR0(d, 4) {
+		if ((mAvoids & (1 << d)) == 0)
+			continue;
+		pos_t p = mypos.GetPos(d);
+		for (const auto& powerup : tickDescription.mPowerUps) {
+			if (pos_t(powerup.mY, powerup.mX) == p && powerup.mRemainingTick >= -3) {
+				mAvoids &= ~(1 << d);
+				break;
+			}
+		}
+	}
+
 	bool wantcharge = false;
 #if 1
 	if (true) {
@@ -840,6 +852,17 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		}
 		FOR0(i, SZ(targets)) {
 			int reach = reaches[targets[i].y][targets[i].x].turn;
+			if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemy[i] == 0) {
+				bool enemyon = false;
+				for (const auto& enemy : tickDescription.mEnemyVampires) {
+					if (pos_t(enemy.mY, enemy.mX) == targets[i]) {
+						enemyon = true;
+						break;
+					}
+				}
+				if (enemyon)
+					continue;
+			}
 			if ((closestenemy[i] >= reach && lastturn >= reach) || reach <= waitturn)
 				MINA2(closest, reach, best, i);
 		}
@@ -876,12 +899,16 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					p = p.GetPos(steps[i]);
 					mPath.push_back(p);
 				}
-				if (mypos == targets[best]) {
+				int mydist = mypos.GetDist(targets[best]);
+				if (mydist <= 2) {
 					if (closestenemy[best] == 0 && me.mPlacableGrenades > 0 && 
-						m[mypos.y][mypos.x] == ' ' && waitturn > 0 && waitturn < 5) {
+						m[mypos.y][mypos.x] == ' ' && waitturn > 0 && waitturn < 5 - (mydist ? 1 : 0)) {
 						for (const auto& enemy : tickDescription.mEnemyVampires) {
 							pos_t p(enemy.mY, enemy.mX); 
-							if (p != mypos && p.GetDist(mypos) <= (enemy.mRunningShoesTick ? 3 : 2)) {
+							int theirdist = p.GetDist(targets[best]);
+							int reldist = p.GetDist(mypos);
+							if (p != mypos && theirdist <= (enemy.mRunningShoesTick ? 3 : 2) &&
+								mydist < theirdist && (mydist <= 1 || reldist == 1)) {
 								mPreferGrenade = 1;
 								cerr << "prefer grenade to protect item" << endl;
 								break;
@@ -907,21 +934,24 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	} else {
 		cerr << "between items or charge" << endl;
 		vector<pos_t> targets;
+		vector<int> closestenemydist;
 		vector<int> closestenemy;
 		FOR0(y, SZ(m)) {
 			FOR0(x, SZ(m)) {
-				if (m[y][x] == ' ') { // we focus on reachable only
+				if (m[y][x] == ' ') { // we focus on directly reachable only
 					targets.push_back(pos_t(y, x));
-					closestenemy.push_back(MAXTURN + 1);
+					closestenemydist.push_back(MAXTURN + 1);
+					closestenemy.push_back(-1);
 				}
 			}
 		}
-		for (const auto& enemy : tickDescription.mEnemyVampires) {
+		FOR0(e, SZ(tickDescription.mEnemyVampires)) {
+			const auto& enemy = tickDescription.mEnemyVampires[e];
 			getdist(m, vector<pos_t>(), tickDescription, enemy);
 			if (enemy.mGrenadeRange == mGameDescription.mGrenadeRadius && !enemy.mRunningShoesTick) // only defend vs. collector enemy
 				continue;
 			FOR0(i, SZ(targets))
-				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
+				MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], e);
 		}
 		vector<char> dirs;
 		vector<char> bestdirs;
@@ -986,9 +1016,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 						cnt = 0;
 						FOR0(i, SZ(targets)) {
 							int reach = reaches[targets[i].y][targets[i].x].turn;
-							if (closestenemy[i] > reach)
+							if (closestenemydist[i] > reach)
 								cnt += 2;
-							else if (closestenemy[i] == reach || reach <= 5)
+							else if (closestenemydist[i] == reach || reach <= 5)
 								++cnt;
 						}
 						int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center

@@ -153,6 +153,8 @@ struct pos_t {
     {
         int dx = abs(x - o.x);
         int dy = abs(y - o.y);
+        if (dx == 0 && dy == 0)
+            return 0;
         if (dx == 0 && x % 2 == 0)
             dx += 2;
         if (dy == 0 && y % 2 == 0)

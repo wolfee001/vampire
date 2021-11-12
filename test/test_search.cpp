@@ -403,3 +403,25 @@ TEST_F(SearchTest, Light)
     }
     SUCCEED();
 }
+
+TEST_F(SearchTest, PreferBomb)
+{
+    // clang-format off
+    const std::vector<std::string> info = {
+        "REQ 6493 0 1",
+        "VAMPIRE 1 3 3 3 1 2 0",
+        "POWERUP TOMATO -3 3 3"
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    Search search(state, mGameDescripton, 1);
+    search.mPreferGrenade = 1;
+
+    for (size_t i = 0; i < 3; ++i) {
+        search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::hours(100));
+    }
+
+    const auto move = search.GetBestMove();
+    EXPECT_TRUE(move.mPlaceGrenade);
+}

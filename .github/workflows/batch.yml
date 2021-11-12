@@ -1,0 +1,42 @@
+name: Batch
+
+on:
+  workflow_dispatch:
+    inputs:
+      descriptor:
+        description: 'Batch descriptor'
+        required: true
+        default: 'v1.json'
+
+jobs:
+  batch:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install extra runtime
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+
+    - name: Install conan
+      uses: turtlebrowser/get-conan@main
+
+    - name: Install Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16
+
+    - name: Batch running
+      run: |
+        cd batch_runner
+        npm install .
+        sudo npm intall -g .
+        cd ..
+        cd github_batches
+        batch_runner ${{ github.event.inputs.timeout }}
+        git add .
+        git commit -m "Batch run data" || echo "Nothing changed"
+        git push || echo "Nothing changed"

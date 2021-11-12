@@ -9,16 +9,18 @@ const fetch = require('node-fetch');
 const seedrandom = require('seedrandom');
 const dateformat = require('dateformat')
 
-const runMatch = async (level, data, rng, batchFolderName) => {
+const runMatch = async (level, runCount, data, rng, batchFolderName) => {
     const promises = [];
 
     if (!fs.existsSync(`${batchFolderName}`)) {
         fs.mkdirSync(`${batchFolderName}`);
     }
-    fs.mkdirSync(`${batchFolderName}/${level}`)
 
     const origCwd = process.cwd();
-    process.chdir(`${origCwd}/${batchFolderName}/${level}`);
+    const cwd = `${origCwd}/${batchFolderName}/${runCount + 1}_level${level}`;
+    fs.mkdirSync(cwd)
+
+    process.chdir(cwd);
 
     promises.push(exec(`../../to_delete/local/build/bin/server ${level} 4 ${(rng() * 1000).toFixed(0)}`, { stdio: 'inherit', maxBuffer: 10000000 }));
 
@@ -47,56 +49,96 @@ const main = async () => {
 
     let data = {};
 
-    data.versions = [];
-    for (let i = 0; i < 4; ++i) {
-        data.versions.push((await inquirer.prompt([
+    const setup = (await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'setup',
+            message: 'Setup mode',
+            choices: ['from console', 'from json']
+        }
+    ])).setup;
+
+    if (setup === 'from json') {
+        data = JSON.parse((await inquirer.prompt([
             {
-                type: 'list',
-                name: 'version',
-                message: `Select vampire #${i + 1} version`,
-                choices: ['local', ...gitTags]
+                type: 'editor',
+                name: 'data',
+                message: 'Press enter to open text editor'
             }
-        ])).version);
+        ])).data)
+    } else {
+        data.versions = [];
+        for (let i = 0; i < 4; ++i) {
+            data.versions.push((await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'version',
+                    message: `Select vampire #${i + 1} version`,
+                    choices: ['local', ...gitTags]
+                }
+            ])).version);
+        }
+
+        data = {
+            ...data, ...(await inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'timeout',
+                    message: 'Select timeot value',
+                    choices: ['100', '300', '600', '1000', '1500'],
+                    default: '300'
+                }
+            ]))
+        };
+
+        data = {
+            ...data, ...(await inquirer.prompt([
+                {
+                    type: 'checkbox',
+                    name: 'levels',
+                    message: 'Select levels',
+                    choices: array(10),
+                    loop: false
+                }
+            ]))
+        };
+
+        data = {
+            ...data, ...(await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'totalRun',
+                    message: 'Number of total runs',
+                    default: '100'
+                }
+            ]))
+        };
+
+        data = {
+            ...data, ...(await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'seed',
+                    message: 'Set seed',
+                    default: (Math.random() * 1000).toFixed(0)
+                }
+            ]))
+        };
     }
 
-    data = {
-        ...data, ...(await inquirer.prompt([
-            {
-                type: 'list',
-                name: 'timeout',
-                message: 'Select timeot value',
-                choices: ['100', '300', '600', '1000', '1500'],
-                default: '300'
-            }
-        ]))
-    };
-
-    data = {
-        ...data, ...(await inquirer.prompt([
-            {
-                type: 'checkbox',
-                name: 'levels',
-                message: 'Select levels',
-                choices: array(10),
-                loop: false
-            }
-        ]))
-    };
-
-    data = {
-        ...data, ...(await inquirer.prompt([
-            {
-                type: 'input',
-                name: 'seed',
-                message: 'Set seed',
-                default: (Math.random() * 1000).toFixed(0)
-            }
-        ]))
-    };
+    const batchFolderName = dateformat(new Date(), "yyyy-mm-dd-HH-MM-ss");
+    fs.mkdirSync(`${batchFolderName}`);
+    fs.writeFileSync(`${batchFolderName}/settings.json`, JSON.stringify(data, null, 2));
 
     const rng = seedrandom(`${data.seed}`);
 
-    console.log(JSON.stringify(data, null, 2));
+    data.runs = [];
+    for (let i = 0; i < data.totalRun; ++i) {
+        const random = Math.abs(rng.int32());
+        const length = data.levels.length;
+        const idx = random % length;
+        data.runs.push(data.levels[idx]);
+    }
 
     console.log('Collecting enemy versions and building them...');
 
@@ -119,13 +161,9 @@ const main = async () => {
 
     console.log('Building local version... DONE!');
 
-    const batchFolderName = dateformat(new Date(), "yyyy-mm-dd-HH-MM-ss");
-    fs.mkdirSync(`${batchFolderName}`);
-    fs.writeFileSync(`${batchFolderName}/settings.json`, JSON.stringify(data, null, 2));
-
-    for (const level of data.levels) {
-        console.log(`Playing level ${level}...`);
-        await runMatch(level, data, rng, batchFolderName);
+    for (const [runCount, level] of data.runs.entries()) {
+        console.log(`Run #${runCount + 1}, level ${level}...`);
+        await runMatch(level, runCount, data, rng, batchFolderName);
         console.log('Finished!');
     }
 

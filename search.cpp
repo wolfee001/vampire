@@ -376,23 +376,39 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
 
     const auto& reachableArea = simulator.GetReachableArea();
 
-    const std::function<bool(const PowerUp&)> isValidPowerUp = [&reachableArea, mMyOriginalPos = mMyOriginalPos](const PowerUp& powerUp) {
-        // ha nincs bat vagy gránát alatta, kivéve ha már rajta vagyok, akkor lehet alattam gránát
-        return reachableArea.find(powerUp.mX, powerUp.mY) || (powerUp.mX == mMyOriginalPos.x && powerUp.mY == mMyOriginalPos.y);
-    };
-
-    const auto beginIt = boost::make_filter_iterator(isValidPowerUp, std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
-    const auto endIt = boost::make_filter_iterator(isValidPowerUp, std::cend(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
-
     float powerUpScore = 0;
+    const PowerUp* powerUpPtr = nullptr;
 
-    const auto powerUpIt = std::min_element(beginIt, endIt, [&distance, &tickDescription](const PowerUp& x, const PowerUp& y) {
-        return distance(x.mX, x.mY, tickDescription.mMe.mX, tickDescription.mMe.mY) < distance(y.mX, y.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
-    });
-    if (powerUpIt != endIt && (!mTomatoSafePlay || powerUpIt->mType != PowerUp::Type::Tomato)) {
-        const auto d = distance(powerUpIt->mX, powerUpIt->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
-        if (powerUpIt->mRemainingTick > 0) {
-            powerUpScore -= 48.F * static_cast<float>(std::distance(beginIt, endIt));
+    if (mPhase == ITEM && !mPathSequence.empty()) {
+        const auto powerUpIt = std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
+            [&mPathSequence = mPathSequence](const PowerUp& powerup) { return powerup.mX == mPathSequence.back().x && powerup.mY == mPathSequence.back().y; });
+
+        if (powerUpIt != std::cend(tickDescription.mPowerUps)) {
+            powerUpPtr = &(*powerUpIt);
+        }
+
+    } else {
+        const std::function<bool(const PowerUp&)> isValidPowerUp = [&reachableArea, mMyOriginalPos = mMyOriginalPos](const PowerUp& powerUp) {
+            // ha nincs bat vagy gránát alatta, kivéve ha már rajta vagyok, akkor lehet alattam gránát
+            return reachableArea.find(powerUp.mX, powerUp.mY) || (powerUp.mX == mMyOriginalPos.x && powerUp.mY == mMyOriginalPos.y);
+        };
+
+        const auto beginIt = boost::make_filter_iterator(isValidPowerUp, std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
+        const auto endIt = boost::make_filter_iterator(isValidPowerUp, std::cend(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
+
+        const auto powerUpIt = std::min_element(beginIt, endIt, [&distance, &tickDescription](const PowerUp& x, const PowerUp& y) {
+            return distance(x.mX, x.mY, tickDescription.mMe.mX, tickDescription.mMe.mY) < distance(y.mX, y.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
+        });
+
+        if (powerUpIt != endIt) {
+            powerUpPtr = &(*powerUpIt);
+        }
+    }
+
+    if (powerUpPtr != nullptr && (!mTomatoSafePlay || powerUpPtr->mType != PowerUp::Type::Tomato)) {
+        const auto d = distance(powerUpPtr->mX, powerUpPtr->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
+        if (powerUpPtr->mRemainingTick > 0) {
+            powerUpScore -= 48.F;
         } else {
             powerUpScore += 48.F / (1.F + d);
         }

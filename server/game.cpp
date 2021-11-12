@@ -90,3 +90,8 @@ void Game::GeneratePowerups(TickDescription& tick)
     }
     mNextPowerupTick = tick.mRequest.mTick + 10 + rand() % 11;
 }
+
+float Game::GetPoint(int id)
+{
+    return mCumulatedPoints[id];
+}

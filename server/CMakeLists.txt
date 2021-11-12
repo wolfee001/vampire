@@ -18,6 +18,7 @@ target_link_libraries(server
     CONAN_PKG::imgui
     CONAN_PKG::stb
     CONAN_PKG::fmt
+    CONAN_PKG::jsonformoderncpp
 )
 
 target_compile_definitions(server PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}")

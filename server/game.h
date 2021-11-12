@@ -12,6 +12,7 @@ public:
     Game(const GameDescription& gd, const TickDescription& zeroTick, int playerCount);
     void SetVampireMove(int id, const Answer& move);
     std::pair<TickDescription, std::vector<std::pair<int, float>>> Tick();
+    float GetPoint(int id);
 
 private:
     void GeneratePowerups(TickDescription& tick);

@@ -3,6 +3,7 @@
 .vs
 .clangd
 .devcontainer
+batch
 build
 data
 node_modules

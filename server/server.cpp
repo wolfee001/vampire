@@ -12,6 +12,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <nlohmann/json.hpp>
+
 void RunGame(int playerCount, const Level& level, int seed)
 {
     srand(seed);
@@ -83,7 +85,7 @@ void RunGame(int playerCount, const Level& level, int seed)
             break;
         }
         if (survivors.size() == 1) {
-            players[survivors[0]->mId].score += 144.F;
+            players[survivors[0]->mId].score = game.GetPoint(survivors[0]->mId) + 144.F;
             ms.SendToConnection(survivors[0]->mId - 1, fmt::format("END {} Survivor\n.\n", players[survivors[0]->mId].score));
             ms.CloseConnection(survivors[0]->mId - 1);
             break;
@@ -112,4 +114,29 @@ void RunGame(int playerCount, const Level& level, int seed)
     }
 
     file.close();
+
+    nlohmann::json gameJson;
+    gameJson["id"] = gd.mGameId;
+    gameJson["level"] = gd.mLevelId;
+    gameJson["maxTick"] = gd.mMaxTick;
+    gameJson["size"] = gd.mMapSize;
+    gameJson["seed"] = seed;
+
+    nlohmann::json results;
+    for (const auto& [id, player] : players) {
+        nlohmann::json r;
+        r["player"] = id;
+        r["version"] = player.name;
+        r["lastTick"] = player.lastTick;
+        r["score"] = player.score;
+        results.push_back(r);
+    }
+
+    nlohmann::json root;
+    root["game"] = gameJson;
+    root["results"] = results;
+
+    std::ofstream json(std::to_string(gd.mGameId) + ".json");
+    json << std::setw(2) << root;
+    json.close();
 }

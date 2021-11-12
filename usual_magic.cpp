@@ -850,21 +850,27 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			if (reach > waitturn)
 				bothreachableinwait = false;
 		}
-		FOR0(i, SZ(targets)) {
-			int reach = reaches[targets[i].y][targets[i].x].turn;
-			if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemy[i] == 0) {
-				bool enemyon = false;
-				for (const auto& enemy : tickDescription.mEnemyVampires) {
-					if (pos_t(enemy.mY, enemy.mX) == targets[i]) {
-						enemyon = true;
-						break;
-					}
-				}
-				if (enemyon)
+		FOR0(tr, 2) {
+			FOR0(i, SZ(targets)) {
+				int reach = reaches[targets[i].y][targets[i].x].turn;
+				if (mypos == targets[i] && waitturn == 0)
 					continue;
+				if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemy[i] == 0) {
+					bool enemyon = false;
+					for (const auto& enemy : tickDescription.mEnemyVampires) {
+						if (pos_t(enemy.mY, enemy.mX) == targets[i]) {
+							enemyon = true;
+							break;
+						}
+					}
+					if (enemyon)
+						continue;
+				}
+				if ((closestenemy[i] >= reach && lastturn >= reach) || (reach <= waitturn && (waitturn < -5 || tr == 2)))
+					MINA2(closest, reach, best, i);
 			}
-			if ((closestenemy[i] >= reach && lastturn >= reach) || reach <= waitturn)
-				MINA2(closest, reach, best, i);
+			if (best != -1)
+				break;
 		}
 
 		if (best == -1) {

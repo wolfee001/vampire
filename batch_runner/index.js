@@ -10,6 +10,7 @@ const seedrandom = require('seedrandom');
 const dateformat = require('dateformat')
 
 const summary = [];
+const notifications = [];
 
 const runMatch = async (level, runCount, data, rng, batchFolderName) => {
     const promises = [];
@@ -46,6 +47,10 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
         row += `,${element.player},${element.version},${element.lastTick},${element.score}`;
     }
     summary.push(row);
+
+    if (result.crashes && result.crashes.length) {
+        notifications.push({ type: "probable crash", game: `${runCount + 1}_level${level}` });
+    }
 }
 
 const main = async () => {
@@ -184,6 +189,9 @@ const main = async () => {
     header += '\n';
 
     fs.writeFileSync(`${batchFolderName}/summary.csv`, header + summary.join('\n'));
+    if (notifications.length) {
+        fs.writeFileSync(`${batchFolderName}/notifications.json`, JSON.stringify(notifications, null, 2));
+    }
 
     fs.rmSync('to_delete', { recursive: true });
 }

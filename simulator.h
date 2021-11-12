@@ -46,6 +46,7 @@ public:
     Area GetBlowArea(const Grenade& grenade);
     const Area& GetReachableArea() const;
     const Area& GetLitArea() const;
+    void KillVampire(int id);
 
 private:
     void RecalculateTicks();

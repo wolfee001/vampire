@@ -104,6 +104,24 @@ const Simulator::Area& Simulator::GetLitArea() const
     return mLitArea;
 }
 
+void Simulator::KillVampire(int id)
+{
+    if (mState.mRequest.mTick == -1 || !mValid) {
+        CHECK(false, "Calling tick without setting state!");
+    }
+
+    if (id == mState.mMe.mId) {
+        mState.mMe.mHealth = -1;
+    } else {
+        for (auto& v : mState.mEnemyVampires) {
+            if (id == v.mId) {
+                v.mHealth = -1;
+                break;
+            }
+        }
+    }
+}
+
 void Simulator::SetVampireMove(int id, const Answer& move)
 {
     mVampireMoves[id] = move;

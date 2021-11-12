@@ -47,6 +47,8 @@ void RunGame(int playerCount, const Level& level, int seed)
 
     Game game(gd, tick, playerCount);
 
+    std::vector<int> probablyCrash;
+
     while (true) {
         for (int p = 0; p < playerCount; ++p) {
             ms.SendToConnection(p, CreateMessage(CreateInfo(tick, p + 1)));
@@ -55,7 +57,34 @@ void RunGame(int playerCount, const Level& level, int seed)
             Answer ans = parseAnswer(ParseMessage(ms.ReadFromConnection(p)));
             game.SetVampireMove(p + 1, ans);
         }
+
         std::pair<TickDescription, std::vector<std::pair<int, float>>> gameState = game.Tick();
+
+        for (int p = 0; p < playerCount; ++p) {
+            if (!ms.IsConnectionValid(p)) {
+                if (players[p + 1].lastTick == -1) {
+                    players[p + 1].score = game.GetPoint(p + 1);
+                    if (gameState.first.mRequest.mTick > gd.mMaxTick) {
+                        players[p + 1].score += 144.F;
+                    } else {
+                        players[p + 1].score += static_cast<float>(gameState.first.mRequest.mTick) / static_cast<float>(gd.mMaxTick) * 144.F;
+                    }
+                    players[p + 1].lastTick = gameState.first.mRequest.mTick;
+                    game.KillVampire(p + 1);
+                    if (p + 1 == gameState.first.mMe.mId) {
+                        gameState.first.mMe.mHealth = -1;
+                    } else {
+                        for (auto& v : gameState.first.mEnemyVampires) {
+                            if (p + 1 == v.mId) {
+                                v.mHealth = -1;
+                                break;
+                            }
+                        }
+                    }
+                    probablyCrash.push_back(p + 1);
+                }
+            }
+        }
 
         for (const auto& deadVampire : gameState.second) {
             if (ms.IsConnectionValid(deadVampire.first - 1)) {
@@ -86,6 +115,7 @@ void RunGame(int playerCount, const Level& level, int seed)
         }
         if (survivors.size() == 1 && playerCount != 1) {
             players[survivors[0]->mId].score = game.GetPoint(survivors[0]->mId) + 144.F;
+            players[survivors[0]->mId].lastTick = 9999;
             ms.SendToConnection(survivors[0]->mId - 1, fmt::format("END {} Survivor\n.\n", players[survivors[0]->mId].score));
             ms.CloseConnection(survivors[0]->mId - 1);
             break;
@@ -111,9 +141,17 @@ void RunGame(int playerCount, const Level& level, int seed)
         results.push_back(r);
     }
 
+    nlohmann::json probablyCrashes;
+    for (const auto& id : probablyCrash) {
+        nlohmann::json c;
+        c["player"] = id;
+        probablyCrashes.push_back(c);
+    }
+
     nlohmann::json root;
     root["game"] = gameJson;
     root["results"] = results;
+    root["crashes"] = probablyCrashes;
 
     std::ofstream json("result.json");
     json << std::setw(2) << root;

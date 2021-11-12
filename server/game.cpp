@@ -95,3 +95,8 @@ float Game::GetPoint(int id)
 {
     return mCumulatedPoints[id];
 }
+
+void Game::KillVampire(int id)
+{
+    mSimulator.KillVampire(id);
+}

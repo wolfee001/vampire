@@ -11,6 +11,7 @@ on:
 jobs:
   batch:
     runs-on: ubuntu-latest
+    timeout-minutes: 4300
 
     steps:
     - name: Checkout

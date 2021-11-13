@@ -183,7 +183,7 @@ const main = async () => {
     console.log('Building local version...');
 
     execSync(`cmake -B to_delete/local/build ../ -DTICK_TIMEOUT=${data.timeout} -DPLAYER_TOKEN=local@${data.timeout}`, { stdio: 'inherit' });
-    execSync(`cmake --build to_delete/local/build --target vampire server`, { stdio: 'inherit' });
+    execSync(`cmake --build to_delete/local/build --target vampire server --config Release`, { stdio: 'inherit' });
 
     console.log('Building local version... DONE!');
 

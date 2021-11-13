@@ -103,11 +103,14 @@ void GUI::Run()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL2_Init();
 
+    srand(time(nullptr));
+
     // Our state
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool gameIsRunning = false;
     int mapSelector = 0;
     int playerCount = 3;
+    int seed = rand() % 1000;
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -124,22 +127,31 @@ void GUI::Run()
 
         {
             ImGui::SetNextWindowPos({ 0, 0 });
-            ImGui::SetNextWindowSize({ 278, 123 });
+            ImGui::SetNextWindowSize({ 278, 140 });
             ImGui::Begin("Server", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
             ImGui::Text(gameIsRunning ? "GAME IS RUNNING!" : "READY TO PLAY");
             ImGui::BeginDisabled(gameIsRunning);
+            ImGui::SetNextItemWidth(170.F);
             ImGui::Combo("Select map", &mapSelector, " 1\0 2\0 3\0 4\0 5\0 6\0 7\0 8\0 9\0 10\0");
+            ImGui::SetNextItemWidth(170.F);
             ImGui::Combo("Player", &playerCount, " 1\0 2\0 3\0 4\0");
+            ImGui::SetNextItemWidth(170.F);
+            ImGui::InputInt("Seed", &seed);
+            ImGui::SameLine();
+            if (ImGui::Button("RANDOM")) {
+                seed = rand() % 1000;
+            }
             if (ImGui::Button("START")) {
                 mGameDescription = {};
                 mTickDescription = {};
                 mCumulatedPoints = {};
                 mVampireNames = {};
-                std::thread t([&gameIsRunning, &mapSelector, &playerCount]() {
+                std::thread t([&gameIsRunning, &mapSelector, &playerCount, &seed]() {
                     gameIsRunning = true;
                     Levels levels;
-                    RunGame(playerCount + 1, levels.mLevels[mapSelector], time(nullptr));
+                    RunGame(playerCount + 1, levels.mLevels[mapSelector], seed);
                     gameIsRunning = false;
+                    seed = rand() % 1000;
                 });
                 t.detach();
             }
@@ -160,7 +172,7 @@ void GUI::Run()
                     vamps.push_back(*it);
                 }
             }
-            ImGui::SetNextWindowPos({ 0, 123 });
+            ImGui::SetNextWindowPos({ 0, 140 });
             ImGui::SetNextWindowSize({ 278, 455 });
             ImGui::Begin("Vampires###ServerVampires", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 

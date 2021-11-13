@@ -10,9 +10,6 @@ const seedrandom = require('seedrandom');
 const dateformat = require('dateformat');
 const path = require('path');
 
-const summary = [];
-const notifications = [];
-
 const runMatch = async (level, runCount, data, rng, batchFolderName) => {
     const promises = [];
 
@@ -38,6 +35,11 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
         promises.push(exec(`${path.join('to_delete', v, 'build', 'bin', 'vampire')} 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }));
     }
 
+    const retVal = {
+        result: null,
+        notification: null
+    };
+
     try {
         await Promise.all(promises);
 
@@ -47,15 +49,18 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
         for (const element of result.results) {
             row += `,${element.player},${element.version},${element.lastTick},${element.score}`;
         }
-        summary.push(row);
+        retVal.result = row;
 
         if (result.crashes && result.crashes.length) {
-            notifications.push({ type: "probable crash", game: `${runCount + 1}_level${level}` });
+            retVal.notification = { type: "probable crash", game: `${runCount + 1}_level${level}` };
         }
     }
     catch (err) {
-        notifications.push({ type: "runner failure", game: `${runCount + 1}_level${level}` });
+        retVal.result = null;
+        retVal.notification = { type: "runner failure", game: `${runCount + 1}_level${level}` };
     }
+
+    return retVal;
 }
 
 const main = async () => {
@@ -187,21 +192,29 @@ const main = async () => {
 
     console.log('Building local version... DONE!');
 
-    for (const [runCount, level] of data.runs.entries()) {
-        console.log(`Run #${runCount + 1}, level ${level}...`);
-        await runMatch(level, runCount, data, rng, batchFolderName);
-        console.log('Finished!');
-    }
-
     let header = 'g_id,g_level,g_maxTick,g_seed,g_size';
     for (let i = 1; i < 5; ++i) {
         header += `,p${i}_id,p${i}_version,p${i}_lastTick,p${i}_score`;
     }
     header += '\n';
 
-    fs.writeFileSync(`${batchFolderName}/summary.csv`, header + summary.join('\n'));
-    if (notifications.length) {
-        fs.writeFileSync(`${batchFolderName}/notifications.json`, JSON.stringify(notifications, null, 2));
+    fs.writeFileSync(`${batchFolderName}/summary.csv`, header);
+
+    for (const [runCount, level] of data.runs.entries()) {
+        console.log(`Run #${runCount + 1}, level ${level}...`);
+        const retVal = await runMatch(level, runCount, data, rng, batchFolderName);
+        console.log('Finished!');
+        if (retVal.result) {
+            fs.writeFileSync(`${batchFolderName}/summary.csv`, retVal.result + '\n', { flag: 'as' });
+        }
+        if (retVal.notification) {
+            let notifications = [];
+            if (fs.existsSync(`${batchFolderName}/notifications.json`)) {
+                notifications = JSON.parse(fs.readFileSync(`${batchFolderName}/notifications.json`, 'utf8'));
+            }
+            notifications.push(retVal.notification);
+            fs.writeFileSync(`${batchFolderName}/notifications.json`, JSON.stringify(notifications, null, 2));
+        }
     }
 
     fs.rmSync('to_delete', { recursive: true });

@@ -7,7 +7,8 @@ const inquirer = require('inquirer');
 const fs = require('fs');
 const fetch = require('node-fetch');
 const seedrandom = require('seedrandom');
-const dateformat = require('dateformat')
+const dateformat = require('dateformat');
+const path = require('path');
 
 const summary = [];
 const notifications = [];
@@ -25,7 +26,7 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
 
     process.chdir(cwd);
 
-    promises.push(exec(`../../to_delete/local/build/bin/server ${level} 4 ${(rng() * 1000).toFixed(0)}`, { stdio: 'inherit', maxBuffer: 10000000 }));
+    promises.push(exec(`${path.join('..', '..', 'to_delete', 'local', 'build', 'bin', 'server')} ${level} 4 ${(rng() * 1000).toFixed(0)}`, { stdio: 'inherit', maxBuffer: 10000000 }));
 
     process.chdir(origCwd);
 

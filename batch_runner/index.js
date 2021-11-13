@@ -38,18 +38,23 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
         promises.push(exec(`${folder}/build/bin/vampire 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }));
     }
 
-    await Promise.all(promises);
+    try {
+        await Promise.all(promises);
 
-    const result = JSON.parse(fs.readFileSync(`${cwd}/result.json`, 'utf8'));
+        const result = JSON.parse(fs.readFileSync(`${cwd}/result.json`, 'utf8'));
 
-    let row = `${result.game.id},${result.game.level},${result.game.maxTick},${result.game.seed},${result.game.size}`;
-    for (const element of result.results) {
-        row += `,${element.player},${element.version},${element.lastTick},${element.score}`;
+        let row = `${result.game.id},${result.game.level},${result.game.maxTick},${result.game.seed},${result.game.size}`;
+        for (const element of result.results) {
+            row += `,${element.player},${element.version},${element.lastTick},${element.score}`;
+        }
+        summary.push(row);
+
+        if (result.crashes && result.crashes.length) {
+            notifications.push({ type: "probable crash", game: `${runCount + 1}_level${level}` });
+        }
     }
-    summary.push(row);
-
-    if (result.crashes && result.crashes.length) {
-        notifications.push({ type: "probable crash", game: `${runCount + 1}_level${level}` });
+    catch (err) {
+        notifications.push({ type: "runner failure", game: `${runCount + 1}_level${level}` });
     }
 }
 

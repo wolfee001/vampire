@@ -41,7 +41,7 @@ const main = async () => {
             const binary = `${folder}/build/bin/vampire${process.platform === 'win32' ? '.exe' : ''}`;
             if (!fs.existsSync(binary)) {
                 execSync(`cmake -B ${folder}/build ${folder} -DTICK_TIMEOUT=${answers.time} -DPLAYER_TOKEN=${answers.tag}@${answers.time}`, { stdio: 'inherit' });
-                execSync(`cmake --build ${folder}/build --target vampire`, { stdio: 'inherit' });
+                execSync(`cmake --build ${folder}/build --target vampire --config Release`, { stdio: 'inherit' });
             }
             for (let i = 0; i < answers.players; ++i) {
                 try {

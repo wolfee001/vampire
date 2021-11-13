@@ -35,8 +35,7 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
     console.log('hopefully ok');
 
     for (const v of data.versions) {
-        const folder = `to_delete/${v}`;
-        promises.push(exec(`${folder}/build/bin/vampire 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }));
+        promises.push(exec(`${path.join('to_delete', v, 'build', 'bin', 'vampire')} 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }));
     }
 
     try {

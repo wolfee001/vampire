@@ -113,12 +113,8 @@ void Simulator::KillVampire(int id)
     if (id == mState.mMe.mId) {
         mState.mMe.mHealth = -1;
     } else {
-        for (auto& v : mState.mEnemyVampires) {
-            if (id == v.mId) {
-                v.mHealth = -1;
-                break;
-            }
-        }
+        mState.mEnemyVampires.erase(std::remove_if(mState.mEnemyVampires.begin(), mState.mEnemyVampires.end(), [id](const auto& v) { return v.mId == id; }),
+            mState.mEnemyVampires.end());
     }
 }
 
@@ -411,6 +407,10 @@ void Simulator::HitLight()
             vampire.mHealth--;
         }
     }
+
+    mState.mEnemyVampires.erase(
+        std::remove_if(mState.mEnemyVampires.begin(), mState.mEnemyVampires.end(), [](const Vampire& vampire) { return vampire.mHealth < 1; }),
+        mState.mEnemyVampires.end());
 }
 
 void Simulator::PlantGrenades()

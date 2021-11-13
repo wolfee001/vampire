@@ -13,6 +13,7 @@ Game::Game(const GameDescription& gd, const TickDescription& zeroTick, int playe
         std::remove_if(tick.mEnemyVampires.begin(), tick.mEnemyVampires.end(), [&playerCount](const auto& vampire) { return vampire.mId > playerCount; }),
         tick.mEnemyVampires.end());
     mSimulator.SetState(tick);
+    mPrevTick = tick;
 
     mNextPowerupTick = mGameDescription.mMapSize * mGameDescription.mMapSize / 3;
 
@@ -39,17 +40,18 @@ std::pair<TickDescription, std::vector<std::pair<int, float>>> Game::Tick()
     if (tickResp.first.mMe.mHealth < 1) {
         retVal.second.emplace_back(1, mCumulatedPoints[1]);
     }
-    for (int i = 2; i < 5; ++i) {
-        if (std::find_if(tickResp.first.mEnemyVampires.begin(), tickResp.first.mEnemyVampires.end(),
-                [i](const auto& element) { return element.mId == i && element.mHealth < 1; })
-            != tickResp.first.mEnemyVampires.end()) {
-            retVal.second.emplace_back(i, mCumulatedPoints[i]);
+
+    for (const auto& v : mPrevTick.mEnemyVampires) {
+        if (std::find_if(tickResp.first.mEnemyVampires.begin(), tickResp.first.mEnemyVampires.end(), [&v](const auto& element) { return element.mId == v.mId; })
+            == tickResp.first.mEnemyVampires.end()) {
+            retVal.second.emplace_back(v.mId, mCumulatedPoints[v.mId]);
         }
     }
 
     GeneratePowerups(tickResp.first);
 
     mSimulator.SetState(tickResp.first);
+    mPrevTick = tickResp.first;
 
     return retVal;
 }

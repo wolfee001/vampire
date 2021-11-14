@@ -39,7 +39,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: split
-        path: github_batches/split
+        path: github_batches/split/*.json
 
 
   run:

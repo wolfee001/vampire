@@ -34,6 +34,8 @@ jobs:
         cd ..
         cd github_batches
         node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }}
+        ls
+        ls splits
 
   run:
     needs: split
@@ -53,6 +55,9 @@ jobs:
       - name: Log
         run: |
           echo ${{ matrix.agent }}
+          ls
+          ls github_batches
+          ls github_batches/splits
           cat github_batches/splits/${{ matrix.agent }}.json
 
   # batch:

@@ -890,7 +890,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			const auto& enemy = tickDescription.mEnemyVampires[ei];
 			getdist(m, targets, tickDescription, enemy);
 			FOR0(i, SZ(targets))
-				MINA(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], ei);
+				MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], ei);
 		}
 		getdist(m, targets, tickDescription, me);
 

@@ -23,7 +23,7 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
 
     process.chdir(cwd);
 
-    promises.push(exec(`${path.join('..', '..', 'to_delete', 'local', 'build', 'bin', 'server')} ${level} 4 ${(Math.abs(rng.int32() % 1000))}`, { stdio: 'inherit', maxBuffer: 10000000 }));
+    promises.push(exec(`${path.join(origCwd, 'to_delete', 'local', 'build', 'bin', 'server')} ${level} 4 ${(Math.abs(rng.int32() % 1000))}`, { stdio: 'inherit', maxBuffer: 10000000 }));
 
     process.chdir(origCwd);
 
@@ -32,7 +32,7 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
     console.log('hopefully ok');
 
     for (const v of data.versions) {
-        promises.push(exec(`${path.join('to_delete', v, 'build', 'bin', 'vampire')} 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }));
+        promises.push(exec(`${path.join(origCwd, 'to_delete', v, 'build', 'bin', 'vampire')} 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }));
     }
 
     const retVal = {

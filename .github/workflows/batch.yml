@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # - name: Checkout
-    #   uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
 
-    # - name: Install Node
-    #   uses: actions/setup-node@v2
-    #   with:
-    #     node-version: 16
+    - name: Install Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16
 
     - name: Create folder
       run: mkdir splits
@@ -35,15 +35,14 @@ jobs:
         cd splits
         touch data.test
 
-    # - name: Data splitting
-    #   run: |
-    #     cd batch_runner
-    #     npm install .
-    #     cd ..
-    #     cd github_batches
-    #     node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }}
-    #     ls
-    #     ls splits
+    - name: Data splitting
+      run: |
+        cd batch_runner
+        npm install .
+        cd ..
+        cd github_batches
+        node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }} 18 ${{github.workspace}}/splits
+
 
   run:
     needs: split

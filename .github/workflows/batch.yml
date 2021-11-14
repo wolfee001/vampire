@@ -28,7 +28,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: splits
-        key: splitdata
+        key: splitdata-${{ github.sha }}
 
     - name: Populate cahce
       run: |
@@ -57,7 +57,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: splits
-          key: splitdata
+          key: splitdata-${{ github.sha }}
 
       - name: Log
         run: |

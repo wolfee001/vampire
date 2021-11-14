@@ -24,11 +24,17 @@ jobs:
     - name: Create folder
       run: mkdir splits
 
-    - name: Creating cache
+    - name: Creating splits cache
       uses: actions/cache@v2
       with:
         path: splits
         key: splitdata-${{ github.sha }}
+
+    - name: Creating batches cache
+      uses: actions/cache@v2
+      with:
+        path: github_batches
+        key: batches-${{ github.sha }}
 
     - name: Data splitting
       run: |
@@ -37,7 +43,6 @@ jobs:
         cd ..
         node ./batch_runner/splitter.js ./github_batches/${{ github.event.inputs.descriptor }} 18 ./splits
         ls splits
-
 
   run:
     needs: split
@@ -48,16 +53,23 @@ jobs:
         agent: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 
     steps:
-      - name: Restore cache
+      - name: Restore splits cache
         uses: actions/cache@v2
         with:
           path: splits
           key: splitdata-${{ github.sha }}
 
+      - name: Restore batches cache
+        uses: actions/cache@v2
+        with:
+          path: github_batches
+          key: batches-${{ github.sha }}
+
       - name: Log
         run: |
           echo ${{ matrix.agent }}
           cat splits/${{ matrix.agent }}.json
+          ls github_batches
 
   # batch:
   #   runs-on: ubuntu-latest

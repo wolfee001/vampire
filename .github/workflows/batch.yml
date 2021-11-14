@@ -64,10 +64,10 @@ jobs:
 
     steps:
       - name: Restore batches cache
-          uses: actions/cache@v2
-          with:
-            path: github_batches
-            key: batches-${{ github.sha }}
+        uses: actions/cache@v2
+        with:
+          path: github_batches
+          key: batches-${{ github.sha }}
 
       - name: Log
         run: |

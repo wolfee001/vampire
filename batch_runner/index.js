@@ -23,7 +23,7 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
 
     process.chdir(cwd);
 
-    promises.push(exec(`${path.join('..', '..', 'to_delete', 'local', 'build', 'bin', 'server')} ${level} 4 ${(rng() * 1000).toFixed(0)}`, { stdio: 'inherit', maxBuffer: 10000000 }));
+    promises.push(exec(`${path.join('..', '..', 'to_delete', 'local', 'build', 'bin', 'server')} ${level} 4 ${(Math.abs(rng.int32() % 1000))}`, { stdio: 'inherit', maxBuffer: 10000000 }));
 
     process.chdir(origCwd);
 
@@ -157,11 +157,17 @@ const main = async () => {
         }
     }
 
-    const batchFolderName = dateformat(new Date(), "yyyy-mm-dd-HH-MM-ss");
-    fs.mkdirSync(`${batchFolderName}`);
+    const batchFolderName = data.batchFolderName || dateformat(new Date(), "yyyy-mm-dd-HH-MM-ss");
+    fs.mkdirSync(`${batchFolderName}`, { recursive: true });
     fs.writeFileSync(`${batchFolderName}/settings.json`, JSON.stringify(data, null, 2));
 
     const rng = seedrandom(`${data.seed}`);
+
+    if (data.randomDrop) {
+        for (let i = 0; i < data.randomDrop; ++i) {
+            rng.int32();
+        }
+    }
 
     data.runs = [];
     for (let i = 0; i < data.totalRun; ++i) {

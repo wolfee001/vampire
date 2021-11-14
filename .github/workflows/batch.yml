@@ -34,13 +34,12 @@ jobs:
         cd ..
         cd github_batches
         node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }} 18
-        ls splits
 
     - name: Upload split data
       uses: actions/upload-artifact@v2
       with:
         name: split
-        path: github_batches/split/*.json
+        path: github_batches/splits
 
 
   run:
@@ -56,7 +55,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: split
-          path: github_batches/split
+          path: github_batches/splits
 
       - name: Log
         run: |

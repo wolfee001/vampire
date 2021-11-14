@@ -62,16 +62,17 @@ jobs:
     needs: run
     runs-on: ubuntu-latest
 
-    - name: Restore batches cache
-        uses: actions/cache@v2
-        with:
-          path: github_batches
-          key: batches-${{ github.sha }}
+    steps:
+      - name: Restore batches cache
+          uses: actions/cache@v2
+          with:
+            path: github_batches
+            key: batches-${{ github.sha }}
 
-    - name: Log
-      run: |
-        cd github_batches
-        ls
+      - name: Log
+        run: |
+          cd github_batches
+          ls
 
   # batch:
   #   runs-on: ubuntu-latest

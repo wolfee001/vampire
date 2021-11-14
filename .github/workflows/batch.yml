@@ -105,7 +105,6 @@ jobs:
         run: |
           cd github_batches
           mkdir ${{ steps.current-time.outputs.formattedTime }}
-          ls
           cd ${{ steps.current-time.outputs.formattedTime }}
           cp ${{github.workspace}}/github_batches/${{ github.event.inputs.descriptor }} ./settings.json
 
@@ -124,6 +123,7 @@ jobs:
 
       - name: Commit
         run: |
+          git pull
           git config --global user.name 'Batch Runner'
           git config --global user.email 'wolfee001@users.noreply.github.com'
           cd github_batches/${{ steps.current-time.outputs.formattedTime }}

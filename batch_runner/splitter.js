@@ -12,7 +12,9 @@ const main = () => {
     const batchFolderName = dateformat(new Date(), "yyyy-mm-dd-HH-MM-ss");
     fs.mkdirSync(`${batchFolderName}`);
     fs.writeFileSync(`${batchFolderName}/settings.json`, JSON.stringify(settings, null, 2));
-    fs.mkdirSync('splits');
+    if (!fs.existsSync('splits')) {
+        fs.mkdirSync('splits');
+    }
 
     for (let i = 0; i < agents; ++i) {
         const low = Math.round(i * perAgentRun);

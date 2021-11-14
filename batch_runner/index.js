@@ -33,6 +33,7 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
 
     for (const v of data.versions) {
         promises.push(exec(`${path.join(origCwd, 'to_delete', v, 'build', 'bin', 'vampire')} 1 localhost 6789`, { stdio: 'inherit', maxBuffer: 10000000 }));
+        await (new Promise(resolve => setTimeout(resolve, 250)));
     }
 
     const retVal = {

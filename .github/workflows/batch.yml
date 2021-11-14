@@ -57,6 +57,12 @@ jobs:
           cd github_batches
           cat splits/${{ matrix.agent }}.json
           touch ${{ matrix.agent }}.test
+
+      - name: Creating final batches cache
+        uses: actions/cache@v2
+        with:
+          path: github_batches
+          key: batches-${{ github.sha }}-${{ hashFiles('*') }}
   
   collect:
     needs: run
@@ -68,6 +74,8 @@ jobs:
         with:
           path: github_batches
           key: batches-${{ github.sha }}
+          restore-keys: |
+            batches-${{ github.sha }}
 
       - name: Log
         run: |

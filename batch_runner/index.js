@@ -64,6 +64,9 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
 }
 
 const main = async () => {
+    if (fs.existsSync('to_delete')) {
+        fs.rmSync('to_delete', { recursive: true });
+    }
     const args = process.argv.slice(2);
 
     let data = {};

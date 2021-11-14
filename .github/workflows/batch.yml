@@ -104,26 +104,26 @@ jobs:
       - name: Create final folder
         run: |
           cd github_batches
-          mkdir {{ steps.current-time.outputs.formattedTime }}
+          mkdir ${{ steps.current-time.outputs.formattedTime }}
           ls
-          cd {{ steps.current-time.outputs.formattedTime }}
+          cd ${{ steps.current-time.outputs.formattedTime }}
           cp ${{github.workspace}}/github_batches/${{ github.event.inputs.descriptor }} ./settings.json
 
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
-          path: github_batches/{{ steps.current-time.outputs.formattedTime }}
+          path: github_batches/${{ steps.current-time.outputs.formattedTime }}
 
       - name: Collecting results
         run: |
-          cd github_batches/{{ steps.current-time.outputs.formattedTime }}
-          node ../batch_runner/collector.js {{ steps.current-time.outputs.formattedTime }} 1
+          cd github_batches/${{ steps.current-time.outputs.formattedTime }}
+          node ../batch_runner/collector.js ${{ steps.current-time.outputs.formattedTime }} 1
 
       - name: Commit
         run: |
           git config --global user.name 'Batch Runner'
           git config --global user.email 'wolfee001@users.noreply.github.com'
-          cd github_batches/{{ steps.current-time.outputs.formattedTime }}
+          cd github_batches/${{ steps.current-time.outputs.formattedTime }}
           git add .
           git commit -m "Batch run data"
           git push

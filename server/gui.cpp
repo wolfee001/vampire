@@ -132,7 +132,7 @@ void GUI::Run()
             ImGui::Text(gameIsRunning ? "GAME IS RUNNING!" : "READY TO PLAY");
             ImGui::BeginDisabled(gameIsRunning);
             ImGui::SetNextItemWidth(170.F);
-            ImGui::Combo("Select map", &mapSelector, " 1\0 2\0 3\0 4\0 5\0 6\0 7\0 8\0 9\0 10\0");
+            ImGui::Combo("Select map", &mapSelector, " 1\0 2\0 3\0 4\0 5\0 6\0 7\0 8\0 9\0 10\0 EMPTY\0");
             ImGui::SetNextItemWidth(170.F);
             ImGui::Combo("Player", &playerCount, " 1\0 2\0 3\0 4\0");
             ImGui::SetNextItemWidth(170.F);

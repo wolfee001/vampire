@@ -23,7 +23,7 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
 
     process.chdir(cwd);
 
-    promises.push(exec(`${path.join(origCwd, 'to_delete', 'local', 'build', 'bin', 'server')} ${level} 4 ${(Math.abs(rng.int32() % 1000))}`, { stdio: 'inherit', maxBuffer: 10000000 }));
+    promises.push(exec(`${path.join(origCwd, 'to_delete', 'local', 'build', 'bin', 'server')} ${level} ${data.versions.length} ${(Math.abs(rng.int32() % 1000))}`, { stdio: 'inherit', maxBuffer: 10000000 }));
 
     process.chdir(origCwd);
 

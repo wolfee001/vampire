@@ -703,6 +703,20 @@ int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemie
 	return avoids;
 }
 
+bool dobomb(const TickDescription& tickDescription)
+{
+	auto& me = tickDescription.mMe;
+	pos_t mypos = pos_t(me.mY, me.mX);
+	for (const auto& enemy : tickDescription.mEnemyVampires) {
+		pos_t p(enemy.mY, enemy.mX);
+		int dy = abs(p.y - mypos.y);
+		int dx = abs(p.x - mypos.x);
+		if ((dx == 0 && dy <= me.mGrenadeRange - 2) || (dy == 0 && dx <= me.mGrenadeRange - 2))
+			return true;
+	}
+	return false;
+}
+
 Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
     Answer answer;
@@ -741,6 +755,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	if ((mAvoids & 48) == 48 && me.mPlacableGrenades > 0 && onitem) {
 		mAvoids &= ~48;
 		mPreferGrenade = 1;
+		cerr << "prefer to protect self from encircled" << endl;
 	}
 	else if ((mAvoids & 16) && ontomato && me.mHealth == 2) // with 2 health, it can be more or less ok to stay (no matter what the timings are)
 		mAvoids &= ~16;
@@ -810,8 +825,12 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				}
 			}
 		}
-//		if (!mPreferGrenade && tickDescription.mPowerUps.empty())
-//			wantcharge = true;
+#if 0
+		if (!mPreferGrenade && tickDescription.mPowerUps.empty() &&
+			me.mGrenadeRange >= 3 && me.mPlacableGrenades >= 2 && me.mHealth >= 2 && 
+			(me.mRunningShoesTick || tickDescription.mRequest.mTick > mGameDescription.mMaxTick / 2))
+			wantcharge = true;
+#endif
 	}
 #else
 	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick) // no hint for now with lights
@@ -922,6 +941,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 						}
 					}
 				}
+				if (wantcharge && dobomb(tickDescription)) {
+					mPreferGrenade = 1;
+					cerr << "and prefer grenade to attack" << endl;
+				}
 				return answer;
 			}
 		}
@@ -956,8 +979,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			getdist(m, vector<pos_t>(), tickDescription, enemy);
 			if (enemy.mGrenadeRange == mGameDescription.mGrenadeRadius && !enemy.mRunningShoesTick) // only defend vs. collector enemy
 				continue;
-			FOR0(i, SZ(targets))
-				MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], e);
+FOR0(i, SZ(targets))
+MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], e);
 		}
 		vector<char> dirs;
 		vector<char> bestdirs;
@@ -1010,22 +1033,25 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					me2.mX = p3.x;
 					if (wantcharge) {
 						int val = 0;
-						for(auto& enemy : tickDescription.mEnemyVampires) {
+						for (auto& enemy : tickDescription.mEnemyVampires) {
 							int d = p3.GetDist(pos_t(enemy.mY, enemy.mX));
 							if (d == 0)
 								d = 2;
-							MAXA(val, 100 - d);
+							MAXA(val, 10000 - 100 * d + min(abs(p3.y - enemy.mY), abs(p3.x - enemy.mY)));
 						}
 						MAXA2(best, val, bestdirs, dirs);
-					} else {
+					}
+					else {
 						getdist(m, vector<pos_t>(), tickDescription, me2);
-						cnt = 0;
+						float cnt = 0;
 						FOR0(i, SZ(targets)) {
 							int reach = reaches[targets[i].y][targets[i].x].turn;
 							if (closestenemydist[i] > reach)
 								cnt += 2;
-							else if (closestenemydist[i] == reach || reach <= 5)
+							else if (closestenemydist[i] == reach)
 								++cnt;
+							else if (reach <= 5)
+								cnt += 0.5;
 						}
 						int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
 	/*					cerr << p3 << ' ';
@@ -1044,12 +1070,12 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				dirs.pop_back();
 		}
 		if (best > 0) {
-			answer.mPlaceGrenade = false; 
+			answer.mPlaceGrenade = false;
 			answer.mSteps = bestdirs;
 			if (wantcharge) {
 				cerr << "charge! ";
 				mPhase = CHARGE;
-				if (best >= 97 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick && randn0(4) == 0) {
+				if (dobomb(tickDescription)) {
 					mPreferGrenade = true;
 					cerr << "with grenade ";
 				}

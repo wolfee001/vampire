@@ -24,18 +24,23 @@ csak dontobe:
 -tamadas: van. de folyamatosan?
  -akadalyozo bomba
 
--predikcio: melyik bot buta
--pl. bekerites ellen vedekezik
+-predikcio
+-targyon allva vedi? (ha nem, akkor erdemes raindulni vagy bekeriteni)
+-targy mellol bekerit?
+
+
 -item-et vedi! (akkor eleve nem kene elindulni!)
 -kiismeres ellen: kevert strat
 
 -miniatura
 -1 item, 1 ellenfel, es random kornyezet
 
--nextmap '-' = blokkol!
+-nextmap '-' = blokkol?
 
 -additional bomb for trapped opponent (to share kill score)
 
 -item-en levo ellenfel nem fog akarni bekeriteni minket? (de ez nem biztos, az is 48 pont)
 
 -item mellett levo ellenfelet bekeriteni a targyon?
+
+

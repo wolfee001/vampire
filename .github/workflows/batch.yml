@@ -30,11 +30,6 @@ jobs:
         path: splits
         key: splitdata-${{ github.sha }}
 
-    - name: Populate cahce
-      run: |
-        cd splits
-        touch data.test
-
     - name: Data splitting
       run: |
         cd batch_runner
@@ -50,7 +45,7 @@ jobs:
 
     strategy:
       matrix:
-        agent: [0] #, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        agent: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 
     steps:
       - name: Restore cache
@@ -62,7 +57,7 @@ jobs:
       - name: Log
         run: |
           echo ${{ matrix.agent }}
-          ls splits
+          cat splits/${{ matrix.agent }}.json
 
   # batch:
   #   runs-on: ubuntu-latest

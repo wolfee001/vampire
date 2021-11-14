@@ -27,7 +27,7 @@ jobs:
         npm install .
         cd ..
         cd github_batches
-        node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }} 1
+        node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }} 18
 
     - name: Upload split data
       uses: actions/upload-artifact@v2
@@ -42,7 +42,7 @@ jobs:
 
     strategy:
       matrix:
-        agent: [0] #, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        agent: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 
     steps:
       - name: Checkout
@@ -120,7 +120,7 @@ jobs:
           npm install .
           cd ..
           cd github_batches
-          node ../batch_runner/collector.js ${{ steps.current-time.outputs.formattedTime }} 1
+          node ../batch_runner/collector.js ${{ steps.current-time.outputs.formattedTime }} 18
 
       - name: Commit
         run: |

@@ -1,5 +1,4 @@
 const fs = require('fs');
-const dateformat = require('dateformat');
 const path = require('path');
 
 const main = () => {
@@ -8,13 +7,6 @@ const main = () => {
     const agents = args[1];
 
     const perAgentRun = settings.totalRun / agents;
-
-    const batchFolderName = dateformat(new Date(), "yyyy-mm-dd-HH-MM-ss");
-    fs.mkdirSync(`${batchFolderName}`);
-    fs.writeFileSync(`${batchFolderName}/settings.json`, JSON.stringify(settings, null, 2));
-    if (!fs.existsSync('splits')) {
-        fs.mkdirSync('splits');
-    }
 
     for (let i = 0; i < agents; ++i) {
         const low = Math.round(i * perAgentRun);
@@ -25,7 +17,7 @@ const main = () => {
         const splitSettings = { ...settings };
         splitSettings.totalRun = runCount;
         splitSettings.randomDrop = randomDropCount;
-        splitSettings.batchFolderName = path.join(batchFolderName, `${i}`);
+        splitSettings.batchFolderName = path.join('subbatches', `${i}`);
         fs.writeFileSync(`splits/${i}.json`, JSON.stringify(splitSettings, null, 2));
     }
 

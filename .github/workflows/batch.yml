@@ -13,12 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Cleanup
-      uses: geekyeggo/delete-artifact@v1
-      with:
-        name: split
-        failOnError: false
-
     - name: Checkout
       uses: actions/checkout@v2
 
@@ -48,19 +42,45 @@ jobs:
 
     strategy:
       matrix:
-        agent: [0] #, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        agent: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Download split data
         uses: actions/download-artifact@v2
         with:
           name: split
           path: github_batches/splits
 
-      - name: Log
+      - name: Install extra runtime
         run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+
+      - name: Install conan
+        uses: turtlebrowser/get-conan@main
+
+      - name: Install Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Batch running
+        run: |
+          cd batch_runner
+          npm install
+          npm install -g .
+          cd ..
           cd github_batches
-          cat splits/${{ matrix.agent }}.json
+          batch_runner splits/${{ matrix.agent }}.json
+
+      - name: Upload run data
+        uses: actions/upload-artifact@v2
+        with:
+          name: subbatch-${{ matrix.agent }}
+          path: github_batches/subbatches/${{ matrix.agent }}
 
   # collect:
   #   needs: run

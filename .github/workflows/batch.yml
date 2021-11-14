@@ -24,18 +24,23 @@ jobs:
     - name: Creating cache
       uses: actions/cache@v2
       with:
-        path: github_batches/splits
-        key: splits
+        path: splits
+        key: splitdata
 
-    - name: Data splitting
+    - name: Populate cahce
       run: |
-        cd batch_runner
-        npm install .
-        cd ..
-        cd github_batches
-        node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }}
-        ls
-        ls splits
+        cd splits
+        touch data.test
+
+    # - name: Data splitting
+    #   run: |
+    #     cd batch_runner
+    #     npm install .
+    #     cd ..
+    #     cd github_batches
+    #     node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }}
+    #     ls
+    #     ls splits
 
   run:
     needs: split
@@ -43,22 +48,19 @@ jobs:
 
     strategy:
       matrix:
-        agent: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        agent: [0] #, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 
     steps:
       - name: Restore cache
         uses: actions/cache@v2
         with:
-          path: github_batches/splits
-          key: splits
+          path: splits
+          key: splitdata
 
       - name: Log
         run: |
           echo ${{ matrix.agent }}
-          ls
-          ls github_batches
-          ls github_batches/splits
-          cat github_batches/splits/${{ matrix.agent }}.json
+          ls splits
 
   # batch:
   #   runs-on: ubuntu-latest

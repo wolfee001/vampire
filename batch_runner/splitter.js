@@ -12,6 +12,7 @@ const main = () => {
     const batchFolderName = dateformat(new Date(), "yyyy-mm-dd-HH-MM-ss");
     fs.mkdirSync(`${batchFolderName}`);
     fs.writeFileSync(`${batchFolderName}/settings.json`, JSON.stringify(settings, null, 2));
+    fs.mkdirSync('splits');
 
     for (let i = 0; i < agents; ++i) {
         const low = Math.round(i * perAgentRun);
@@ -23,7 +24,7 @@ const main = () => {
         splitSettings.totalRun = runCount;
         splitSettings.randomDrop = randomDropCount;
         splitSettings.batchFolderName = path.join(batchFolderName, `${i}`);
-        fs.writeFileSync(`${i}.json`, JSON.stringify(splitSettings, null, 2));
+        fs.writeFileSync(`splits/${i}.json`, JSON.stringify(splitSettings, null, 2));
     }
 
 }

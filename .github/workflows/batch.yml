@@ -82,55 +82,45 @@ jobs:
           name: subbatch-${{ matrix.agent }}
           path: github_batches/subbatches/${{ matrix.agent }}
 
-  # collect:
-  #   needs: run
-  #   runs-on: ubuntu-latest
+  collect:
+    needs: run
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Restore batches cache
-  #       uses: actions/cache@v2
-  #       with:
-  #         path: github_batches
-  #         key: batches-${{ github.sha }}
-  #         restore-keys: |
-  #           batches-${{ github.sha }}
+    steps:
+      - name: Install Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
 
-  #     - name: Log
-  #       run: |
-  #         cd github_batches
-  #         ls
+      - name: Get current time
+        uses: srfrnk/current-time@master
+        id: current-time
+        with:
+          format: YYYY-MM-DD-HH-mm-ss
 
-  # batch:
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 4300
+      - name: Create final folder
+        run: |
+          cd github_batches
+          mkdir {{ steps.current-time.outputs.formattedTime }}
+          ls
+          cd {{ steps.current-time.outputs.formattedTime }}
+          cp ${{github.workspace}}/github_batches/${{ github.event.inputs.descriptor }} ./settings.json
 
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v2
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: github_batches/{{ steps.current-time.outputs.formattedTime }}
 
-  #   - name: Install extra runtime
-  #     run: |
-  #       sudo apt-get update
-  #       sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+      - name: Collecting results
+        run: |
+          cd github_batches/{{ steps.current-time.outputs.formattedTime }}
+          node ../batch_runner/collector.js {{ steps.current-time.outputs.formattedTime }} 18
 
-  #   - name: Install conan
-  #     uses: turtlebrowser/get-conan@main
-
-  #   - name: Install Node
-  #     uses: actions/setup-node@v2
-  #     with:
-  #       node-version: 16
-
-  #   - name: Batch running
-  #     run: |
-  #       cd batch_runner
-  #       npm install .
-  #       sudo npm install -g .
-  #       cd ..
-  #       cd github_batches
-  #       batch_runner ${{ github.event.inputs.descriptor }}
-  #       git config --global user.name 'Batch Runner'
-  #       git config --global user.email 'wolfee001@users.noreply.github.com'
-  #       git add .
-  #       git commit -m "Batch run data" || echo "Nothing changed"
-  #       git push || echo "Nothing changed"
+      - name: Commit
+        run: |
+          git config --global user.name 'Batch Runner'
+          git config --global user.email 'wolfee001@users.noreply.github.com'
+          cd github_batches/{{ steps.current-time.outputs.formattedTime }}
+          git add .
+          git commit -m "Batch run data"
+          git push

@@ -116,8 +116,11 @@ jobs:
 
       - name: Collecting results
         run: |
+          cd batch_runner
+          npm install .
+          cd ..
           cd github_batches/${{ steps.current-time.outputs.formattedTime }}
-          node ../batch_runner/collector.js ${{ steps.current-time.outputs.formattedTime }} 1
+          node ../../batch_runner/collector.js ${{ steps.current-time.outputs.formattedTime }} 1
 
       - name: Commit
         run: |

@@ -603,13 +603,14 @@ void checkbombsequence(map_t m, int r, int maxstep)
 		} else
 			repeat = 0;
 	}
-	auto res = bombsequence(m, start, r, maxstep);
+	auto res = bombsequence(m, start, r, maxstep, false);
 	ASSERT_EQ(res, expect);
 }
 
 // tests should have clear winner
 TEST(UsualMagic, BombSequence)
 {
+	// note: all these tests are for freecell count, not batcount
     checkbombsequence(
 		{ { 
             "OOOOO", 

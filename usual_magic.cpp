@@ -531,8 +531,9 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 	allbombs.resize(oldcnt);
 }
 
-vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep)
+vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep, bool batcount)
 {
+	bombseqbatcnt = batcount;
 	bestbombseqval = 0;
 	bombseqmaxstep = maxstep;
 	bombtimestart = chrono::steady_clock::now();
@@ -987,7 +988,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	if (mInPhase1) {
 //		bombseqbatcnt = true;
 		bombtimeout = mTimeout.count();
-		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30); // todo how many steps (not turns) ahead
+		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30, true); // todo how many steps (not turns) ahead
 		mPhase = PHASE1;
 		mPath = seq;
 		cerr << "phase1 seq";

@@ -8,6 +8,10 @@ const main = () => {
 
     const perAgentRun = settings.totalRun / agents;
 
+    if (!fs.existsSync('splits')) {
+        fs.mkdirSync('splits');
+    }
+
     for (let i = 0; i < agents; ++i) {
         const low = Math.round(i * perAgentRun);
         const high = Math.round(i * perAgentRun + perAgentRun);

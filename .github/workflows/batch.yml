@@ -40,7 +40,7 @@ jobs:
         cd batch_runner
         npm install .
         cd ..
-        node ./batch_runner/splitter.js ${{ github.event.inputs.descriptor }} 18 ./splits
+        node ./batch_runner/splitter.js ./github_batches/${{ github.event.inputs.descriptor }} 18 ./splits
         ls splits
 
 

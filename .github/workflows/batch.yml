@@ -119,8 +119,8 @@ jobs:
           cd batch_runner
           npm install .
           cd ..
-          cd github_batches/${{ steps.current-time.outputs.formattedTime }}
-          node ../../batch_runner/collector.js ${{ steps.current-time.outputs.formattedTime }} 1
+          cd github_batches
+          node ../batch_runner/collector.js ${{ steps.current-time.outputs.formattedTime }} 1
 
       - name: Commit
         run: |

@@ -1,0 +1,6 @@
+g_id,g_level,g_maxTick,g_seed,g_size,p1_id,p1_version,p1_lastTick,p1_score,p2_id,p2_version,p2_lastTick,p2_score,p3_id,p3_version,p3_lastTick,p3_score,p4_id,p4_version,p4_lastTick,p4_score
+1636923650,4,1000,326,21,1,final_v2@600,1112,3010,2,final_v2@600,1112,3028,3,final_v1@600,1112,3084,4,final_v1@600,1112,3022
+1636924225,10,800,427,15,1,final_v2@600,859,2643,2,final_v2@600,859,2603,3,final_v1@600,859,2627,4,final_v1@600,859,2627
+1636924632,5,850,116,17,1,final_v2@600,924,1952,2,final_v2@600,924,1934,3,final_v1@600,924,2012,4,final_v1@600,924,2070
+1636925035,10,800,142,15,1,final_v2@600,859,2781,2,final_v2@600,859,2649,3,final_v1@600,859,2631,4,final_v1@600,859,2631
+1636925447,8,1200,886,21,1,final_v2@600,1312,3534,2,final_v2@600,1312,3644,3,final_v1@600,1312,3726,4,final_v1@600,1312,3772

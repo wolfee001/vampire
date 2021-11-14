@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <map>
 #include "i_magic.h"
 
 struct map_t : std::vector<std::string> 
@@ -23,6 +24,12 @@ std::pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int
 std::vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep);
 int collectavoids(map_t& m, map_t& nextmap, pos_t player, std::vector<pos_t> enemieswithbomb);
 
+struct enemypredict_t {
+	pos_t prevpos;
+	bool bombonitem = false;
+	bool bombnexttoitem = false;
+};
+
 class UsualMagic : public IMagic {
 public:
 	bool mInPhase1 = true;
@@ -32,6 +39,7 @@ public:
 	std::vector<pos_t> mPath;
 	int mAvoids;
 	int mPreferGrenade;
+	std::map<int, enemypredict_t> mEnemyPredict;
 };
 
 // clang-format on

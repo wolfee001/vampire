@@ -456,7 +456,7 @@ std::chrono::time_point<std::chrono::steady_clock>  bombtimestart;
 vector<pos_t> bombseq;
 vector<pos_t> bestbombseq;
 vector<pos_t> allbombs;
-bool bombseqbatcnt = false;
+bool bombseqbatcnt = true;
 
 int batcnt(map_t& m)
 {
@@ -719,7 +719,9 @@ bool dobomb(const TickDescription& tickDescription)
 
 Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
-    Answer answer;
+	int turn = tickDescription.mRequest.mTick;
+
+	Answer answer;
 	mPhase = NONE;
 	mAvoids = 0;
 	mPreferGrenade = false;
@@ -739,6 +741,34 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	m = sim(m, false); // just go on after bombs
 
 	auto nextmap = sim(m);
+
+	if (turn == 0) {
+		mEnemyPredict.clear();
+		for(const auto& enemy: tickDescription.mEnemyVampires) {
+			enemypredict_t et;
+			mEnemyPredict.insert(make_pair(enemy.mId, et));
+		}
+	} else {
+		for(const auto& enemy: tickDescription.mEnemyVampires) {
+			enemypredict_t& et = mEnemyPredict[enemy.mId];
+			pos_t ep(enemy.mY, enemy.mX);
+			for(const auto& powerup: tickDescription.mPowerUps) {
+				pos_t pp(powerup.mY, powerup.mX);
+				char pc = m[pp.y][pp.x];
+				for(const auto& bomb: tickDescription.mGrenades) {
+					pos_t bp(bomb.mY, bomb.mX);
+					if (bomb.mId != enemy.mId)
+						continue;
+					if (pp == ep && bp == pp)
+						et.bombonitem = true;
+					else if (et.prevpos.GetDist(pp) == 1 && bp == et.prevpos && 
+						 pc != '-' && pc != '+' && pc != '*')
+						et.bombnexttoitem = true;
+				}
+			}
+			et.prevpos = ep;
+		}
+	}
 
 	bool onitem = false;
 	bool ontomato = false;
@@ -842,22 +872,25 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		mInPhase1 = false;
 
 		vector<pos_t> targets;
+		vector<int> closestenemydist;
 		vector<int> closestenemy;
 		int waitturn = 0;
 		int lastturn = 0;
 		for (const auto& powerup : tickDescription.mPowerUps) {
 			targets.push_back(pos_t(powerup.mY, powerup.mX));
-			closestenemy.push_back(MAXTURN + 1);
+			closestenemydist.push_back(MAXTURN + 1);
+			closestenemy.push_back(-1);
 			if (powerup.mRemainingTick < 0) {
 				waitturn = -powerup.mRemainingTick - 1;
 				lastturn = waitturn + 15;
 			} else
 				lastturn = powerup.mRemainingTick - 1;
 		}
-		for (const auto& enemy : tickDescription.mEnemyVampires) {
+		FOR0(ei, SZ(tickDescription.mEnemyVampires)) {
+			const auto& enemy = tickDescription.mEnemyVampires[ei];
 			getdist(m, targets, tickDescription, enemy);
 			FOR0(i, SZ(targets))
-				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
+				MINA(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], ei);
 		}
 		getdist(m, targets, tickDescription, me);
 
@@ -874,7 +907,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				int reach = reaches[targets[i].y][targets[i].x].turn;
 				if (mypos == targets[i] && waitturn == 0)
 					continue;
-				if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemy[i] == 0) {
+				if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemydist[i] == 0) {
 					bool enemyon = false;
 					for (const auto& enemy : tickDescription.mEnemyVampires) {
 						if (pos_t(enemy.mY, enemy.mX) == targets[i]) {
@@ -885,7 +918,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					if (enemyon)
 						continue;
 				}
-				if ((closestenemy[i] >= reach && lastturn >= reach) || (reach <= waitturn && (waitturn < -5 || tr == 2)))
+				if ((closestenemydist[i] >= reach && lastturn >= reach) || (reach <= waitturn && 
+					(!mEnemyPredict[tickDescription.mEnemyVampires[closestenemy[i]].mId].bombonitem || tr == 1)))
 					MINA2(closest, reach, best, i);
 			}
 			if (best != -1)
@@ -926,7 +960,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				}
 				int mydist = mypos.GetDist(targets[best]);
 				if (mydist <= 2) {
-					if (closestenemy[best] == 0 && me.mPlacableGrenades > 0 && 
+					if (closestenemydist[best] == 0 && me.mPlacableGrenades > 0 && 
 						m[mypos.y][mypos.x] == ' ' && waitturn > 0 && waitturn < 5 - (mydist ? 1 : 0)) {
 						for (const auto& enemy : tickDescription.mEnemyVampires) {
 							pos_t p(enemy.mY, enemy.mX); 

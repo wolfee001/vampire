@@ -13,6 +13,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Cleanup
+      uses: geekyeggo/delete-artifact@v1
+      with:
+        name: split
+        failOnError: false
+
     - name: Checkout
       uses: actions/checkout@v2
 
@@ -21,12 +27,6 @@ jobs:
       with:
         node-version: 16
 
-    - name: Creating batches cache
-      uses: actions/cache@v2
-      with:
-        path: github_batches
-        key: batches-${{ github.sha }}
-
     - name: Data splitting
       run: |
         cd batch_runner
@@ -34,8 +34,13 @@ jobs:
         cd ..
         cd github_batches
         node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }} 18
-        ls
-        ls splits
+
+    - name: Upload split data
+      uses: actions/upload-artifact@v2
+      with:
+        name: split
+        path: github_batches/split
+
 
   run:
     needs: split
@@ -43,44 +48,37 @@ jobs:
 
     strategy:
       matrix:
-        agent: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        agent: [0] #, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 
     steps:
-      - name: Restore batches cache
-        uses: actions/cache@v2
+      - name: Download split data
+        uses: actions/download-artifact@v2
         with:
-          path: github_batches
-          key: batches-${{ github.sha }}
+          name: split
+          path: github_batches/split
 
       - name: Log
         run: |
           cd github_batches
           cat splits/${{ matrix.agent }}.json
-          touch ${{ matrix.agent }}.test
 
-      - name: Creating final batches cache
-        uses: actions/cache@v2
-        with:
-          path: github_batches
-          key: batches-${{ github.sha }}-${{ hashFiles('*') }}
-  
-  collect:
-    needs: run
-    runs-on: ubuntu-latest
+  # collect:
+  #   needs: run
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Restore batches cache
-        uses: actions/cache@v2
-        with:
-          path: github_batches
-          key: batches-${{ github.sha }}
-          restore-keys: |
-            batches-${{ github.sha }}
+  #   steps:
+  #     - name: Restore batches cache
+  #       uses: actions/cache@v2
+  #       with:
+  #         path: github_batches
+  #         key: batches-${{ github.sha }}
+  #         restore-keys: |
+  #           batches-${{ github.sha }}
 
-      - name: Log
-        run: |
-          cd github_batches
-          ls
+  #     - name: Log
+  #       run: |
+  #         cd github_batches
+  #         ls
 
   # batch:
   #   runs-on: ubuntu-latest

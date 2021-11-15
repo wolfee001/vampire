@@ -15,7 +15,11 @@ Game::Game(const GameDescription& gd, const TickDescription& zeroTick, int playe
     mSimulator.SetState(tick);
     mPrevTick = tick;
 
-    mNextPowerupTick = mGameDescription.mMapSize * mGameDescription.mMapSize / 3;
+    if (!zeroTick.mAllBats.empty()) {
+        mNextPowerupTick = mGameDescription.mMapSize * mGameDescription.mMapSize / 3;
+    } else {
+        mNextPowerupTick = 40;
+    }
 
     GUI::GetInstance().SetGameDescription(mGameDescription);
     GUI::GetInstance().Update(tick, mCumulatedPoints);
@@ -84,8 +88,12 @@ void Game::GeneratePowerups(TickDescription& tick)
         const int pre = 5 + rand() % 6;
         const int duration = 10 + rand() % 11;
 
+        int alivePlayers = tick.mEnemyVampires.size() + (tick.mMe.mHealth > 0 ? 1 : 0);
+
         tick.mPowerUps.push_back({ type, -pre, position.first, position.second, duration });
-        tick.mPowerUps.push_back({ type, -pre, mGameDescription.mMapSize - position.first - 1, mGameDescription.mMapSize - position.second - 1, duration });
+        if (alivePlayers > 2) {
+            tick.mPowerUps.push_back({ type, -pre, mGameDescription.mMapSize - position.first - 1, mGameDescription.mMapSize - position.second - 1, duration });
+        }
     }
     if (!tick.mPowerUps.empty()) {
         return;

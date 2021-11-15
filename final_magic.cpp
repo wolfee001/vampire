@@ -14,7 +14,14 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const Simulator:
 {
     std::chrono::milliseconds start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
     mUsualMagic.SetTickTimeout(mTimeout / 4);
-    mUsualMagic.Tick(tickDescription, points);
+    const auto& retVal1 = mUsualMagic.Tick(tickDescription, points);
+    std::chrono::milliseconds usualTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - start;
+    std::cerr << "Total allowed time: " << mTimeout.count() << " ms" << std::endl;
+    std::cerr << "Usual magic time: " << usualTime.count() << " ms" << std::endl;
+    if (!retVal1.mSteps.empty()) {
+        std::cerr << "Gabor magic skipped!" << std::endl;
+        return retVal1;
+    }
     mGaborMagic.SetPhase(mUsualMagic.mPhase);
     mGaborMagic.SetAvoids(mUsualMagic.mAvoids);
     mGaborMagic.SetPreferGrenade(mUsualMagic.mPreferGrenade);
@@ -27,14 +34,9 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const Simulator:
         mGaborMagic.SetPhase(NONE);
     }
 
-    std::chrono::milliseconds usualTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - start;
     mGaborMagic.SetTickTimeout(mTimeout - usualTime);
     const auto& retVal = mGaborMagic.Tick(tickDescription, points);
     std::chrono::milliseconds totalTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - start;
-
-    std::cerr << "Total allowed time: " << mTimeout.count() << " ms" << std::endl;
-    std::cerr << "Usual magic time: " << usualTime.count() << " ms" << std::endl;
-    std::cerr << "Gabor magic time: " << totalTime.count() << " ms" << std::endl;
-
+    std::cerr << "Total magic time: " << totalTime.count() << " ms" << std::endl;
     return retVal;
 }

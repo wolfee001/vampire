@@ -920,7 +920,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 						continue;
 				}
 				if ((closestenemydist[i] >= reach && lastturn >= reach) || (reach <= waitturn && 
-					(!mEnemyPredict[tickDescription.mEnemyVampires[closestenemy[i]].mId].bombonitem || tr == 1)))
+					(!mEnemyPredict[tickDescription.mEnemyVampires[closestenemy[i]].mId].bombonitem || waitturn - reach > 4 || tr == 1)))
 					MINA2(closest, reach, best, i);
 			}
 			if (best != -1)
@@ -1014,8 +1014,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			getdist(m, vector<pos_t>(), tickDescription, enemy);
 			if (enemy.mGrenadeRange == mGameDescription.mGrenadeRadius && !enemy.mRunningShoesTick) // only defend vs. collector enemy
 				continue;
-FOR0(i, SZ(targets))
-MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], e);
+			FOR0(i, SZ(targets))
+				MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], e);
 		}
 		vector<char> dirs;
 		vector<char> bestdirs;
@@ -1085,8 +1085,8 @@ MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenem
 								cnt += 2;
 							else if (closestenemydist[i] == reach)
 								++cnt;
-							else if (reach <= 5)
-								cnt += 0.5;
+							else if (reach <= 5 && !mEnemyPredict[tickDescription.mEnemyVampires[closestenemy[i]].mId].bombonitem)
+								++cnt;
 						}
 						int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
 	/*					cerr << p3 << ' ';

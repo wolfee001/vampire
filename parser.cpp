@@ -12,6 +12,9 @@ GameDescription parseGameDescription(const std::vector<std::string>& startInfos)
     GameDescription description;
     for (const auto& element : startInfos) {
         std::stringstream stream(element);
+#ifdef CONSOLE_LOG
+        std::cout << "> " << element << std::endl;
+#endif
 
         std::string msg;
         stream >> msg;
@@ -54,6 +57,9 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
     TickDescription newDescription;
     for (const auto& element : infos) {
         std::stringstream stream(element);
+#ifdef CONSOLE_LOG
+        std::cout << "> " << element << std::endl;
+#endif
 
         std::string msg;
         stream >> msg;

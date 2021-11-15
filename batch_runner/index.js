@@ -23,7 +23,7 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
 
     process.chdir(cwd);
 
-    promises.push(exec(`${path.join(origCwd, 'to_delete', 'local', 'build', 'bin', 'server')} ${level} ${data.versions.length} ${(Math.abs(rng.int32() % 1000))}`, { stdio: 'inherit', maxBuffer: 10000000 }));
+    const serverPromise = exec(`${path.join(origCwd, 'to_delete', 'local', 'build', 'bin', 'server')} ${level} ${data.versions.length} ${(Math.abs(rng.int32() % 1000))}`, { stdio: 'inherit', maxBuffer: 10000000 });
 
     process.chdir(origCwd);
 
@@ -42,7 +42,11 @@ const runMatch = async (level, runCount, data, rng, batchFolderName) => {
     };
 
     try {
-        await Promise.all(promises);
+        const resolves = await Promise.all(promises);
+        await serverPromise;
+        for (const [player, element] of resolves.entries()) {
+            fs.writeFileSync(path.join(cwd, `p${player + 1}_${data.versions[player]}`), element.stdout);
+        }
 
         const result = JSON.parse(fs.readFileSync(`${cwd}/result.json`, 'utf8'));
 
@@ -190,14 +194,14 @@ const main = async () => {
         const folder = `to_delete/${version}`;
         execSync(`git clone https://github.com/wolfee001/vampire.git ${folder}`, { stdio: 'inherit' });
         execSync(`git checkout ${version}`, { stdio: 'inherit', cwd: folder });
-        execSync(`cmake -B ${folder}/build ${folder} -DTICK_TIMEOUT=${data.timeout} -DPLAYER_TOKEN=${version}@${data.timeout}`, { stdio: 'inherit' });
+        execSync(`cmake -B ${folder}/build ${folder} -DTICK_TIMEOUT=${data.timeout} -DPLAYER_TOKEN=${version}@${data.timeout} -DCONSOLE_LOG=1`, { stdio: 'inherit' });
         execSync(`cmake --build ${folder}/build --target vampire`, { stdio: 'inherit' });
     }
 
     console.log('Collecting enemy versions and building them... DONE!');
     console.log('Building local version...');
 
-    execSync(`cmake -B to_delete/local/build ../ -DTICK_TIMEOUT=${data.timeout} -DPLAYER_TOKEN=local@${data.timeout}`, { stdio: 'inherit' });
+    execSync(`cmake -B to_delete/local/build ../ -DTICK_TIMEOUT=${data.timeout} -DPLAYER_TOKEN=local@${data.timeout} -DCONSOLE_LOG=1`, { stdio: 'inherit' });
     execSync(`cmake --build to_delete/local/build --target vampire server --config Release`, { stdio: 'inherit' });
 
     console.log('Building local version... DONE!');

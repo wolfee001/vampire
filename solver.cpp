@@ -128,5 +128,11 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
     Framework::GetInstance().Step(commands);
 #endif
 
+#ifdef CONSOLE_LOG
+    for (const auto& element : commands) {
+        std::cout << "< " << element << std::endl;
+    }
+#endif
+
     return commands;
 }

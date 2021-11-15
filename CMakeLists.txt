@@ -20,6 +20,10 @@ if(PLAYER_TOKEN)
     add_compile_definitions(TOKEN="${PLAYER_TOKEN}")
 endif()
 
+if(CONSOLE_LOG)
+    add_compile_definitions(CONSOLE_LOG)
+endif()
+
 #-------------- SETUPS
 add_library(project_options INTERFACE)
 target_compile_features(project_options INTERFACE cxx_std_17)

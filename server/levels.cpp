@@ -221,10 +221,10 @@ Levels::Levels()
             },
             {
                 "REQ 55544 0 1",
-                "VAMPIRE 2 13 1 3 1 3 0",
-                "VAMPIRE 1 1 1 3 1 3 0",
-                "VAMPIRE 3 13 13 3 1 3 0",
-                "VAMPIRE 4 1 13 3 1 3 0",
+                "VAMPIRE 1 1 1 3 1 2 0",
+                "VAMPIRE 2 1 17 3 1 2 0",
+                "VAMPIRE 3 17 1 3 1 2 0",
+                "VAMPIRE 4 17 17 3 1 2 0",
             }
         }
     };

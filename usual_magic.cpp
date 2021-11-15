@@ -766,8 +766,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 						continue;
 					if (pp == ep && bp == pp)
 						et.bombonitem = true;
-					else if (et.prevpos.GetDist(pp) == 1 && bp == et.prevpos && 
-						 pc != '-' && pc != '+' && pc != '*')
+					else if (et.prevpos.GetDist(pp) == 1 && bp == et.prevpos && pc == ' ')
 						et.bombnexttoitem = true;
 				}
 			}
@@ -801,7 +800,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			continue;
 		for (const auto& powerup : tickDescription.mPowerUps) {
 			pos_t pp(powerup.mY, powerup.mX);
-			if (pp == p && powerup.mRemainingTick >= -3) {
+			if (pp == p) {
 				bool importantitem = powerup.mType == PowerUp::Type::Tomato && me.mHealth < 3 || powerup.mType == PowerUp::Type::Shoe;
 				bool attackableenemy = false;
 				bool dangerousbomber = false;
@@ -967,7 +966,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		if (best == -1) {
 			cerr << "no target" << endl; 
 			// we gonna fall to temporary...or should we go for closest bad target
-			if (tickDescription.mRequest.mTick < 150) {
+			if (tickDescription.mRequest.mTick < 150 && tickDescription.mAllBats.size() > 8) {
 				cerr << "than we are still in phase1" << endl; 
 				mInPhase1 = true;
 			}
@@ -1041,13 +1040,20 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 //		bombseqbatcnt = true;
 		bombtimeout = mTimeout.count();
 		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30, true); // todo how many steps (not turns) ahead
-		mPhase = PHASE1;
-		mPath = seq;
-		cerr << "phase1 seq";
-		for(auto p : seq)
-			cerr << p;
-		cerr << ' ' << bestbombseqval << endl;
-	} else {
+		if (seq.empty())
+			mInPhase1 = false;
+		else {
+			mPhase = PHASE1;
+			mPath = seq;
+			cerr << "phase1 seq";
+			for(auto p : seq)
+				cerr << p;
+			cerr << ' ' << bestbombseqval << endl;
+			return answer;
+		}
+	} 
+	
+	{
 		cerr << "between items or charge" << endl;
 		vector<pos_t> targets;
 		vector<int> closestenemydist;

@@ -800,7 +800,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			continue;
 		for (const auto& powerup : tickDescription.mPowerUps) {
 			pos_t pp(powerup.mY, powerup.mX);
-			if (pp == p) {
+			if (pp == p && blockcnt(m, pp) == 2) {
 				bool importantitem = powerup.mType == PowerUp::Type::Tomato && me.mHealth < 3 || powerup.mType == PowerUp::Type::Shoe;
 				bool attackableenemy = false;
 				bool dangerousbomber = false;

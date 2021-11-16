@@ -165,6 +165,16 @@ public:
         return answer;
     }
 
+    void Print() const
+    {
+        const auto answer = GetAnswer();
+        std::cerr << "grenade: " << answer.mPlaceGrenade << " moves: ";
+        for (const auto& step : answer.mSteps) {
+            std::cerr << step;
+        }
+        std::cerr << std::endl;
+    }
+
     static const constexpr ActionSequence_t MaxSequenceId = ((21 + 3 * (1) + 3 * (4) + 3 * (4 * 4)) << 1) + 1; // bomb, right, right, right
 
 private:

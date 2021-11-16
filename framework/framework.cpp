@@ -434,14 +434,30 @@ void Framework::Render()
             }
         }
 
+        std::map<std::pair<int, int>, std::vector<const Vampire*>> vampires;
+        if (mTickDescription.mMe.mHealth > 0) {
+            vampires[{ mTickDescription.mMe.mX, mTickDescription.mMe.mY }].push_back(&mTickDescription.mMe);
+        }
         for (const auto& vampire : mTickDescription.mEnemyVampires) {
-            ImVec2 vampirePos = ImVec2(p.x + static_cast<float>(vampire.mX) * 34 + 1, p.y + static_cast<float>(vampire.mY) * 34 + 1);
-            draw_list->AddImage(mAssets[mVampireAvatarMapping[vampire.mId]], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
+            vampires[{ vampire.mX, vampire.mY }].push_back(&vampire);
         }
 
-        {
-            ImVec2 myPos = ImVec2(p.x + static_cast<float>(mTickDescription.mMe.mX) * 34 + 1, p.y + static_cast<float>(mTickDescription.mMe.mY) * 34 + 1);
-            draw_list->AddImage(mAssets["vampire1"], myPos, ImVec2(myPos.x + 32, myPos.y + 32));
+        for (const auto& [position, vamps] : vampires) {
+            if (vamps.size() == 1) {
+                std::string vampImage = vamps[0]->mId == mTickDescription.mMe.mId ? "vampire1" : mVampireAvatarMapping[vamps[0]->mId];
+                ImVec2 vampirePos = ImVec2(p.x + static_cast<float>(position.first) * 34 + 1, p.y + static_cast<float>(position.second) * 34 + 1);
+                draw_list->AddImage(mAssets[vampImage], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
+            } else {
+                std::vector<ImVec2> positions = { ImVec2(p.x + static_cast<float>(position.first) * 34 + 1, p.y + static_cast<float>(position.second) * 34 + 1),
+                    ImVec2(p.x + static_cast<float>(position.first) * 34 + 1 + 16, p.y + static_cast<float>(position.second) * 34 + 1),
+                    ImVec2(p.x + static_cast<float>(position.first) * 34 + 1, p.y + static_cast<float>(position.second) * 34 + 1 + 16),
+                    ImVec2(p.x + static_cast<float>(position.first) * 34 + 1 + 16, p.y + static_cast<float>(position.second) * 34 + 1 + 16) };
+                for (size_t i = 0; i < vamps.size(); ++i) {
+                    std::string vampImage = vamps[i]->mId == mTickDescription.mMe.mId ? "vampire1" : mVampireAvatarMapping[vamps[i]->mId];
+                    const ImVec2& position = positions[i];
+                    draw_list->AddImage(mAssets[vampImage], position, ImVec2(position.x + 16, position.y + 16));
+                }
+            }
         }
 
         for (const auto& grenade : mTickDescription.mGrenades) {

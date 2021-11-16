@@ -483,7 +483,7 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 	if (step > bombseqmaxstep) {
 //		for(auto b : bombseq)
 //			cerr << b << ' ';
-		int v = (bombseqbatcnt ? batcnt(m) : (bombs.first + 1)) * 100 - step;
+		int v = (bombseqbatcnt ? (1000 - batcnt(m)) : (bombs.first + 1)) * 100 - step;
 //		cerr << v << endl;
 		MAXA2(bestbombseqval, v, bestbombseq, bombseq);
 		return;
@@ -764,13 +764,13 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		for(const auto& enemy: tickDescription.mEnemyVampires) {
 			enemypredict_t& et = mEnemyPredict[enemy.mId];
 			pos_t ep(enemy.mY, enemy.mX);
-			if (et.prevpos != ep && enemy.mGrenadeRange == 0) // still has one more bomb (to finish attempt)
+			if (et.prevpos != ep && enemy.mGrenadeRange == 0) // still has one more bomb (to finish attempt) - also assures that we are "after" phase1
 				continue;
 			for(const auto& bomb: tickDescription.mGrenades) {
 				pos_t bp(bomb.mY, bomb.mX);
 				if (bomb.mId != enemy.mId)
 					continue;
-				if (et.prevpos == bp) {
+				if (et.prevpos == bp) { // just put a bomb there
 					for(const auto& pred : mEnemyPredict) {
 						pos_t otherprev = pred.second.prevpos;
 						if (otherprev == ep || (otherprev.GetDist(ep) == 1 && otherprev.GetDist(et.prevpos) == 2)) {

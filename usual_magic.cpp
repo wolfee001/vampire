@@ -860,8 +860,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	}
 
 	bool wantcharge = false;
-#if 1
-	if (true) {
+	{
 		if (me.mPlacableGrenades >= 1 && m[mypos.y][mypos.x] == ' ') {
 			if (nextmap[mypos.y][mypos.x] == '.') {
 				map_t test = m;
@@ -919,7 +918,6 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			wantcharge = true;
 #endif
 	}
-#endif
 
 	if (!tickDescription.mPowerUps.empty()) {
 
@@ -987,7 +985,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		if (best == -1) {
 			cerr << "no target" << endl; 
 			// we gonna fall to temporary...or should we go for closest bad target
-			if (tickDescription.mRequest.mTick < 150 && tickDescription.mAllBats.size() > 8) {
+			if (tickDescription.mRequest.mTick < 150 && tickDescription.mAllBats.size() >= 4) {
 				cerr << "than we are still in phase1" << endl; 
 				mInPhase1 = true;
 			}

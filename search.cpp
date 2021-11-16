@@ -149,11 +149,11 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
-            const Answer move = action.GetAnswer();
-            if (!simulator.IsValidMove(mPlayerId, move)) {
+            if (!simulator.IsValidMove(mPlayerId, action)) {
                 continue;
             }
 
+            const Answer move = action.GetAnswer();
             if (mLevels.size() == 2 && mAvoids && action.GetNumberOfSteps() > 0) {
                 if ((mAvoids & 1) && move.mSteps[0] == 'U')
                     continue;

@@ -308,6 +308,7 @@ void GUI::Run()
                     case PowerUp::Type::Tomato:
                         return "tomato";
                     }
+                    throw std::runtime_error("unknown type");
                 }(pu.mType);
                 ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
                 draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32), { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, 128));

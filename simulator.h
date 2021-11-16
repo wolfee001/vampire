@@ -1,5 +1,6 @@
 #pragma once
 
+#include "action_sequence.h"
 #include "models.h"
 #include <bitset>
 #include <unordered_map>
@@ -22,6 +23,11 @@ public:
         void insert(int x, int y);
         void clear(int x, int y);
         const AreaVector& getAsVector() const;
+
+        bool operator==(const Area& other) const
+        {
+            return mAreas == other.mAreas && mMapSize == other.mMapSize && mVectorIsValid == other.mVectorIsValid && mVector == other.mVector;
+        }
     };
     struct BlowArea {
         BlowArea(int mapSize)
@@ -42,6 +48,7 @@ public:
     void SetVampireMove(int id, const Answer& move);
     std::pair<TickDescription, NewPoints> Tick();
     bool IsValidMove(int id, const Answer& move) const;
+    bool IsValidMove(int id, const ActionSequence& move) const;
     std::vector<BlowArea> GetBlowAreas(const bool blowNow = false);
     Area GetBlowArea(const Grenade& grenade);
     const Area& GetReachableArea() const;

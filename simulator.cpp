@@ -55,24 +55,24 @@ Simulator::Simulator(const GameDescription& gameDescription)
 
 void Simulator::SetState(const TickDescription& state)
 {
-    mState = state;
-    mValid = true;
     if (mGameDescription.mMapSize != 0) {
-        mReachableArea = Area(mGameDescription.mMapSize);
-        for (const auto& bat : state.mAllBats) {
-            mReachableArea.insert(bat.mX, bat.mY);
-        }
-        for (const auto& grenade : state.mGrenades) {
-            mReachableArea.insert(grenade.mX, grenade.mY);
-        }
-        for (int x = 0; x < mGameDescription.mMapSize; ++x) {
-            for (int y = 0; y < mGameDescription.mMapSize; ++y) {
-                if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
-                    mReachableArea.insert(x, y);
+        if (mState.mAllBats != state.mAllBats || mState.mGrenades != state.mGrenades || !mReachableArea.mAreas.any()) {
+            mReachableArea = Area(mGameDescription.mMapSize);
+            for (const auto& bat : state.mAllBats) {
+                mReachableArea.insert(bat.mX, bat.mY);
+            }
+            for (const auto& grenade : state.mGrenades) {
+                mReachableArea.insert(grenade.mX, grenade.mY);
+            }
+            for (int x = 0; x < mGameDescription.mMapSize; ++x) {
+                for (int y = 0; y < mGameDescription.mMapSize; ++y) {
+                    if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
+                        mReachableArea.insert(x, y);
+                    }
                 }
             }
+            mReachableArea.mAreas.flip();
         }
-        mReachableArea.mAreas.flip();
 
         mLitArea = Area(mGameDescription.mMapSize);
         if (state.mRequest.mTick >= mGameDescription.mMaxTick) {
@@ -92,6 +92,9 @@ void Simulator::SetState(const TickDescription& state)
             }
         }
     }
+
+    mState = state;
+    mValid = true;
 }
 
 const Simulator::Area& Simulator::GetReachableArea() const
@@ -296,6 +299,7 @@ void Simulator::BlowUpGrenades()
         mState.mGrenades.end());
 
     std::vector<BatSquad> survivorBats;
+    survivorBats.reserve(mState.mAllBats.size());
 
     for (const auto& bat : mState.mAllBats) {
         int injured = 0;
@@ -312,7 +316,7 @@ void Simulator::BlowUpGrenades()
         if (bat.mDensity > injured) {
             survivorBats.emplace_back(bat).mDensity -= injured;
         } else {
-            mReachableArea.clear(bat.mX, bat.mY);
+            mReachableArea.insert(bat.mX, bat.mY);
         }
     }
     mState.mAllBats = survivorBats;
@@ -484,6 +488,11 @@ void Simulator::Move()
 
 bool Simulator::IsValidMove(int id, const Answer& move) const
 {
+    return IsValidMove(id, ActionSequence(move));
+}
+
+bool Simulator::IsValidMove(int id, const ActionSequence& move) const
+{
     const Vampire* vampire = nullptr;
 
     if (mState.mMe.mId == id) {
@@ -498,10 +507,10 @@ bool Simulator::IsValidMove(int id, const Answer& move) const
     }
 
     if (vampire == nullptr) {
-        CHECK(false, "Invalid id!");
+        CHECK(false, "Invalid id: " + std::to_string(id));
     }
 
-    if (move.mPlaceGrenade) {
+    if (move.IsGrenade()) {
         if (vampire->mGhostModeTick != 0) {
             return false;
         }
@@ -509,27 +518,36 @@ bool Simulator::IsValidMove(int id, const Answer& move) const
             return false;
         }
     }
-    if (move.mSteps.size() > 3) {
+
+    const auto numberOfSteps = move.GetNumberOfSteps();
+    if (numberOfSteps > 2 && vampire->mRunningShoesTick == 0) {
         return false;
     }
 
-    if (move.mSteps.size() > 2 && vampire->mRunningShoesTick == 0) {
+    if (numberOfSteps > 3) {
         return false;
     }
 
     int x = vampire->mX;
     int y = vampire->mY;
-    for (const auto& d : move.mSteps) {
-        if (d == 'U') {
+    for (int n = 0; n < numberOfSteps; ++n) {
+        const auto d = move.GetNthStep(n);
+
+        switch (d) {
+        case 0:
             y--;
-        } else if (d == 'R') {
-            x++;
-        } else if (d == 'D') {
+            break;
+        case 1:
             y++;
-        } else if (d == 'L') {
+            break;
+        case 2:
             x--;
-        } else {
-            CHECK(false, "Invalid direction!");
+            break;
+        case 3:
+            x++;
+            break;
+        default:
+            throw std::runtime_error("Invalid step");
         }
 
         if (!mReachableArea.find(x, y)) {

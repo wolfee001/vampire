@@ -122,6 +122,11 @@ struct TickDescription {
 struct Answer {
     bool mPlaceGrenade = false;
     std::vector<char> mSteps;
+
+    bool operator==(const Answer& other) const
+    {
+        return mPlaceGrenade == other.mPlaceGrenade && mSteps == other.mSteps;
+    }
 };
 
 struct pos_t {

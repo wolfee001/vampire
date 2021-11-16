@@ -541,7 +541,7 @@ vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep, bool batco
 	return bestbombseq;
 }
 
-int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescription, const Vampire& vampire)
+int getdist(map_t m, vector<pos_t> targets, const TickDescription& tickDescription, const Vampire& vampire, int avoids = 0)
 {
 	vector<event_t> events;
 	if (vampire.mRunningShoesTick > 0)
@@ -554,7 +554,14 @@ int getdist(map_t& m, vector<pos_t> targets, const TickDescription& tickDescript
 		events.push_back(event_t(0, 4, 1));
 		events.push_back(event_t(vampire.mGhostModeTick, 4, -1));
 	}
-    return getdist(m, pos_t(vampire.mY, vampire.mX), targets, vampire.mGrenadeRange, vampire.mRunningShoesTick > 0 ? 3 : 2, vampire.mGhostModeTick ? 0 : vampire.mPlacableGrenades, events);
+	pos_t p(vampire.mY, vampire.mX);
+	FOR0(d, 4) {
+		if ((avoids & (1 << d)) == 0)
+			continue;
+		pos_t p2 = p.GetPos(d);
+		m[p2.y][p2.x] = 'O';
+	}
+    return getdist(m, p, targets, vampire.mGrenadeRange, vampire.mRunningShoesTick > 0 ? 3 : 2, vampire.mGhostModeTick ? 0 : vampire.mPlacableGrenades, events);
 }
 
 int blockcnt(map_t& m, pos_t p)
@@ -757,7 +764,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		for(const auto& enemy: tickDescription.mEnemyVampires) {
 			enemypredict_t& et = mEnemyPredict[enemy.mId];
 			pos_t ep(enemy.mY, enemy.mX);
-			if (et.prevpos != ep && enemy.mGrenadeRange > 0) // has one more bomb
+			if (et.prevpos != ep && enemy.mGrenadeRange == 0) // still has one more bomb (to finish attempt)
 				continue;
 			for(const auto& bomb: tickDescription.mGrenades) {
 				pos_t bp(bomb.mY, bomb.mX);
@@ -944,7 +951,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			FOR0(i, SZ(targets))
 				MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], ei);
 		}
-		getdist(m, targets, tickDescription, me);
+		getdist(m, targets, tickDescription, me, mAvoids);
 
 		int best = -1;
 		int closest = MAXTURN + 1;

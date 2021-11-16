@@ -1,0 +1,36 @@
+{
+  "crashes": null,
+  "game": {
+    "id": 1636960317,
+    "level": 6,
+    "maxTick": 900,
+    "seed": 737,
+    "size": 21
+  },
+  "results": [
+    {
+      "lastTick": 1012,
+      "player": 1,
+      "score": 2839.0,
+      "version": "final_v2b@600"
+    },
+    {
+      "lastTick": 1012,
+      "player": 2,
+      "score": 2725.0,
+      "version": "final_v2@600"
+    },
+    {
+      "lastTick": 1011,
+      "player": 3,
+      "score": 2445.0,
+      "version": "final_v1@600"
+    },
+    {
+      "lastTick": 503,
+      "player": 4,
+      "score": 1227.47998046875,
+      "version": "semifinal@600"
+    }
+  ]
+}

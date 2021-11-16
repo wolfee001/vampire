@@ -39,10 +39,12 @@ public:
 				" error code: " + std::to_string(socketerrno));
 		}
 
+#ifndef CONSOLE_LOG
 		// please use std::cerr for logging. 
 		std::cout.rdbuf(nullptr);
 		std::cout.exceptions(std::ios_base::failbit);
 		std::fclose(stdout);
+#endif
 	}
 
 	virtual ~socket_connector() = default;

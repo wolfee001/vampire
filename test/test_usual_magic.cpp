@@ -603,13 +603,14 @@ void checkbombsequence(map_t m, int r, int maxstep)
 		} else
 			repeat = 0;
 	}
-	auto res = bombsequence(m, start, r, maxstep);
+	auto res = bombsequence(m, start, r, maxstep, false);
 	ASSERT_EQ(res, expect);
 }
 
 // tests should have clear winner
 TEST(UsualMagic, BombSequence)
 {
+	// note: all these tests are for freecell count, not batcount
     checkbombsequence(
 		{ { 
             "OOOOO", 
@@ -687,8 +688,13 @@ int checkavoid(map_t m)
 				m[y][x] = ' ';
 				start = pos_t(static_cast<int>(y), static_cast<int>(x));
 			}
+			else if (m[y][x] == 'e') {
+				m[y][x] = ' ';
+				enemies.push_back(pos_t(static_cast<int>(y), static_cast<int>(x)));
+			}
 			else if (m[y][x] == 'E') {
 				m[y][x] = ' ';
+				enemies.push_back(pos_t(static_cast<int>(y), static_cast<int>(x)));
 				enemies.push_back(pos_t(static_cast<int>(y), static_cast<int>(x)));
 			}
 		}
@@ -703,10 +709,17 @@ TEST(UsualMagic, Avoids)
 	ASSERT_EQ(checkavoid(
 		{ { 
             "OOOOO", 
-            "O P2O", 
+            "O P3O", 
             "O O O", 
             "O   O", 
-            "OOOOO" } }) & 16, 16);
+            "OOOOO" } }) & 16, 0);
+	ASSERT_EQ(checkavoid(
+		{ { 
+            "OOOOO", 
+            "O PeO", 
+            "O O O", 
+            "O   O", 
+            "OOOOO" } }) & 16, 0);
 	ASSERT_EQ(checkavoid(
 		{ { 
             "OOOOO", 

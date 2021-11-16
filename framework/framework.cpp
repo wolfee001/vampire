@@ -105,6 +105,10 @@ void Framework::Render()
                     bool oldRecord = mRecordGame;
                     mRecordGame = false;
                     mPlayBook.mSolver.startMessage(mPlayBook.mGameLoader.GetDescription().mMessage);
+                    if (mPlayBook.mStep > 0) {
+                        GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                        mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                    }
                     GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                     const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                     if (resp != step.mAnswerMessage) {
@@ -161,6 +165,10 @@ void Framework::Render()
                             std::vector<GameLoader::Step> steps = mPlayBook.mGameLoader.GetStepUntil(mPlayBook.mStep);
                             std::thread t([steps, &mPlayBook = mPlayBook]() {
                                 for (const auto& element : steps) {
+                                    if (mPlayBook.mStep > 0) {
+                                        GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                        mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                    }
                                     const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
                                     if (resp != element.mAnswerMessage) {
                                         mPlayBook.mIsCorrupted = true;
@@ -173,6 +181,10 @@ void Framework::Render()
                         } else {
                             GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                             std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
+                                if (mPlayBook.mStep > 0) {
+                                    GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                    mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                }
                                 const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                 mVampireCumulatedPoints = step.mPoints;
                                 if (resp != step.mAnswerMessage) {
@@ -203,6 +215,10 @@ void Framework::Render()
                                 std::thread t([steps, &mPlayBook = mPlayBook]() {
                                     mPlayBook.mSteppingDisabled = true;
                                     for (const auto& element : steps) {
+                                        if (mPlayBook.mStep > 0) {
+                                            GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                            mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                        }
                                         const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
                                         if (resp != element.mAnswerMessage) {
                                             mPlayBook.mIsCorrupted = true;
@@ -216,6 +232,10 @@ void Framework::Render()
                                 GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                                 std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
                                     mPlayBook.mSteppingDisabled = true;
+                                    if (mPlayBook.mStep > 0) {
+                                        GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                        mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                    }
                                     const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                     mVampireCumulatedPoints = step.mPoints;
                                     if (resp != step.mAnswerMessage) {
@@ -248,6 +268,10 @@ void Framework::Render()
                                             Framework::GetInstance().Update(step.mTick, step.mTickMessage);
                                             mVampireCumulatedPoints = step.mPoints;
                                         } else {
+                                            if (mPlayBook.mStep > 0) {
+                                                GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                                mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                            }
                                             const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                             if (resp != step.mAnswerMessage) {
                                                 mPlayBook.mIsCorrupted = true;
@@ -278,6 +302,10 @@ void Framework::Render()
                         } else {
                             std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
                                 mPlayBook.mSteppingDisabled = true;
+                                if (mPlayBook.mStep > 0) {
+                                    GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                    mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                }
                                 const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                 if (resp != step.mAnswerMessage) {
                                     mPlayBook.mIsCorrupted = true;
@@ -406,14 +434,30 @@ void Framework::Render()
             }
         }
 
+        std::map<std::pair<int, int>, std::vector<const Vampire*>> vampires;
+        if (mTickDescription.mMe.mHealth > 0) {
+            vampires[{ mTickDescription.mMe.mX, mTickDescription.mMe.mY }].push_back(&mTickDescription.mMe);
+        }
         for (const auto& vampire : mTickDescription.mEnemyVampires) {
-            ImVec2 vampirePos = ImVec2(p.x + static_cast<float>(vampire.mX) * 34 + 1, p.y + static_cast<float>(vampire.mY) * 34 + 1);
-            draw_list->AddImage(mAssets[mVampireAvatarMapping[vampire.mId]], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
+            vampires[{ vampire.mX, vampire.mY }].push_back(&vampire);
         }
 
-        {
-            ImVec2 myPos = ImVec2(p.x + static_cast<float>(mTickDescription.mMe.mX) * 34 + 1, p.y + static_cast<float>(mTickDescription.mMe.mY) * 34 + 1);
-            draw_list->AddImage(mAssets["vampire1"], myPos, ImVec2(myPos.x + 32, myPos.y + 32));
+        for (const auto& [position, vamps] : vampires) {
+            if (vamps.size() == 1) {
+                std::string vampImage = vamps[0]->mId == mTickDescription.mMe.mId ? "vampire1" : mVampireAvatarMapping[vamps[0]->mId];
+                ImVec2 vampirePos = ImVec2(p.x + static_cast<float>(position.first) * 34 + 1, p.y + static_cast<float>(position.second) * 34 + 1);
+                draw_list->AddImage(mAssets[vampImage], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
+            } else {
+                std::vector<ImVec2> positions = { ImVec2(p.x + static_cast<float>(position.first) * 34 + 1, p.y + static_cast<float>(position.second) * 34 + 1),
+                    ImVec2(p.x + static_cast<float>(position.first) * 34 + 1 + 16, p.y + static_cast<float>(position.second) * 34 + 1),
+                    ImVec2(p.x + static_cast<float>(position.first) * 34 + 1, p.y + static_cast<float>(position.second) * 34 + 1 + 16),
+                    ImVec2(p.x + static_cast<float>(position.first) * 34 + 1 + 16, p.y + static_cast<float>(position.second) * 34 + 1 + 16) };
+                for (size_t i = 0; i < vamps.size(); ++i) {
+                    std::string vampImage = vamps[i]->mId == mTickDescription.mMe.mId ? "vampire1" : mVampireAvatarMapping[vamps[i]->mId];
+                    const ImVec2& position = positions[i];
+                    draw_list->AddImage(mAssets[vampImage], position, ImVec2(position.x + 16, position.y + 16));
+                }
+            }
         }
 
         for (const auto& grenade : mTickDescription.mGrenades) {

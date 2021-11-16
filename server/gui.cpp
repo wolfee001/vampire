@@ -25,6 +25,7 @@
 
 #include "server.h"
 
+#include "../check.h"
 #include "../simulator.h"
 
 static void glfw_error_callback(int error, const char* description)
@@ -103,11 +104,14 @@ void GUI::Run()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL2_Init();
 
+    srand(time(nullptr));
+
     // Our state
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool gameIsRunning = false;
     int mapSelector = 0;
     int playerCount = 3;
+    int seed = rand() % 1000;
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -124,22 +128,31 @@ void GUI::Run()
 
         {
             ImGui::SetNextWindowPos({ 0, 0 });
-            ImGui::SetNextWindowSize({ 278, 123 });
+            ImGui::SetNextWindowSize({ 278, 140 });
             ImGui::Begin("Server", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
             ImGui::Text(gameIsRunning ? "GAME IS RUNNING!" : "READY TO PLAY");
             ImGui::BeginDisabled(gameIsRunning);
-            ImGui::Combo("Select map", &mapSelector, " 1\0 2\0 3\0 4\0 5\0 6\0 7\0 8\0 9\0 10\0");
+            ImGui::SetNextItemWidth(170.F);
+            ImGui::Combo("Select map", &mapSelector, " 1\0 2\0 3\0 4\0 5\0 6\0 7\0 8\0 9\0 10\0 EMPTY\0");
+            ImGui::SetNextItemWidth(170.F);
             ImGui::Combo("Player", &playerCount, " 1\0 2\0 3\0 4\0");
+            ImGui::SetNextItemWidth(170.F);
+            ImGui::InputInt("Seed", &seed);
+            ImGui::SameLine();
+            if (ImGui::Button("RANDOM")) {
+                seed = rand() % 1000;
+            }
             if (ImGui::Button("START")) {
                 mGameDescription = {};
                 mTickDescription = {};
                 mCumulatedPoints = {};
                 mVampireNames = {};
-                std::thread t([&gameIsRunning, &mapSelector, &playerCount]() {
+                std::thread t([&gameIsRunning, &mapSelector, &playerCount, &seed]() {
                     gameIsRunning = true;
                     Levels levels;
-                    RunGame(playerCount + 1, levels.mLevels[mapSelector], time(nullptr));
+                    RunGame(playerCount + 1, levels.mLevels[mapSelector], seed);
                     gameIsRunning = false;
+                    seed = rand() % 1000;
                 });
                 t.detach();
             }
@@ -160,7 +173,7 @@ void GUI::Run()
                     vamps.push_back(*it);
                 }
             }
-            ImGui::SetNextWindowPos({ 0, 123 });
+            ImGui::SetNextWindowPos({ 0, 140 });
             ImGui::SetNextWindowSize({ 278, 455 });
             ImGui::Begin("Vampires###ServerVampires", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
@@ -242,14 +255,29 @@ void GUI::Run()
                 }
             }
 
+            std::map<std::pair<int, int>, std::vector<const Vampire*>> vampires;
+            if (mTickDescription.mMe.mHealth > 0) {
+                vampires[{ mTickDescription.mMe.mX, mTickDescription.mMe.mY }].push_back(&mTickDescription.mMe);
+            }
             for (const auto& vampire : mTickDescription.mEnemyVampires) {
-                ImVec2 vampirePos = ImVec2(p.x + static_cast<float>(vampire.mX) * 34 + 1, p.y + static_cast<float>(vampire.mY) * 34 + 1);
-                draw_list->AddImage(mAssets["vampire" + std::to_string(vampire.mId)], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
+                vampires[{ vampire.mX, vampire.mY }].push_back(&vampire);
             }
 
-            {
-                ImVec2 myPos = ImVec2(p.x + static_cast<float>(mTickDescription.mMe.mX) * 34 + 1, p.y + static_cast<float>(mTickDescription.mMe.mY) * 34 + 1);
-                draw_list->AddImage(mAssets["vampire1"], myPos, ImVec2(myPos.x + 32, myPos.y + 32));
+            for (const auto& [position, vamps] : vampires) {
+                if (vamps.size() == 1) {
+                    ImVec2 vampirePos = ImVec2(p.x + static_cast<float>(position.first) * 34 + 1, p.y + static_cast<float>(position.second) * 34 + 1);
+                    draw_list->AddImage(mAssets["vampire" + std::to_string(vamps[0]->mId)], vampirePos, ImVec2(vampirePos.x + 32, vampirePos.y + 32));
+                } else {
+                    std::vector<ImVec2> positions
+                        = { ImVec2(p.x + static_cast<float>(position.first) * 34 + 1, p.y + static_cast<float>(position.second) * 34 + 1),
+                              ImVec2(p.x + static_cast<float>(position.first) * 34 + 1 + 16, p.y + static_cast<float>(position.second) * 34 + 1),
+                              ImVec2(p.x + static_cast<float>(position.first) * 34 + 1, p.y + static_cast<float>(position.second) * 34 + 1 + 16),
+                              ImVec2(p.x + static_cast<float>(position.first) * 34 + 1 + 16, p.y + static_cast<float>(position.second) * 34 + 1 + 16) };
+                    for (size_t i = 0; i < vamps.size(); ++i) {
+                        const ImVec2& position = positions[i];
+                        draw_list->AddImage(mAssets["vampire" + std::to_string(vamps[i]->mId)], position, ImVec2(position.x + 16, position.y + 16));
+                    }
+                }
             }
 
             for (const auto& grenade : mTickDescription.mGrenades) {
@@ -308,7 +336,11 @@ void GUI::Run()
                     case PowerUp::Type::Tomato:
                         return "tomato";
                     }
+<<<<<<< HEAD
                     throw std::runtime_error("unknown type");
+=======
+                    CHECK(false, "Unhandled type");
+>>>>>>> 56b05026c76d6abdd9cb7e09987086b3ba27acf3
                 }(pu.mType);
                 ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
                 draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32), { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, 128));

@@ -24,4 +24,5 @@ private:
     Simulator mSimulator;
     std::map<int, float> mCumulatedPoints;
     int mNextPowerupTick = 0;
+    TickDescription mPrevTick;
 };

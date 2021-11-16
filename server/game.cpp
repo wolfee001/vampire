@@ -13,8 +13,13 @@ Game::Game(const GameDescription& gd, const TickDescription& zeroTick, int playe
         std::remove_if(tick.mEnemyVampires.begin(), tick.mEnemyVampires.end(), [&playerCount](const auto& vampire) { return vampire.mId > playerCount; }),
         tick.mEnemyVampires.end());
     mSimulator.SetState(tick);
+    mPrevTick = tick;
 
-    mNextPowerupTick = mGameDescription.mMapSize * mGameDescription.mMapSize / 3;
+    if (!zeroTick.mAllBats.empty()) {
+        mNextPowerupTick = mGameDescription.mMapSize * mGameDescription.mMapSize / 3;
+    } else {
+        mNextPowerupTick = 40;
+    }
 
     GUI::GetInstance().SetGameDescription(mGameDescription);
     GUI::GetInstance().Update(tick, mCumulatedPoints);
@@ -39,17 +44,18 @@ std::pair<TickDescription, std::vector<std::pair<int, float>>> Game::Tick()
     if (tickResp.first.mMe.mHealth < 1) {
         retVal.second.emplace_back(1, mCumulatedPoints[1]);
     }
-    for (int i = 2; i < 5; ++i) {
-        if (std::find_if(tickResp.first.mEnemyVampires.begin(), tickResp.first.mEnemyVampires.end(),
-                [i](const auto& element) { return element.mId == i && element.mHealth < 1; })
-            != tickResp.first.mEnemyVampires.end()) {
-            retVal.second.emplace_back(i, mCumulatedPoints[i]);
+
+    for (const auto& v : mPrevTick.mEnemyVampires) {
+        if (std::find_if(tickResp.first.mEnemyVampires.begin(), tickResp.first.mEnemyVampires.end(), [&v](const auto& element) { return element.mId == v.mId; })
+            == tickResp.first.mEnemyVampires.end()) {
+            retVal.second.emplace_back(v.mId, mCumulatedPoints[v.mId]);
         }
     }
 
     GeneratePowerups(tickResp.first);
 
     mSimulator.SetState(tickResp.first);
+    mPrevTick = tickResp.first;
 
     return retVal;
 }
@@ -82,8 +88,12 @@ void Game::GeneratePowerups(TickDescription& tick)
         const int pre = 5 + rand() % 6;
         const int duration = 10 + rand() % 11;
 
+        int alivePlayers = tick.mEnemyVampires.size() + (tick.mMe.mHealth > 0 ? 1 : 0);
+
         tick.mPowerUps.push_back({ type, -pre, position.first, position.second, duration });
-        tick.mPowerUps.push_back({ type, -pre, mGameDescription.mMapSize - position.first - 1, mGameDescription.mMapSize - position.second - 1, duration });
+        if (alivePlayers > 2) {
+            tick.mPowerUps.push_back({ type, -pre, mGameDescription.mMapSize - position.first - 1, mGameDescription.mMapSize - position.second - 1, duration });
+        }
     }
     if (!tick.mPowerUps.empty()) {
         return;

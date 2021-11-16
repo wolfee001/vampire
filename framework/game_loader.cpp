@@ -63,7 +63,7 @@ GameLoader::GameLoader(const std::string& fileName)
         mSteps.push_back(step);
     }
 
-    std::map<int, float> cumulatedPoints;
+    Simulator::NewPoints cumulatedPoints;
     Simulator simulator(mDescription.mGameDescription);
     for (size_t i = 1; i < mSteps.size(); ++i) {
         auto& step = mSteps[i];

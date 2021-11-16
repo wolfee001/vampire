@@ -456,7 +456,7 @@ std::chrono::time_point<std::chrono::steady_clock>  bombtimestart;
 vector<pos_t> bombseq;
 vector<pos_t> bestbombseq;
 vector<pos_t> allbombs;
-bool bombseqbatcnt = false;
+bool bombseqbatcnt = true;
 
 int batcnt(map_t& m)
 {
@@ -531,8 +531,9 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 	allbombs.resize(oldcnt);
 }
 
-vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep)
+vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep, bool batcount)
 {
+	bombseqbatcnt = batcount;
 	bestbombseqval = 0;
 	bombseqmaxstep = maxstep;
 	bombtimestart = chrono::steady_clock::now();
@@ -636,7 +637,7 @@ int avoidtoward(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemieswit
 				if (enemy == p3)
 					++bomb;					
 		}
-		if (block >= 2 && bomb >= 1)
+		if (block + bomb >= 4 && bomb >= 1)
 			avoids |= (1 << dd);
 	}
 	return avoids;
@@ -659,7 +660,7 @@ int avoidstay(map_t& m, pos_t player, vector<pos_t> enemieswithbomb)
 				avoiddirs |= (1 << dd);
 			}
 	}
-	if (bomb + block >= 3 && bomb >= 1)
+	if (block + bomb >= 4 && bomb >= 1)
 		return 16 | 32 | avoiddirs; 
 	return 0;
 }
@@ -679,13 +680,17 @@ int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemiesw
 	return avoids;
 }
 
-int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemies)
-{
+int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemies, map<int, enemypredict_t>& enemypredict)
+{	
 	int avoids;
 	vector<pos_t> enemieswithbomb;
-	for (const auto& enemy : enemies)
-		if (enemy.mPlacableGrenades >= 1)
+	for (const auto& enemy : enemies) {
+		if (enemy.mPlacableGrenades >= 1) {
 			enemieswithbomb.push_back(pos_t(enemy.mY, enemy.mX));
+			if (enemy.mPlacableGrenades >= 2 && enemypredict[enemy.mId].doublebomber)
+				enemieswithbomb.push_back(pos_t(enemy.mY, enemy.mX));
+		}
+	}
 
 	avoids = collectavoids(m, nextmap, player, enemieswithbomb);
 
@@ -703,9 +708,25 @@ int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemie
 	return avoids;
 }
 
+bool dobomb(const TickDescription& tickDescription)
+{
+	auto& me = tickDescription.mMe;
+	pos_t mypos = pos_t(me.mY, me.mX);
+	for (const auto& enemy : tickDescription.mEnemyVampires) {
+		pos_t p(enemy.mY, enemy.mX);
+		int dy = abs(p.y - mypos.y);
+		int dx = abs(p.x - mypos.x);
+		if ((dx == 0 && dy <= me.mGrenadeRange - 2) || (dy == 0 && dx <= me.mGrenadeRange - 2))
+			return true;
+	}
+	return false;
+}
+
 Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
-    Answer answer;
+	int turn = tickDescription.mRequest.mTick;
+
+	Answer answer;
 	mPhase = NONE;
 	mAvoids = 0;
 	mPreferGrenade = false;
@@ -726,6 +747,54 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 
 	auto nextmap = sim(m);
 
+	if (turn == 0) {
+		mEnemyPredict.clear();
+		for(const auto& enemy: tickDescription.mEnemyVampires) {
+			enemypredict_t et;
+			mEnemyPredict.insert(make_pair(enemy.mId, et));
+		}
+	} else {
+		for(const auto& enemy: tickDescription.mEnemyVampires) {
+			enemypredict_t& et = mEnemyPredict[enemy.mId];
+			pos_t ep(enemy.mY, enemy.mX);
+			if (et.prevpos != ep && enemy.mGrenadeRange > 0) // has one more bomb
+				continue;
+			for(const auto& bomb: tickDescription.mGrenades) {
+				pos_t bp(bomb.mY, bomb.mX);
+				if (bomb.mId != enemy.mId)
+					continue;
+				if (et.prevpos == bp) {
+					for(const auto& pred : mEnemyPredict) {
+						pos_t otherprev = pred.second.prevpos;
+						if (otherprev == ep || (otherprev.GetDist(ep) == 1 && otherprev.GetDist(et.prevpos) == 2)) {
+							et.doublebomber = true;
+							break;
+						}
+					}
+				}
+			}
+		}
+		for(const auto& enemy: tickDescription.mEnemyVampires) {
+			enemypredict_t& et = mEnemyPredict[enemy.mId];
+			pos_t ep(enemy.mY, enemy.mX);
+			for(const auto& powerup: tickDescription.mPowerUps) {
+				pos_t pp(powerup.mY, powerup.mX);
+				char pc = m[pp.y][pp.x];
+				for(const auto& bomb: tickDescription.mGrenades) {
+					pos_t bp(bomb.mY, bomb.mX);
+					if (bomb.mId != enemy.mId)
+						continue;
+					if (pp == ep && bp == pp)
+						et.bombonitem = true;
+					else if (et.prevpos.GetDist(pp) == 1 && bp == et.prevpos && pc == ' ')
+						et.bombnexttoitem = true;
+				}
+			}
+			et.prevpos = ep;
+		}
+	}
+	mEnemyPredict[me.mId].prevpos = mypos;
+
 	bool onitem = false;
 	bool ontomato = false;
 	for (const auto& powerup : tickDescription.mPowerUps) {
@@ -736,22 +805,55 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		}
 	}
 
-	mAvoids = collectavoids(m, nextmap, mypos, tickDescription.mEnemyVampires);
+	mAvoids = collectavoids(m, nextmap, mypos, tickDescription.mEnemyVampires, mEnemyPredict);
 
 	if ((mAvoids & 48) == 48 && me.mPlacableGrenades > 0 && onitem) {
 		mAvoids &= ~48;
 		mPreferGrenade = 1;
+		cerr << "prefer to protect self from encircled" << endl;
 	}
 	else if ((mAvoids & 16) && ontomato && me.mHealth == 2) // with 2 health, it can be more or less ok to stay (no matter what the timings are)
 		mAvoids &= ~16;
 
 	FOR0(d, 4) {
-		if ((mAvoids & (1 << d)) == 0)
-			continue;
 		pos_t p = mypos.GetPos(d);
+		if (m[p.y][p.x] != ' ')
+			continue;
 		for (const auto& powerup : tickDescription.mPowerUps) {
-			if (pos_t(powerup.mY, powerup.mX) == p && powerup.mRemainingTick >= -3) {
-				mAvoids &= ~(1 << d);
+			pos_t pp(powerup.mY, powerup.mX);
+			if (pp == p && blockcnt(m, pp) == 2) {
+				bool importantitem = powerup.mType == PowerUp::Type::Tomato && me.mHealth < 3 || powerup.mType == PowerUp::Type::Shoe;
+				bool attackableenemy = false;
+				bool dangerousbomber = false;
+				char c2;
+				FOR0(ei, SZ(tickDescription.mEnemyVampires)) {
+					const auto& enemy = tickDescription.mEnemyVampires[ei];
+					pos_t ep(enemy.mY, enemy.mX);
+					if (ep.GetDist(p) <= 1) {
+						if (ep != p && mEnemyPredict[enemy.mId].bombnexttoitem && mEnemyPredict[enemy.mId].doublebomber && enemy.mPlacableGrenades >= 2 && 
+							(enemy.mHealth > 1 || me.mHealth == 1)) {
+							dangerousbomber = true;
+							break;
+						}
+						if (enemy.mHealth == 1 || !importantitem)
+							attackableenemy = true;
+					}
+				}
+				if (dangerousbomber)
+					continue;
+				else if (attackableenemy && me.mPlacableGrenades >= 2) {
+					FOR0(d2, 4) {
+						pos_t p2 = p.GetPos(d2);
+						if (p2 != mypos && m[p2.y][p2.x] == ' ') {
+							answer.mPlaceGrenade = true;
+							answer.mSteps.push_back(dirc2[d]);
+							answer.mSteps.push_back(dirc2[d2]);
+							cerr << "Encircle with direct command" << dirc2[d] << dirc2[d2] << endl;
+							return answer;
+						}
+					}
+				}
+				mAvoids &= ~(1 << d); // just go for the item
 				break;
 			}
 		}
@@ -810,12 +912,13 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				}
 			}
 		}
-//		if (!mPreferGrenade && tickDescription.mPowerUps.empty())
-//			wantcharge = true;
+#if 0
+		if (!mPreferGrenade && tickDescription.mPowerUps.empty() &&
+			me.mGrenadeRange >= 3 && me.mPlacableGrenades >= 2 && me.mHealth >= 2 && 
+			(me.mRunningShoesTick || tickDescription.mRequest.mTick > mGameDescription.mMaxTick / 2))
+			wantcharge = true;
+#endif
 	}
-#else
-	if (tickDescription.mRequest.mTick >= mGameDescription.mMaxTick) // no hint for now with lights
-		return answer;
 #endif
 
 	if (!tickDescription.mPowerUps.empty()) {
@@ -823,22 +926,25 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		mInPhase1 = false;
 
 		vector<pos_t> targets;
+		vector<int> closestenemydist;
 		vector<int> closestenemy;
 		int waitturn = 0;
 		int lastturn = 0;
 		for (const auto& powerup : tickDescription.mPowerUps) {
 			targets.push_back(pos_t(powerup.mY, powerup.mX));
-			closestenemy.push_back(MAXTURN + 1);
+			closestenemydist.push_back(MAXTURN + 1);
+			closestenemy.push_back(-1);
 			if (powerup.mRemainingTick < 0) {
 				waitturn = -powerup.mRemainingTick - 1;
 				lastturn = waitturn + 15;
 			} else
 				lastturn = powerup.mRemainingTick - 1;
 		}
-		for (const auto& enemy : tickDescription.mEnemyVampires) {
+		FOR0(ei, SZ(tickDescription.mEnemyVampires)) {
+			const auto& enemy = tickDescription.mEnemyVampires[ei];
 			getdist(m, targets, tickDescription, enemy);
 			FOR0(i, SZ(targets))
-				MINA(closestenemy[i], reaches[targets[i].y][targets[i].x].turn);
+				MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], ei);
 		}
 		getdist(m, targets, tickDescription, me);
 
@@ -853,9 +959,13 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		FOR0(tr, 2) {
 			FOR0(i, SZ(targets)) {
 				int reach = reaches[targets[i].y][targets[i].x].turn;
-				if (mypos == targets[i] && waitturn == 0)
-					continue;
-				if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemy[i] == 0) {
+				if (mypos == targets[i]) {
+					if (waitturn == 0)
+						continue;
+					best = i;
+					break;
+				}
+				if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemydist[i] == 0) {
 					bool enemyon = false;
 					for (const auto& enemy : tickDescription.mEnemyVampires) {
 						if (pos_t(enemy.mY, enemy.mX) == targets[i]) {
@@ -866,7 +976,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					if (enemyon)
 						continue;
 				}
-				if ((closestenemy[i] >= reach && lastturn >= reach) || (reach <= waitturn && (waitturn < -5 || tr == 2)))
+				if ((closestenemydist[i] >= reach && lastturn >= reach) || (reach <= waitturn && 
+					(!mEnemyPredict[tickDescription.mEnemyVampires[closestenemy[i]].mId].bombonitem || waitturn - reach > 4 || tr == 1)))
 					MINA2(closest, reach, best, i);
 			}
 			if (best != -1)
@@ -876,7 +987,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		if (best == -1) {
 			cerr << "no target" << endl; 
 			// we gonna fall to temporary...or should we go for closest bad target
-			if (tickDescription.mRequest.mTick < 150) {
+			if (tickDescription.mRequest.mTick < 150 && tickDescription.mAllBats.size() > 8) {
 				cerr << "than we are still in phase1" << endl; 
 				mInPhase1 = true;
 			}
@@ -885,7 +996,6 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			cerr << "closest target: " << targets[best] << endl;
 			if (show(m, mypos, targets[best])) {
 
-				answer.mPlaceGrenade = false; // TBD
 				int stepcnt = me.mRunningShoesTick > 0 ? 3 : 2;
 				pos_t p = mypos;
 				int last = max(0, SZ(steps) - stepcnt);
@@ -894,10 +1004,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					if (m[p.y][p.x] != ' ' || i == last && nextmap[p.y][p.x] == '.')
 						break;
 					char c = dirc2[steps[i]];
-					answer.mSteps.push_back(c);
 				}
-				for(auto c : answer.mSteps)
-					cerr << c;
 				cerr << endl;
 				mPhase = ITEM;
 				p = mypos;
@@ -907,20 +1014,53 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				}
 				int mydist = mypos.GetDist(targets[best]);
 				if (mydist <= 2) {
-					if (closestenemy[best] == 0 && me.mPlacableGrenades > 0 && 
+					if (closestenemydist[best] == 0 && me.mPlacableGrenades > 0 && 
 						m[mypos.y][mypos.x] == ' ' && waitturn > 0 && waitturn < 5 - (mydist ? 1 : 0)) {
-						for (const auto& enemy : tickDescription.mEnemyVampires) {
-							pos_t p(enemy.mY, enemy.mX); 
-							int theirdist = p.GetDist(targets[best]);
-							int reldist = p.GetDist(mypos);
-							if (p != mypos && theirdist <= (enemy.mRunningShoesTick ? 3 : 2) &&
-								mydist < theirdist && (mydist <= 1 || reldist == 1)) {
-								mPreferGrenade = 1;
-								cerr << "prefer grenade to protect item" << endl;
-								break;
+						bool ok = true;
+						// note: statistically it is not worth
+						// except if we would know that we battle for the 1st place vs. someone else!
+
+						if (mydist == 0) {
+							int bomb = 0;
+							int block = 0;
+							FOR0(d, 4) {
+								pos_t p = mypos.GetPos(d);
+								if (m[p.y][p.x] >= '1' && m[p.y][p.x] <= '9') {
+									++bomb;
+									break;
+								} else if (m[p.y][p.x] != ' ')
+									++block;
+							}
+							if (bomb >= 1 && block >= 2) {
+								int cnt = 0;
+								for (const auto& enemy : tickDescription.mEnemyVampires) {
+									if (pos_t(enemy.mY, enemy.mX) == mypos)
+										++cnt;
+								}
+								if (cnt <= 1) {
+									ok = false;
+									mPreferGrenade = false;
+								}
+							}
+						} 
+						if (ok) {
+							for (const auto& enemy : tickDescription.mEnemyVampires) {
+								pos_t p(enemy.mY, enemy.mX); 
+								int theirdist = p.GetDist(targets[best]);
+								int reldist = p.GetDist(mypos);
+								if (p != mypos && theirdist <= (enemy.mRunningShoesTick ? 3 : 2) &&
+									mydist < theirdist && (mydist <= 1 || reldist == 1)) {
+									mPreferGrenade = 1;
+									cerr << "prefer grenade to protect item" << endl;
+									break;
+								}
 							}
 						}
 					}
+				}
+				if (wantcharge && dobomb(tickDescription)) {
+					mPreferGrenade = 1;
+					cerr << "and prefer grenade to attack" << endl;
 				}
 				return answer;
 			}
@@ -930,14 +1070,21 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	if (mInPhase1) {
 //		bombseqbatcnt = true;
 		bombtimeout = mTimeout.count();
-		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30); // todo how many steps (not turns) ahead
-		mPhase = PHASE1;
-		mPath = seq;
-		cerr << "phase1 seq";
-		for(auto p : seq)
-			cerr << p;
-		cerr << ' ' << bestbombseqval << endl;
-	} else {
+		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30, true); // todo how many steps (not turns) ahead
+		if (seq.empty())
+			mInPhase1 = false;
+		else {
+			mPhase = PHASE1;
+			mPath = seq;
+			cerr << "phase1 seq";
+			for(auto p : seq)
+				cerr << p;
+			cerr << ' ' << bestbombseqval << endl;
+			return answer;
+		}
+	} 
+	
+	{
 		cerr << "between items or charge" << endl;
 		vector<pos_t> targets;
 		vector<int> closestenemydist;
@@ -1010,21 +1157,24 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					me2.mX = p3.x;
 					if (wantcharge) {
 						int val = 0;
-						for(auto& enemy : tickDescription.mEnemyVampires) {
+						for (auto& enemy : tickDescription.mEnemyVampires) {
 							int d = p3.GetDist(pos_t(enemy.mY, enemy.mX));
 							if (d == 0)
 								d = 2;
-							MAXA(val, 100 - d);
+							MAXA(val, 10000 - 100 * d + min(abs(p3.y - enemy.mY), abs(p3.x - enemy.mY)));
 						}
 						MAXA2(best, val, bestdirs, dirs);
-					} else {
+					}
+					else {
 						getdist(m, vector<pos_t>(), tickDescription, me2);
-						cnt = 0;
+						float cnt = 0;
 						FOR0(i, SZ(targets)) {
 							int reach = reaches[targets[i].y][targets[i].x].turn;
 							if (closestenemydist[i] > reach)
 								cnt += 2;
-							else if (closestenemydist[i] == reach || reach <= 5)
+							else if (closestenemydist[i] == reach)
+								++cnt;
+							else if (reach <= 5 && !mEnemyPredict[tickDescription.mEnemyVampires[closestenemy[i]].mId].bombonitem)
 								++cnt;
 						}
 						int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
@@ -1044,12 +1194,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				dirs.pop_back();
 		}
 		if (best > 0) {
-			answer.mPlaceGrenade = false; 
-			answer.mSteps = bestdirs;
 			if (wantcharge) {
 				cerr << "charge! ";
 				mPhase = CHARGE;
-				if (best >= 97 && tickDescription.mRequest.mTick > mGameDescription.mMaxTick && randn0(4) == 0) {
+				if (dobomb(tickDescription)) {
 					mPreferGrenade = true;
 					cerr << "with grenade ";
 				}
@@ -1058,7 +1206,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				mPhase = BETWEEN_ITEMS;
 			}
 			pos_t p = mypos;
-			for(auto c : answer.mSteps) {
+			for(auto c : bestdirs) {
 				p = p.GetPos(c == 'U' ? 0 : c == 'R' ? 1 : c == 'D' ? 2 : 3);
 				mPath.push_back(p);
 				cerr << c;
@@ -1067,11 +1215,6 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			return answer;
 		}
 	}
-
-    std::vector<char> dirs = { 'U', 'R', 'D', 'L' };
-    // answer.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
-    // answer.mSteps.push_back(dirs[static_cast<size_t>(std::rand() % 4)]);
-    // answer.mSteps = {'R', 'L'};
 
     return answer;
 }

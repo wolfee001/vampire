@@ -12,30 +12,43 @@ lower impact (parszaz pont)
 
 csak dontobe:
 
-~hogyan tudunk 4 jatekost egymas ellen: 
++hogyan tudunk 4 jatekost egymas ellen: 
  referencia-verzio(k!)
  setup 1 vs. 3, 2 vs. 2 egymas mellett, 2 vs 2 atlosan!
 +paradicsomkedvezmeny: nincs
-~olyan targyat valasszunk ahova hamarabb erunk
-~megakadalyozni hogy mas is felvegyen targyat? - ha mar korabban odaerunk, vagy mi mar ott vagyunk, rakjunk ra bombat
-~avoid 16 - bomba lerakassal IS ki lehet vedeni (kiveve ha avoid 32 - korbevesznek)
++olyan targyat valasszunk ahova hamarabb erunk
++megakadalyozni hogy mas is felvegyen targyat? - ha mar korabban odaerunk, vagy mi mar ott vagyunk, rakjunk ra bombat
++avoid 16 - bomba lerakassal IS ki lehet vedeni (kiveve ha avoid 32 - korbevesznek)
 
 
--tamadas: van. de folyamatosan?
+?tamadas: van. de folyamatosan?
  -akadalyozo bomba
 
--predikcio: melyik bot buta
--pl. bekerites ellen vedekezik
--item-et vedi! (akkor eleve nem kene elindulni!)
++predikcio
++targyon allva vedi? (ha nem, akkor erdemes raindulni vagy bekeriteni)
++targy mellol bekerit?
++item-et vedi! (akkor eleve nem kene elindulni!)
+
 -kiismeres ellen: kevert strat
 
 -miniatura
 -1 item, 1 ellenfel, es random kornyezet
 
--nextmap '-' = blokkol!
+-nextmap '-' = blokkol?
 
 -additional bomb for trapped opponent (to share kill score)
 
 -item-en levo ellenfel nem fog akarni bekeriteni minket? (de ez nem biztos, az is 48 pont)
 
--item mellett levo ellenfelet bekeriteni a targyon?
+-2 oldalrol zart item mellett levo ellenfelet bekeriteni a targyon keresztul? mikor er tobbet mint a targy? pl. ha mar csak 1 elete van es nem robbanas elott felveheto paradicsomrol van szo. cipo valoszinuleg tul ertekes.
+de hogyan lehet hintelni a bekeritest az evalnak (hogy ne a targyra menjunk)?
+
+
+-trap enemy early: if he has bomb
+
+
+-stay on bomb+item (do not move away, cause i put that for a reason)
+
+
+
+

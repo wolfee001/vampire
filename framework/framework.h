@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../models.h"
+#include "../simulator.h"
 #include "../solver.h"
 #include <chrono>
 #include <filesystem>
@@ -55,7 +56,7 @@ private:
 
     PlayBook mPlayBook;
 
-    std::map<int, float> mVampireCumulatedPoints;
+    Simulator::NewPoints mVampireCumulatedPoints;
 
     bool mIsPlaying = false;
 };

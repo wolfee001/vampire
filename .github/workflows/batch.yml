@@ -1,0 +1,132 @@
+name: Batch
+
+on:
+  workflow_dispatch:
+    inputs:
+      descriptor:
+        description: 'Batch descriptor'
+        required: true
+        default: 'v1.json'
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Install Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16
+
+    - name: Data splitting
+      run: |
+        cd batch_runner
+        npm install .
+        cd ..
+        cd github_batches
+        node ../batch_runner/splitter.js ${{ github.event.inputs.descriptor }} 18
+
+    - name: Upload split data
+      uses: actions/upload-artifact@v2
+      with:
+        name: split
+        path: github_batches/splits
+
+
+  run:
+    needs: split
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        agent: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Download split data
+        uses: actions/download-artifact@v2
+        with:
+          name: split
+          path: github_batches/splits
+
+      - name: Install extra runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+
+      - name: Install conan
+        uses: turtlebrowser/get-conan@main
+
+      - name: Install Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Batch running
+        run: |
+          cd batch_runner
+          npm install
+          npm install -g .
+          cd ..
+          cd github_batches
+          batch_runner splits/${{ matrix.agent }}.json
+
+      - name: Upload run data
+        uses: actions/upload-artifact@v2
+        with:
+          name: subbatch-${{ matrix.agent }}
+          path: github_batches/subbatches/${{ matrix.agent }}
+
+  collect:
+    needs: run
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Get current time
+        uses: srfrnk/current-time@master
+        id: current-time
+        with:
+          format: YYYY-MM-DD-HH-mm-ss
+
+      - name: Create final folder
+        run: |
+          cd github_batches
+          mkdir ${{ steps.current-time.outputs.formattedTime }}
+          cd ${{ steps.current-time.outputs.formattedTime }}
+          cp ${{github.workspace}}/github_batches/${{ github.event.inputs.descriptor }} ./settings.json
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: github_batches/${{ steps.current-time.outputs.formattedTime }}
+
+      - name: Collecting results
+        run: |
+          cd batch_runner
+          npm install .
+          cd ..
+          cd github_batches
+          node ../batch_runner/collector.js ${{ steps.current-time.outputs.formattedTime }} 18
+
+      - name: Commit
+        run: |
+          git pull
+          git config --global user.name 'Batch Runner'
+          git config --global user.email 'wolfee001@users.noreply.github.com'
+          cd github_batches/${{ steps.current-time.outputs.formattedTime }}
+          git add .
+          git commit -m "Batch run data"
+          git push

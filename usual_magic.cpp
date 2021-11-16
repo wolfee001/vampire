@@ -637,7 +637,7 @@ int avoidtoward(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemieswit
 				if (enemy == p3)
 					++bomb;					
 		}
-		if (block >= 2 && bomb >= 1)
+		if (block + bomb >= 4 && bomb >= 1)
 			avoids |= (1 << dd);
 	}
 	return avoids;
@@ -660,7 +660,7 @@ int avoidstay(map_t& m, pos_t player, vector<pos_t> enemieswithbomb)
 				avoiddirs |= (1 << dd);
 			}
 	}
-	if (block >= 2 && bomb >= 2)
+	if (block + bomb >= 4 && bomb >= 1)
 		return 16 | 32 | avoiddirs; 
 	return 0;
 }
@@ -680,14 +680,14 @@ int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemiesw
 	return avoids;
 }
 
-int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemies)
+int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemies, map<int, enemypredict_t>& enemypredict)
 {	
 	int avoids;
 	vector<pos_t> enemieswithbomb;
 	for (const auto& enemy : enemies) {
 		if (enemy.mPlacableGrenades >= 1) {
 			enemieswithbomb.push_back(pos_t(enemy.mY, enemy.mX));
-			if (enemy.mPlacableGrenades >= 2)
+			if (enemy.mPlacableGrenades >= 2 && enemypredict[enemy.mId].doublebomber)
 				enemieswithbomb.push_back(pos_t(enemy.mY, enemy.mX));
 		}
 	}
@@ -757,6 +757,26 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		for(const auto& enemy: tickDescription.mEnemyVampires) {
 			enemypredict_t& et = mEnemyPredict[enemy.mId];
 			pos_t ep(enemy.mY, enemy.mX);
+			if (et.prevpos != ep && enemy.mGrenadeRange > 0) // has one more bomb
+				continue;
+			for(const auto& bomb: tickDescription.mGrenades) {
+				pos_t bp(bomb.mY, bomb.mX);
+				if (bomb.mId != enemy.mId)
+					continue;
+				if (et.prevpos == bp) {
+					for(const auto& pred : mEnemyPredict) {
+						pos_t otherprev = pred.second.prevpos;
+						if (otherprev == ep || (otherprev.GetDist(ep) == 1 && otherprev.GetDist(et.prevpos) == 2)) {
+							et.doublebomber = true;
+							break;
+						}
+					}
+				}
+			}
+		}
+		for(const auto& enemy: tickDescription.mEnemyVampires) {
+			enemypredict_t& et = mEnemyPredict[enemy.mId];
+			pos_t ep(enemy.mY, enemy.mX);
 			for(const auto& powerup: tickDescription.mPowerUps) {
 				pos_t pp(powerup.mY, powerup.mX);
 				char pc = m[pp.y][pp.x];
@@ -773,6 +793,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			et.prevpos = ep;
 		}
 	}
+	mEnemyPredict[me.mId].prevpos = mypos;
 
 	bool onitem = false;
 	bool ontomato = false;
@@ -784,7 +805,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		}
 	}
 
-	mAvoids = collectavoids(m, nextmap, mypos, tickDescription.mEnemyVampires);
+	mAvoids = collectavoids(m, nextmap, mypos, tickDescription.mEnemyVampires, mEnemyPredict);
 
 	if ((mAvoids & 48) == 48 && me.mPlacableGrenades > 0 && onitem) {
 		mAvoids &= ~48;
@@ -809,7 +830,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					const auto& enemy = tickDescription.mEnemyVampires[ei];
 					pos_t ep(enemy.mY, enemy.mX);
 					if (ep.GetDist(p) <= 1) {
-						if (ep != p && mEnemyPredict[enemy.mId].bombnexttoitem && enemy.mPlacableGrenades >= 2 && 
+						if (ep != p && mEnemyPredict[enemy.mId].bombnexttoitem && mEnemyPredict[enemy.mId].doublebomber && enemy.mPlacableGrenades >= 2 && 
 							(enemy.mHealth > 1 || me.mHealth == 1)) {
 							dangerousbomber = true;
 							break;

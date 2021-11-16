@@ -28,6 +28,7 @@ struct enemypredict_t {
 	pos_t prevpos;
 	bool bombonitem = false;
 	bool bombnexttoitem = false;
+	bool doublebomber = false;
 };
 
 class UsualMagic : public IMagic {

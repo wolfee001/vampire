@@ -4,6 +4,7 @@
 #include <string>
 
 #include "../models.h"
+#include "../simulator.h"
 
 class GameLoader {
 public:
@@ -17,7 +18,7 @@ public:
         std::vector<std::string> mTickMessage;
         Answer mAnswer;
         std::vector<std::string> mAnswerMessage;
-        std::map<int, float> mPoints;
+        Simulator::NewPoints mPoints;
     };
 
 public:

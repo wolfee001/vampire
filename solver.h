@@ -16,12 +16,14 @@ class solver {
 public:
     void startMessage(const std::vector<std::string>& startInfos);
     std::vector<std::string> processTick(const std::vector<std::string>& infos);
+    void SetPoints(const Simulator::NewPoints& points);
 
 private:
     GameDescription mGameDescription;
     TickDescription mTickDescription;
     std::unique_ptr<IMagic> mMagic;
     std::unique_ptr<Simulator> mSimulator;
+    Simulator::NewPoints mCumulatedPoints;
 };
 
 #endif // SOLVER_H_INCLUDED

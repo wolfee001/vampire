@@ -76,6 +76,11 @@ void solver::startMessage(const std::vector<std::string>& startInfos)
 #pragma error "No magic defined!"
 #endif
     mMagic->SetTickTimeout(std::chrono::milliseconds(TIMEOUT));
+
+    mCumulatedPoints[1] = 0.F;
+    mCumulatedPoints[2] = 0.F;
+    mCumulatedPoints[3] = 0.F;
+    mCumulatedPoints[4] = 0.F;
 }
 
 std::vector<std::string> solver::processTick(const std::vector<std::string>& infos)
@@ -99,6 +104,9 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
         mSimulator->SetState(mTickDescription);
         points = mSimulator->Tick().second;
     }
+    for (const auto& [id, point] : points) {
+        mCumulatedPoints[id] += point;
+    }
     mTickDescription = tick;
 
 #ifdef GAME_WITH_FRAMEWORK
@@ -109,7 +117,7 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
         return {};
     }
 
-    Answer answer = mMagic->Tick(mTickDescription, points);
+    Answer answer = mMagic->Tick(mTickDescription, mCumulatedPoints);
 
     std::vector<std::string> commands { "RES " + std::to_string(tick.mRequest.mGameId) + " " + std::to_string(tick.mRequest.mTick) + " "
         + std::to_string(tick.mRequest.mVampireId) };
@@ -135,4 +143,9 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
 #endif
 
     return commands;
+}
+
+void solver::SetPoints(const Simulator::NewPoints& points)
+{
+    mCumulatedPoints = points;
 }

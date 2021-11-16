@@ -105,6 +105,10 @@ void Framework::Render()
                     bool oldRecord = mRecordGame;
                     mRecordGame = false;
                     mPlayBook.mSolver.startMessage(mPlayBook.mGameLoader.GetDescription().mMessage);
+                    if (mPlayBook.mStep > 0) {
+                        GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                        mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                    }
                     GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                     const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                     if (resp != step.mAnswerMessage) {
@@ -161,6 +165,10 @@ void Framework::Render()
                             std::vector<GameLoader::Step> steps = mPlayBook.mGameLoader.GetStepUntil(mPlayBook.mStep);
                             std::thread t([steps, &mPlayBook = mPlayBook]() {
                                 for (const auto& element : steps) {
+                                    if (mPlayBook.mStep > 0) {
+                                        GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                        mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                    }
                                     const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
                                     if (resp != element.mAnswerMessage) {
                                         mPlayBook.mIsCorrupted = true;
@@ -173,6 +181,10 @@ void Framework::Render()
                         } else {
                             GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                             std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
+                                if (mPlayBook.mStep > 0) {
+                                    GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                    mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                }
                                 const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                 mVampireCumulatedPoints = step.mPoints;
                                 if (resp != step.mAnswerMessage) {
@@ -203,6 +215,10 @@ void Framework::Render()
                                 std::thread t([steps, &mPlayBook = mPlayBook]() {
                                     mPlayBook.mSteppingDisabled = true;
                                     for (const auto& element : steps) {
+                                        if (mPlayBook.mStep > 0) {
+                                            GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                            mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                        }
                                         const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
                                         if (resp != element.mAnswerMessage) {
                                             mPlayBook.mIsCorrupted = true;
@@ -216,6 +232,10 @@ void Framework::Render()
                                 GameLoader::Step step = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep);
                                 std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
                                     mPlayBook.mSteppingDisabled = true;
+                                    if (mPlayBook.mStep > 0) {
+                                        GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                        mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                    }
                                     const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                     mVampireCumulatedPoints = step.mPoints;
                                     if (resp != step.mAnswerMessage) {
@@ -248,6 +268,10 @@ void Framework::Render()
                                             Framework::GetInstance().Update(step.mTick, step.mTickMessage);
                                             mVampireCumulatedPoints = step.mPoints;
                                         } else {
+                                            if (mPlayBook.mStep > 0) {
+                                                GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                                mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                            }
                                             const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                             if (resp != step.mAnswerMessage) {
                                                 mPlayBook.mIsCorrupted = true;
@@ -278,6 +302,10 @@ void Framework::Render()
                         } else {
                             std::thread t([&mVampireCumulatedPoints = mVampireCumulatedPoints, step, &mPlayBook = mPlayBook]() {
                                 mPlayBook.mSteppingDisabled = true;
+                                if (mPlayBook.mStep > 0) {
+                                    GameLoader::Step prevStep = mPlayBook.mGameLoader.GetFrame(mPlayBook.mStep - 1);
+                                    mPlayBook.mSolver.SetPoints(prevStep.mPoints);
+                                }
                                 const auto& resp = mPlayBook.mSolver.processTick(step.mTickMessage);
                                 if (resp != step.mAnswerMessage) {
                                     mPlayBook.mIsCorrupted = true;

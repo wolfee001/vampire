@@ -996,6 +996,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					if (closestenemydist[best] == 0 && me.mPlacableGrenades > 0 && 
 						m[mypos.y][mypos.x] == ' ' && waitturn > 0 && waitturn < 5 - (mydist ? 1 : 0)) {
 						bool ok = true;
+						// note: statistically it is not worth
+						// except if we would know that we battle for the 1st place vs. someone else!
+
 						if (mydist == 0) {
 							int bomb = 0;
 							int block = 0;
@@ -1008,10 +1011,17 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 									++block;
 							}
 							if (bomb >= 1 && block >= 2) {
-								ok = false;
-								mPreferGrenade = false;
+								int cnt = 0;
+								for (const auto& enemy : tickDescription.mEnemyVampires) {
+									if (pos_t(enemy.mY, enemy.mX) == mypos)
+										++cnt;
+								}
+								if (cnt <= 1) {
+									ok = false;
+									mPreferGrenade = false;
+								}
 							}
-						}
+						} 
 						if (ok) {
 							for (const auto& enemy : tickDescription.mEnemyVampires) {
 								pos_t p(enemy.mY, enemy.mX); 

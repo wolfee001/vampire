@@ -543,49 +543,62 @@ bool Simulator::IsValidMove(int id, const Answer& move) const
 std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= false*/)
 {
     std::vector<Simulator::BlowArea> retVal;
-    std::unordered_map<std::pair<int, int>, std::pair<const Grenade*, bool>, boost::hash<std::pair<int, int>>> grenadesByPos;
+    std::unordered_map<std::pair<int, int>, std::vector<std::pair<const Grenade*, bool>>, boost::hash<std::pair<int, int>>> grenadesByPos;
+    // collect grenades: [x, y] -> vector<{grenade*, bAlreadyProcessed}>
     for (const auto& grenade : mState.mGrenades) {
-        grenadesByPos[{ grenade.mX, grenade.mY }] = { &grenade, false };
+        grenadesByPos[{ grenade.mX, grenade.mY }].emplace_back(&grenade, false);
     }
-    for (const auto& [_, grenadeDesc] : grenadesByPos) {
-        if (blowNow && grenadeDesc.first->mTick != 0) {
-            continue;
-        }
+    // go over on all grenade positions
+    for (auto& [_, grenadeDescVec] : grenadesByPos) {
+        // go over on grenades on the given position
+        for (std::pair<const Grenade*, bool>& grenadeDesc : grenadeDescVec) {
+            if (blowNow && grenadeDesc.first->mTick != 0) {
+                continue;
+            }
 
-        if (grenadeDesc.second) {
-            continue;
-        }
+            // skip if the grenade was already processed
+            if (grenadeDesc.second) {
+                continue;
+            }
 
-        Simulator::BlowArea ba(mGameDescription.mMapSize);
-        std::vector<const Grenade*> grenadesToProcess;
-        grenadesToProcess.push_back(grenadeDesc.first);
-        while (!grenadesToProcess.empty()) {
-            const Grenade& grenade = *grenadesToProcess.back();
-            grenadesToProcess.pop_back();
+            Simulator::BlowArea ba(mGameDescription.mMapSize);
+            // queue for grenades that are in a given area
+            std::vector<std::pair<const Grenade*, bool>*> grenadesToProcess;
+            grenadesToProcess.push_back(&grenadeDesc);
+            // while the queue is not empty
+            while (!grenadesToProcess.empty()) {
+                std::pair<const Grenade*, bool>& grenade = *grenadesToProcess.back();
+                grenadesToProcess.pop_back();
 
-            grenadesByPos[{ grenade.mX, grenade.mY }].second = true;
-            Simulator::Area area = GetBlowArea(grenade);
-            for (const auto& position : area.getAsVector()) {
-                ba.mArea.insert(position.first, position.second);
-                if (position == std::pair<int, int> { grenade.mX, grenade.mY }) {
-                    continue;
-                }
-                if (auto it = grenadesByPos.find(position); it != grenadesByPos.end()) {
-                    if (!it->second.second) {
-                        grenadesToProcess.push_back(it->second.first);
+                // set the given grenade to 'processed'
+                grenade.second = true;
+                // get the are of the grenade
+                Simulator::Area area = GetBlowArea(*(grenade.first));
+                for (const auto& position : area.getAsVector()) {
+                    // extend the whole blow are (chain) with the given grenade's area
+                    ba.mArea.insert(position.first, position.second);
+                    // check if the area's part contains an other grenade
+                    if (auto gv = grenadesByPos.find(position); gv != grenadesByPos.end()) {
+                        // if so, iterate on the grenades of the given position
+                        for (std::pair<const Grenade*, bool>& g : gv->second) {
+                            // if it's not marked already processed, add it to the queue
+                            if (!g.second) {
+                                grenadesToProcess.push_back(&g);
+                            }
+                        }
                     }
                 }
             }
-        }
 
-        for (const auto& g : mState.mGrenades) {
-            if (ba.mArea.find(g.mX, g.mY)) {
-                ba.mTickCount = ba.mTickCount == -1 ? g.mTick : std::min(ba.mTickCount, g.mTick);
-                ba.mVampireIds.insert(g.mId);
+            for (const auto& g : mState.mGrenades) {
+                if (ba.mArea.find(g.mX, g.mY)) {
+                    ba.mTickCount = ba.mTickCount == -1 ? g.mTick : std::min(ba.mTickCount, g.mTick);
+                    ba.mVampireIds.insert(g.mId);
+                }
             }
-        }
 
-        retVal.push_back(ba);
+            retVal.push_back(ba);
+        }
     }
     return retVal;
 }

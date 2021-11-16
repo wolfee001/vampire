@@ -349,6 +349,23 @@ TEST_F(SimulateTest, BlowUpChainReaction)
     ASSERT_EQ(newState.mGrenades.size(), 0);
 }
 
+TEST_F(SimulateTest, BlowUpChainReaction2)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 3 6 1 5",
+        "GRENADE 2 3 6 1 5",
+        "GRENADE 1 3 6 2 5",
+        "GRENADE 2 3 6 2 5",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+}
+
 TEST_F(SimulateTest, BlowUpGrenadeKillBats)
 {
     // clang-format off

@@ -389,7 +389,7 @@ UsualMagic::UsualMagic(const GameDescription& gameDescription)
 	mInPhase1 = true;
 }
 
-pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
+pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r, int avoids)
 {
 	vector<pos_t> res;
 	vector<pos_t> other;
@@ -408,6 +408,8 @@ pair<int, std::vector<pos_t>> collectgoodbombpos(map_t& m, pos_t start, int r)
 		q.pop_front();
 		bool spec = false;
 		FOR0(d, 4) {
+			if (p1 == start && (avoids & (1 << d)))
+				continue;
 			pos_t p0 = p1.GetPos(d);
 			char c = m[p0.y][p0.x];
 			if (c == ' ' && (reaches[p0.y][p0.x].step > reaches[p1.y][p1.x].step + 1 || 
@@ -475,10 +477,10 @@ int batcnt(map_t& m)
 	return cnt;
 }
 
-void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
+void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth, int avoids = 0)
 {
 	reach_t currreaches[23][23];
-	auto bombs = collectgoodbombpos(m, start, r);
+	auto bombs = collectgoodbombpos(m, start, r, avoids);
 	sort(bombs.second.begin(), bombs.second.end());
 	if (step > bombseqmaxstep) {
 //		for(auto b : bombseq)
@@ -531,13 +533,13 @@ void bombdfs(map_t& m, pos_t start, int r, int step, int lastbombidx, int depth)
 	allbombs.resize(oldcnt);
 }
 
-vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep, bool batcount)
+vector<pos_t> bombsequence(map_t& m, pos_t start, int r, int maxstep, bool batcount, int avoids)
 {
 	bombseqbatcnt = batcount;
 	bestbombseqval = 0;
 	bombseqmaxstep = maxstep;
 	bombtimestart = chrono::steady_clock::now();
-	bombdfs(m, start, r, 0, 0, 0);
+	bombdfs(m, start, r, 0, 0, 0, avoids);
 	return bestbombseq;
 }
 
@@ -630,21 +632,25 @@ int avoidtoward(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemieswit
 		pos_t p2 = player.GetPos(dd);
 		int block = 0;
 		int bomb = 0;
+		int existing = 0;
 		if (m[p2.y][p2.x] != ' ' || nextmap[p2.y][p2.x] == '.') {
 			avoids |= (1 << dd);
 			continue;
 		}
 		FOR0(d3, 4) {
 			pos_t p3 = p2.GetPos(d3);
-			if (m[p3.y][p3.x] >= '1' && m[p3.y][p3.x] <= '9')
+			if (m[p3.y][p3.x] >= '1' && m[p3.y][p3.x] <= '9') {
 				++bomb;
-			else if (m[p3.y][p3.x] != ' ')
+				++existing;
+			} else if (m[p3.y][p3.x] != ' ') {
 				++block;
+				++existing;
+			}
 			for (auto enemy : enemieswithbomb)
 				if (enemy == p3)
 					++bomb;					
 		}
-		if (block + bomb >= 4 && bomb >= 1)
+		if (block + bomb >= 4 && bomb >= 1 && existing >= 2)
 			avoids |= (1 << dd);
 	}
 	return avoids;
@@ -655,24 +661,28 @@ int avoidstay(map_t& m, pos_t player, vector<pos_t> enemieswithbomb)
 	int bomb = 0;
 	int block = 0;
 	int avoiddirs = 0;
+	int existing = 0;
 	FOR0(dd, 4) {
 		pos_t p2 = player.GetPos(dd);
-		if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9')
+		if (m[p2.y][p2.x] >= '1' && m[p2.y][p2.x] <= '9') {
 			++bomb;
-		else if (m[p2.y][p2.x] != ' ')
+			++existing;
+		} else if (m[p2.y][p2.x] != ' ') {
 			++block;
+			++existing;
+		}
 		for (auto enemy : enemieswithbomb)
 			if (enemy == p2) {
 				++bomb;					
 				avoiddirs |= (1 << dd);
 			}
 	}
-	if (block + bomb >= 4 && bomb >= 1)
+	if (block + bomb >= 4 && bomb >= 1 && existing >= 2)
 		return 16 | 32 | avoiddirs; 
 	return 0;
 }
 
-int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<pos_t> enemieswithbomb)
+int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<pos_t>& enemieswithbomb)
 {
 	int avoids = avoidtoward(m, nextmap, player, enemieswithbomb);
 	avoids |= avoidstay(m, player, enemieswithbomb);
@@ -1075,7 +1085,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	if (mInPhase1) {
 //		bombseqbatcnt = true;
 		bombtimeout = mTimeout.count();
-		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30, true); // todo how many steps (not turns) ahead
+		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30, true, mAvoids); // todo how many steps (not turns) ahead
 		if (seq.empty())
 			mInPhase1 = false;
 		else {

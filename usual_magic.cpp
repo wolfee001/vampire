@@ -851,31 +851,19 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					if (ep.GetDist(p) <= 1) {
 						if (ep != p && (mEnemyPredict[enemy.mId].bombnexttoitem || mEnemyPredict[enemy.mId].doublebomber) && enemy.mPlacableGrenades >= 2 &&
 							(!importantitem || me.mHealth == 1)) {
-							if (mypos == ep && me.mPlacableGrenades >= 2 && randn0(2) == 0) {
+							if (me.mPlacableGrenades >= 2 && turn % 2 == 0) {
 								attackableenemy = true;
 								continue;
-							} else {
-								dangerousbomber = true;
-								if (mypos != ep)
-									dangerousbomberotherside = true;
 							}
 						}
 						if (me.mPlacableGrenades >= 2 && (enemy.mHealth == 1 || !importantitem))
 							attackableenemy = true;
 					}
 				}
-				if (dangerousbomber) {
-					mAvoids |= (1 << d);
-					if (dangerousbomberotherside) {
-						mPreferGrenade = true;
-						cerr << "use grenade on one side to trap the trapper" << endl;
-					}
-					continue;
-				}
-				else if (attackableenemy) {
+				if (attackableenemy) {
 					FOR0(d2, 4) {
 						pos_t p2 = p.GetPos(d2);
-						if (p2 != mypos && m[p2.y][p2.x] == ' ') {
+						if (p2 != mypos && m[p2.y][p2.x] == ' ' && nextmap[p2.y][p2.x] != '.') {
 							answer.mPlaceGrenade = true;
 							answer.mSteps.push_back(dirc2[d]);
 							answer.mSteps.push_back(dirc2[d2]);

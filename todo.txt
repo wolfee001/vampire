@@ -24,17 +24,15 @@ csak dontobe:
 +targy mellol bekerit?
 +item-et vedi! (akkor eleve nem kene elindulni!)
 ~nextmap '-' = blokkol?
++kevert strat
++check nextmap if want to cross on item
 
-?tamadas
- -akadalyozo bomba
--kiismeres ellen: kevert strat
-
-:(miniatura
-
--additional bomb for trapped opponent (to share kill score)
-
--de hogyan lehet hintelni a bekeritest az evalnak (hogy ne a targyra menjunk)?
+/(miniatura
+/additional bomb for trapped opponent (to share kill score): nem kell mar
+/de hogyan lehet hintelni a bekeritest az evalnak (hogy ne a targyra menjunk)? - elengedtuk
 
 -stay on bomb+item (do not move away, cause i put that for a reason)
 
--phase1 crap?
+
+
+

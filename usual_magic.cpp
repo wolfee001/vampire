@@ -843,6 +843,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				bool importantitem = powerup.mType == PowerUp::Type::Tomato && me.mHealth < 3 || powerup.mType == PowerUp::Type::Shoe;
 				bool attackableenemy = false;
 				bool dangerousbomber = false;
+				bool dangerousbomberotherside = false;
 				char c2;
 				FOR0(ei, SZ(tickDescription.mEnemyVampires)) {
 					const auto& enemy = tickDescription.mEnemyVampires[ei];
@@ -850,8 +851,14 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					if (ep.GetDist(p) <= 1) {
 						if (ep != p && (mEnemyPredict[enemy.mId].bombnexttoitem || mEnemyPredict[enemy.mId].doublebomber) && enemy.mPlacableGrenades >= 2 &&
 							(!importantitem || me.mHealth == 1)) {
-							dangerousbomber = true;
-							break;
+							if (mypos == ep && me.mPlacableGrenades >= 2 && randn0(2) == 0) {
+								attackableenemy = true;
+								continue;
+							} else {
+								dangerousbomber = true;
+								if (mypos != ep)
+									dangerousbomberotherside = true;
+							}
 						}
 						if (me.mPlacableGrenades >= 2 && (enemy.mHealth == 1 || !importantitem))
 							attackableenemy = true;
@@ -859,6 +866,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				}
 				if (dangerousbomber) {
 					mAvoids |= (1 << d);
+					if (dangerousbomberotherside) {
+						mPreferGrenade = true;
+						cerr << "use grenade on one side to trap the trapper" << endl;
+					}
 					continue;
 				}
 				else if (attackableenemy) {

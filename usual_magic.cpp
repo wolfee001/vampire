@@ -848,18 +848,20 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					const auto& enemy = tickDescription.mEnemyVampires[ei];
 					pos_t ep(enemy.mY, enemy.mX);
 					if (ep.GetDist(p) <= 1) {
-						if (ep != p && (mEnemyPredict[enemy.mId].bombnexttoitem || mEnemyPredict[enemy.mId].doublebomber) && enemy.mPlacableGrenades >= 2 && 
-							(enemy.mHealth > 1 || me.mHealth == 1)) {
+						if (ep != p && (mEnemyPredict[enemy.mId].bombnexttoitem || mEnemyPredict[enemy.mId].doublebomber) && enemy.mPlacableGrenades >= 2 &&
+							(!importantitem || me.mHealth == 1)) {
 							dangerousbomber = true;
 							break;
 						}
-						if (enemy.mHealth == 1 || !importantitem)
+						if (me.mPlacableGrenades >= 2 && (enemy.mHealth == 1 || !importantitem))
 							attackableenemy = true;
 					}
 				}
-				if (dangerousbomber)
+				if (dangerousbomber) {
+					mAvoids |= (1 << d);
 					continue;
-				else if (attackableenemy && me.mPlacableGrenades >= 2) {
+				}
+				else if (attackableenemy) {
 					FOR0(d2, 4) {
 						pos_t p2 = p.GetPos(d2);
 						if (p2 != mypos && m[p2.y][p2.x] == ' ') {

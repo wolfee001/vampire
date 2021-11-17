@@ -4,11 +4,6 @@
 
 #include "../action_sequence.h"
 
-bool operator==(const Answer& x, const Answer& y)
-{
-    return x.mPlaceGrenade == y.mPlaceGrenade && x.mSteps == y.mSteps;
-}
-
 TEST(ActionSequence, EmptyWithoutBomb)
 {
     Answer answer;

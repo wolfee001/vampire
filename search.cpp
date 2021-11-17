@@ -32,13 +32,7 @@ Search::Search(const TickDescription& tickDescription, const GameDescription& ga
 
     mMyOriginalPos = pos_t(tickDescription.mMe.mY, tickDescription.mMe.mX);
 
-    mTomatoSafePlay = tickDescription.mMe.mHealth == 3
-        && std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
-               [](const PowerUp& powerup) { return powerup.mType == PowerUp::Type::Tomato && (powerup.mRemainingTick < 0 || powerup.mRemainingTick > 10); })
-            != std::cend(tickDescription.mPowerUps)
-        && std::find_if(std::cbegin(tickDescription.mEnemyVampires), std::cend(tickDescription.mEnemyVampires), [](const Vampire& v) { return v.mHealth == 1; })
-            != std::cend(tickDescription.mEnemyVampires)
-        && tickDescription.mEnemyVampires.size() <= 2;
+    mTomatoSafePlay = false;
 }
 
 bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline)
@@ -149,11 +143,11 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
-            const Answer move = action.GetAnswer();
-            if (!simulator.IsValidMove(mPlayerId, move)) {
+            if (!simulator.IsValidMove(mPlayerId, action)) {
                 continue;
             }
 
+            const Answer move = action.GetAnswer();
             if (mLevels.size() == 2 && mAvoids && action.GetNumberOfSteps() > 0) {
                 if ((mAvoids & 1) && move.mSteps[0] == 'U')
                     continue;

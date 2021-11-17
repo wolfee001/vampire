@@ -172,7 +172,6 @@ void Framework::Render()
                                     const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
                                     if (resp != element.mAnswerMessage) {
                                         mPlayBook.mIsCorrupted = true;
-                                        mPlayBook.mIsPlaying = false;
                                         return;
                                     }
                                 }
@@ -222,7 +221,6 @@ void Framework::Render()
                                         const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
                                         if (resp != element.mAnswerMessage) {
                                             mPlayBook.mIsCorrupted = true;
-                                            mPlayBook.mIsPlaying = false;
                                         }
                                     }
                                     mPlayBook.mSteppingDisabled = false;

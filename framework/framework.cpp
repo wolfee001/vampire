@@ -170,7 +170,6 @@ void Framework::Render()
                                     const auto& resp = mPlayBook.mSolver.processTick(element.mTickMessage);
                                     if (resp != element.mAnswerMessage) {
                                         mPlayBook.mIsCorrupted = true;
-                                        return;
                                     }
                                 }
                             });
@@ -186,7 +185,6 @@ void Framework::Render()
                                 mVampireCumulatedPoints = step.mPoints;
                                 if (resp != step.mAnswerMessage) {
                                     mPlayBook.mIsCorrupted = true;
-                                    return;
                                 }
                             });
                             t.detach();

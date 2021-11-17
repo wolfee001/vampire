@@ -774,10 +774,8 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		for(const auto& enemy: tickDescription.mEnemyVampires) {
 			enemypredict_t& et = mEnemyPredict[enemy.mId];
 			pos_t ep(enemy.mY, enemy.mX);
-			// note: we can't differentiate between a failed attempt with stay
-			//!!!!! 
-//			if (et.prevpos == ep || enemy.mGrenadeRange == 0) // still has one more bomb (to finish attempt) - also assures that we are "after" phase1
-			if (et.prevpos == ep && enemy.mGrenadeRange == 0) // still has one more bomb (to finish attempt) - also assures that we are "after" phase1
+			// note: we can't really differentiate between a failed attempt with stay
+			if (et.prevpos == ep || enemy.mGrenadeRange == 0) // still has one more bomb (to finish attempt) - also assures that we are "after" phase1
 				continue;
 			for(const auto& bomb: tickDescription.mGrenades) {
 				pos_t bp(bomb.mY, bomb.mX);

@@ -8,6 +8,7 @@
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
+#include <vector>
 
 #include "check.h"
 
@@ -280,16 +281,23 @@ void Simulator::BlowUpGrenades()
         }
     }
 
-    mState.mGrenades.erase(std::remove_if(mState.mGrenades.begin(), mState.mGrenades.end(),
-                               [&areas](const auto& grenade) {
-                                   for (const auto& area : areas) {
-                                       if (area.mArea.find(grenade.mX, grenade.mY)) {
-                                           return true;
-                                       }
-                                   }
-                                   return false;
-                               }),
-        mState.mGrenades.end());
+    struct NowBlowingGrenade {
+        Area area;
+        Grenade grenade;
+    };
+
+    std::vector<NowBlowingGrenade> blowingGrenades;
+    for (Grenade& grenade : mState.mGrenades) {
+        for (const auto& area : areas) {
+            if (area.mArea.find(grenade.mX, grenade.mY)) {
+                blowingGrenades.push_back({ GetBlowArea(grenade), grenade });
+                grenade.mTick = -2;
+            }
+        }
+    }
+
+    mState.mGrenades.erase(
+        std::remove_if(mState.mGrenades.begin(), mState.mGrenades.end(), [](const auto& grenade) { return grenade.mTick == -2; }), mState.mGrenades.end());
 
     std::vector<BatSquad> survivorBats;
 
@@ -341,7 +349,7 @@ void Simulator::BlowUpGrenades()
 
             bool isDead = false;
             bool alreadyDamaged = false;
-            std::vector<int> vampiresDamaging;
+            std::unordered_set<int> vampiresDamaging;
 
             for (const auto& area : areas) {
                 if (area.mArea.find(vampire.mX, vampire.mY)) {
@@ -359,7 +367,11 @@ void Simulator::BlowUpGrenades()
                         alreadyDamaged = true;
                     }
 
-                    vampiresDamaging.insert(std::end(vampiresDamaging), std::cbegin(area.mVampireIds), std::cend(area.mVampireIds));
+                    for (const auto& element : blowingGrenades) {
+                        if (element.area.find(vampire.mX, vampire.mY)) {
+                            vampiresDamaging.insert(element.grenade.mId);
+                        }
+                    }
                 }
             }
 

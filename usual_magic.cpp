@@ -704,7 +704,7 @@ int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemie
 	for (const auto& enemy : enemies) {
 		if (enemy.mPlacableGrenades >= 1) {
 			enemieswithbomb.push_back(pos_t(enemy.mY, enemy.mX));
-			if (enemy.mPlacableGrenades >= 2 && enemypredict[enemy.mId].doublebomber)
+			if (enemy.mPlacableGrenades >= 2 && (enemypredict[enemy.mId].bombnexttoitem || enemypredict[enemy.mId].doublebomber))
 				enemieswithbomb.push_back(pos_t(enemy.mY, enemy.mX));
 		}
 	}
@@ -774,7 +774,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		for(const auto& enemy: tickDescription.mEnemyVampires) {
 			enemypredict_t& et = mEnemyPredict[enemy.mId];
 			pos_t ep(enemy.mY, enemy.mX);
-			if (et.prevpos != ep && enemy.mGrenadeRange == 0) // still has one more bomb (to finish attempt) - also assures that we are "after" phase1
+			// note: we can't differentiate between a failed attempt with stay
+			//!!!!! 
+//			if (et.prevpos == ep || enemy.mGrenadeRange == 0) // still has one more bomb (to finish attempt) - also assures that we are "after" phase1
+			if (et.prevpos == ep && enemy.mGrenadeRange == 0) // still has one more bomb (to finish attempt) - also assures that we are "after" phase1
 				continue;
 			for(const auto& bomb: tickDescription.mGrenades) {
 				pos_t bp(bomb.mY, bomb.mX);
@@ -847,7 +850,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					const auto& enemy = tickDescription.mEnemyVampires[ei];
 					pos_t ep(enemy.mY, enemy.mX);
 					if (ep.GetDist(p) <= 1) {
-						if (ep != p && mEnemyPredict[enemy.mId].bombnexttoitem && mEnemyPredict[enemy.mId].doublebomber && enemy.mPlacableGrenades >= 2 && 
+						if (ep != p && (mEnemyPredict[enemy.mId].bombnexttoitem || mEnemyPredict[enemy.mId].doublebomber) && enemy.mPlacableGrenades >= 2 && 
 							(enemy.mHealth > 1 || me.mHealth == 1)) {
 							dangerousbomber = true;
 							break;

@@ -137,12 +137,10 @@ void Framework::Render()
 
             {
                 if (mPlayBook.mIsCorrupted) {
-                    ImGui::Text("THE GAME IS CORRUPTED. STATELESS REPLAY FOR DISPLAY!");
-                    mPlayBook.mSolverIsStateful = false;
+                    ImGui::Text("THE GAME IS CORRUPTED. USE STATEFUL AT YOUR OWN RISK!");
                     ImGui::NewLine();
-                } else {
-                    ImGui::Checkbox("Solver is stateful", &mPlayBook.mSolverIsStateful);
                 }
+                ImGui::Checkbox("Solver is stateful", &mPlayBook.mSolverIsStateful);
                 ImGui::SameLine();
 
                 ImGui::Checkbox("Playback only", &mPlayBook.mPlaybackOnly);

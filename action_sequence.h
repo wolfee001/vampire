@@ -3,6 +3,7 @@
 #include "models.h"
 #include <cmath>
 #include <functional>
+#include <optional>
 #include <stdexcept>
 
 class ActionSequence {
@@ -111,6 +112,12 @@ public:
         }
 
         return 255;
+    }
+
+    std::optional<Throw> GetThrow() const
+    {
+        // TODO: Gabor!!!
+        return std::nullopt;
     }
 
     Answer GetAnswer() const

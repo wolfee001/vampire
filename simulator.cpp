@@ -5,6 +5,7 @@
 #include <boost/functional/hash.hpp>
 #include <cstddef>
 #include <exception>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
@@ -490,61 +491,18 @@ void Simulator::ThrowGrenades()
                 //     continue;
                 // }
                 const auto& th = *(it->second.mThrow);
-                if (th.mDistance > mGameDescription.mGrenadeRadius + 1) {
-                    continue;
-                }
-                std::pair<int, int> origin;
-                std::pair<int, int> target;
-                switch (th.mDirection) {
-                case Throw::Direction::Up:
-                    origin = std::make_pair(vampire->mX, vampire->mY - 1);
-                    target = std::make_pair(vampire->mX, vampire->mY - 1 - th.mDistance);
-                    break;
-                case Throw::Direction::Down:
-                    origin = std::make_pair(vampire->mX, vampire->mY + 1);
-                    target = std::make_pair(vampire->mX, vampire->mY + 1 + th.mDistance);
-                    break;
-                case Throw::Direction::Left:
-                    origin = std::make_pair(vampire->mX - 1, vampire->mY);
-                    target = std::make_pair(vampire->mX - 1 - th.mDistance, vampire->mY);
-                    break;
-                case Throw::Direction::Right:
-                    origin = std::make_pair(vampire->mX + 1, vampire->mY);
-                    target = std::make_pair(vampire->mX + 1 + th.mDistance, vampire->mY);
-                    break;
-                case Throw::Direction::XUp:
-                    origin = std::make_pair(vampire->mX, vampire->mY);
-                    target = std::make_pair(vampire->mX, vampire->mY - th.mDistance);
-                    break;
-                case Throw::Direction::XDown:
-                    origin = std::make_pair(vampire->mX, vampire->mY);
-                    target = std::make_pair(vampire->mX, vampire->mY + th.mDistance);
-                    break;
-                case Throw::Direction::XLeft:
-                    origin = std::make_pair(vampire->mX, vampire->mY);
-                    target = std::make_pair(vampire->mX - th.mDistance, vampire->mY);
-                    break;
-                case Throw::Direction::XRight:
-                    origin = std::make_pair(vampire->mX, vampire->mY);
-                    target = std::make_pair(vampire->mX + th.mDistance, vampire->mY);
-                    break;
-                }
-
-                if (target.first < 0 || target.first > mGameDescription.mMapSize - 1 || target.second < 0 || target.second > mGameDescription.mMapSize - 1) {
-                    continue;
-                }
-
-                if (!mThrowableArea.find(target.first, target.second)) {
+                std::optional<ThrowPositions> targetsOpt = GetThrowPosition(std::make_pair(vampire->mX, vampire->mY), th);
+                if (!targetsOpt) {
                     continue;
                 }
 
                 bool originHasNonMeBomb = false;
                 bool successfullThrow = false;
                 for (auto& grenade : mState.mGrenades) {
-                    if (grenade.mX == origin.first && grenade.mY == origin.second) {
+                    if (grenade.mX == targetsOpt->origin.first && grenade.mY == targetsOpt->origin.second) {
                         if (grenade.mId == mState.mMe.mId) {
-                            grenade.mX = target.first;
-                            grenade.mY = target.second;
+                            grenade.mX = targetsOpt->target.first;
+                            grenade.mY = targetsOpt->target.second;
                             successfullThrow = true;
                         } else {
                             originHasNonMeBomb = true;
@@ -553,10 +511,10 @@ void Simulator::ThrowGrenades()
                 }
 
                 if (successfullThrow) {
-                    mReachableArea.clear(target.first, target.second);
+                    mReachableArea.clear(targetsOpt->target.first, targetsOpt->target.second);
                 }
                 if (!originHasNonMeBomb) {
-                    mReachableArea.insert(origin.first, origin.second);
+                    mReachableArea.insert(targetsOpt->origin.first, targetsOpt->origin.second);
                 }
             }
         }
@@ -605,6 +563,59 @@ void Simulator::Move()
     }
 }
 
+std::optional<Simulator::ThrowPositions> Simulator::GetThrowPosition(const std::pair<int, int>& position, const Throw& th) const
+{
+    if (th.mDistance > mGameDescription.mGrenadeRadius + 1) {
+        return std::nullopt;
+    }
+    std::pair<int, int> origin;
+    std::pair<int, int> target;
+    switch (th.mDirection) {
+    case Throw::Direction::Up:
+        origin = std::make_pair(position.first, position.second - 1);
+        target = std::make_pair(position.first, position.second - 1 - th.mDistance);
+        break;
+    case Throw::Direction::Down:
+        origin = std::make_pair(position.first, position.second + 1);
+        target = std::make_pair(position.first, position.second + 1 + th.mDistance);
+        break;
+    case Throw::Direction::Left:
+        origin = std::make_pair(position.first - 1, position.second);
+        target = std::make_pair(position.first - 1 - th.mDistance, position.second);
+        break;
+    case Throw::Direction::Right:
+        origin = std::make_pair(position.first + 1, position.second);
+        target = std::make_pair(position.first + 1 + th.mDistance, position.second);
+        break;
+    case Throw::Direction::XUp:
+        origin = std::make_pair(position.first, position.second);
+        target = std::make_pair(position.first, position.second - th.mDistance);
+        break;
+    case Throw::Direction::XDown:
+        origin = std::make_pair(position.first, position.second);
+        target = std::make_pair(position.first, position.second + th.mDistance);
+        break;
+    case Throw::Direction::XLeft:
+        origin = std::make_pair(position.first, position.second);
+        target = std::make_pair(position.first - th.mDistance, position.second);
+        break;
+    case Throw::Direction::XRight:
+        origin = std::make_pair(position.first, position.second);
+        target = std::make_pair(position.first + th.mDistance, position.second);
+        break;
+    }
+
+    if (target.first < 0 || target.first > mGameDescription.mMapSize - 1 || target.second < 0 || target.second > mGameDescription.mMapSize - 1) {
+        return std::nullopt;
+    }
+
+    if (!mThrowableArea.find(target.first, target.second)) {
+        return std::nullopt;
+    }
+
+    return Simulator::ThrowPositions { origin, target };
+}
+
 bool Simulator::IsValidMove(int id, const Answer& move) const
 {
     return IsValidMove(id, ActionSequence(move));
@@ -629,11 +640,37 @@ bool Simulator::IsValidMove(int id, const ActionSequence& move) const
         CHECK(false, "Invalid id: " + std::to_string(id));
     }
 
+    std::optional<Throw> throwOpt = move.GetThrow();
+
+    if (move.IsGrenade() && throwOpt) {
+        return false;
+    }
+
     if (move.IsGrenade()) {
         if (vampire->mGhostModeTick != 0) {
             return false;
         }
         if (vampire->mPlacableGrenades < 1) {
+            return false;
+        }
+    }
+
+    if (throwOpt) {
+        std::optional<ThrowPositions> targetsOpt = GetThrowPosition(std::make_pair(vampire->mX, vampire->mY), *(throwOpt));
+        if (!targetsOpt) {
+            return false;
+        }
+
+        bool hasMatchingGrenade = false;
+        for (const auto& grenade : mState.mGrenades) {
+            if (grenade.mX == targetsOpt->origin.first && grenade.mY == targetsOpt->origin.second) {
+                if (grenade.mId == id) {
+                    hasMatchingGrenade = true;
+                    break;
+                }
+            }
+        }
+        if (!hasMatchingGrenade) {
             return false;
         }
     }

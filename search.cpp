@@ -1,8 +1,18 @@
 #include "search.h"
 #include "action_sequence.h"
 #include "gabor_magic.h"
+
+#ifdef _WIN32
+#pragma warning(push, 0)
+#endif
+
 #include <boost/container/flat_map.hpp>
 #include <boost/iterator/filter_iterator.hpp>
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 #include <cmath>
 #include <iostream>
 #include <optional>

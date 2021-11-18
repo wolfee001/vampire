@@ -1,8 +1,8 @@
 {
     "versions": [
-        "final_v3",
         "final_v4",
         "final_v5",
+        "final_v6",
         "local"
     ],
     "timeout": "600",

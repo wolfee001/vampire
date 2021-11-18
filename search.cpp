@@ -163,7 +163,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
-            const Answer move = action.GetAnswer();
+            Answer move = action.GetAnswer();
             if (mLevels.size() == 2 && mAvoids && action.GetNumberOfSteps() > 0) {
                 if ((mAvoids & 1) && move.mSteps[0] == 'U')
                     continue;
@@ -173,6 +173,10 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                     continue;
                 if ((mAvoids & 8) && move.mSteps[0] == 'L')
                     continue;
+            }
+
+            if (currentLevelIndex == 1) {
+                move.mThrow = mThrow;
             }
 
             simulator.SetVampireMove(mPlayerId, move);

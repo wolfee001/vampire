@@ -311,8 +311,14 @@ void Simulator::BlowUpGrenades()
         for (const auto& area : areas) {
             if (area.mArea.find(bat.mX, bat.mY)) {
                 injured++;
-                for (const auto& vId : area.mVampireIds) {
-                    mNewPoints[vId] += 12.F / static_cast<float>(area.mVampireIds.size());
+                std::unordered_set<int> vampiresDamaging;
+                for (const auto& element : blowingGrenades) {
+                    if (area.mArea.find(element.grenade.mX, element.grenade.mY) && element.area.find(bat.mX, bat.mY)) {
+                        vampiresDamaging.insert(element.grenade.mId);
+                    }
+                }
+                for (const auto& vId : vampiresDamaging) {
+                    mNewPoints[vId] += 12.F / static_cast<float>(vampiresDamaging.size());
                 }
             }
         }
@@ -372,7 +378,7 @@ void Simulator::BlowUpGrenades()
                     }
 
                     for (const auto& element : blowingGrenades) {
-                        if (element.area.find(vampire.mX, vampire.mY)) {
+                        if (area.mArea.find(element.grenade.mX, element.grenade.mY) && element.area.find(vampire.mX, vampire.mY)) {
                             vampiresDamaging.insert(element.grenade.mId);
                         }
                     }

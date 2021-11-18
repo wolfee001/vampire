@@ -73,6 +73,11 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             }
 
             const ActionSequence action(i);
+
+            if (mThrow && action.IsGrenade()) {
+                continue;
+            }
+
             if (action.GetNumberOfSteps() == 3 && node.mTickDescription.mMe.mRunningShoesTick == 0) {
                 continue;
             }
@@ -158,7 +163,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
-            const Answer move = action.GetAnswer();
+            Answer move = action.GetAnswer();
             if (mLevels.size() == 2 && mAvoids && action.GetNumberOfSteps() > 0) {
                 if ((mAvoids & 1) && move.mSteps[0] == 'U')
                     continue;
@@ -168,6 +173,10 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                     continue;
                 if ((mAvoids & 8) && move.mSteps[0] == 'L')
                     continue;
+            }
+
+            if (currentLevelIndex == 1) {
+                move.mThrow = mThrow;
             }
 
             simulator.SetVampireMove(mPlayerId, move);
@@ -265,7 +274,9 @@ Answer Search::GetBestMove()
             printBranch(mLevels.back()[i]);
         }
     */
-    return ActionSequence(current->mAction).GetAnswer();
+    Answer answer = ActionSequence(current->mAction).GetAnswer();
+    answer.mThrow = mThrow;
+    return answer;
 }
 
 float Search::Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move, const size_t level,

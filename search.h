@@ -41,6 +41,11 @@ public:
         mReachDiff = reachdiff;
     }
 
+    void SetThrow(std::optional<Throw> pThrow)
+    {
+        mThrow = std::move(pThrow);
+    }
+
     bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     Answer GetBestMove();
@@ -83,4 +88,5 @@ public:
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
     pos_t mMyOriginalPos;
+    std::optional<Throw> mThrow;
 };

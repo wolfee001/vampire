@@ -645,6 +645,26 @@ TEST_F(SimulateTest, OneBatTwoGrenadeChainMultiplePoints)
     ASSERT_EQ(newPoints.at(2), 12 / 2);
 }
 
+TEST_F(SimulateTest, OneBatTwoGrenadeChainSinglePoints)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "BAT1 1 1",
+        "GRENADE 1 1 2 1 2",
+        "GRENADE 2 1 4 1 2",
+        "GRENADE 1 2 1 1 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), 12 + 12);
+    ASSERT_EQ(newPoints.at(2), 0);
+}
+
 TEST_F(SimulateTest, BlowUpGrenadeKillVampiresFinally)
 {
     // clang-format off

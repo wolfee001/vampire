@@ -20,6 +20,11 @@ void GaborMagic::SetReachDiff(int reachdiff)
     mReachDiff = reachdiff;
 }
 
+void GaborMagic::SetThrow(std::optional<Throw> pThrow)
+{
+    mThrow = std::move(pThrow);
+}
+
 Answer GaborMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
     Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);

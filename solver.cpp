@@ -118,19 +118,7 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
     }
 
     Answer answer = mMagic->Tick(mTickDescription, mCumulatedPoints);
-
-    std::vector<std::string> commands { "RES " + std::to_string(tick.mRequest.mGameId) + " " + std::to_string(tick.mRequest.mTick) + " "
-        + std::to_string(tick.mRequest.mVampireId) };
-    if (answer.mPlaceGrenade) {
-        commands.emplace_back("GRENADE");
-    }
-    if (!answer.mSteps.empty()) {
-        std::string moveCommand = "MOVE";
-        for (const auto& step : answer.mSteps) {
-            moveCommand += std::string(" ") + step;
-        }
-        commands.emplace_back(moveCommand);
-    }
+    auto commands = createAnswer(answer, mTickDescription.mRequest.mGameId, mTickDescription.mRequest.mTick, mTickDescription.mRequest.mVampireId);
 
 #ifdef GAME_WITH_FRAMEWORK
     Framework::GetInstance().Step(commands);

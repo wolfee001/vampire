@@ -182,8 +182,76 @@ Answer parseAnswer(const std::vector<std::string>& message)
                 }
                 retVal.mSteps.push_back(c);
             }
+        } else if (id == "THROW") {
+            std::string dir;
+            int length;
+            stream >> dir;
+            stream >> length;
+            Throw::Direction direction = Throw::Direction::Up;
+            if (dir == "U") {
+                direction = Throw::Direction::Up;
+            } else if (dir == "D") {
+                direction = Throw::Direction::Down;
+            } else if (dir == "L") {
+                direction = Throw::Direction::Left;
+            } else if (dir == "R") {
+                direction = Throw::Direction::Right;
+            } else if (dir == "XU") {
+                direction = Throw::Direction::XUp;
+            } else if (dir == "XD") {
+                direction = Throw::Direction::XDown;
+            } else if (dir == "XL") {
+                direction = Throw::Direction::XLeft;
+            } else if (dir == "XR") {
+                direction = Throw::Direction::XRight;
+            }
+            retVal.mThrow = { direction, length };
         }
     }
 
     return retVal;
+}
+
+std::vector<std::string> createAnswer(const Answer& answer, int gameId, int tick, int vampireId)
+{
+    CHECK(!(answer.mPlaceGrenade && answer.mThrow), "Only one grenade action allowed!");
+
+    std::vector<std::string> commands { "RES " + std::to_string(gameId) + " " + std::to_string(tick) + " " + std::to_string(vampireId) };
+    if (answer.mPlaceGrenade) {
+        commands.emplace_back("GRENADE");
+    }
+    if (answer.mThrow) {
+        const std::string direction = [](const Throw::Direction& dir) {
+            switch (dir) {
+            case Throw::Direction::Up:
+                return "U";
+            case Throw::Direction::Down:
+                return "D";
+            case Throw::Direction::Left:
+                return "L";
+            case Throw::Direction::Right:
+                return "R";
+            case Throw::Direction::XUp:
+                return "XU";
+            case Throw::Direction::XDown:
+                return "XD";
+            case Throw::Direction::XLeft:
+                return "XL";
+            case Throw::Direction::XRight:
+                return "XR";
+            }
+            CHECK(false, "Unhandled type");
+            return "";
+        }(answer.mThrow->mDirection);
+        commands.emplace_back("THROW " + direction + " " + std::to_string(answer.mThrow->mDistance));
+    }
+    if (!answer.mSteps.empty()) {
+        std::string moveCommand = "MOVE";
+        for (const auto& step : answer.mSteps) {
+            moveCommand += std::string(" ") + step;
+        }
+        commands.emplace_back(moveCommand);
+    }
+
+    return commands;
 }

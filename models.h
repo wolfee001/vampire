@@ -123,7 +123,13 @@ struct TickDescription {
 
 struct Throw {
     enum class Direction { Up, Down, Left, Right, XUp, XDown, XLeft, XRight };
+    Direction mDirection;
     int mDistance = -1;
+
+    bool operator==(const Throw& other) const
+    {
+        return mDirection == other.mDirection && mDistance == other.mDistance;
+    }
 };
 
 struct Answer {
@@ -133,7 +139,7 @@ struct Answer {
 
     bool operator==(const Answer& other) const
     {
-        return mPlaceGrenade == other.mPlaceGrenade && mSteps == other.mSteps;
+        return mPlaceGrenade == other.mPlaceGrenade && mSteps == other.mSteps && mThrow == other.mThrow;
     }
 };
 

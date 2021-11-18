@@ -1,5 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <optional>
+#include <stdexcept>
 
 #include "../parser.h"
 
@@ -142,4 +144,77 @@ TEST(Parsing, ParseTick)
     EXPECT_EQ(desc.mPowerUps[0].mX, 2);
     EXPECT_EQ(desc.mPowerUps[0].mY, 1);
     EXPECT_EQ(desc.mPowerUps[0].mDefensTime, 1);
+}
+
+TEST(Parser, CreateAnswer)
+{
+    Answer answer;
+    std::vector<std::string> retVal;
+
+    answer.mPlaceGrenade = false;
+    answer.mSteps = {};
+    answer.mThrow = std::nullopt;
+    retVal = createAnswer(answer, 1, 1, 1);
+    EXPECT_EQ(retVal, std::vector<std::string>({ "RES 1 1 1" }));
+
+    answer.mPlaceGrenade = false;
+    answer.mSteps = { 'U', 'U' };
+    answer.mThrow = std::nullopt;
+    retVal = createAnswer(answer, 1, 1, 1);
+    EXPECT_EQ(retVal, std::vector<std::string>({ "RES 1 1 1", "MOVE U U" }));
+
+    answer.mPlaceGrenade = true;
+    answer.mSteps = { 'U', 'U' };
+    answer.mThrow = std::nullopt;
+    retVal = createAnswer(answer, 1, 1, 1);
+    EXPECT_EQ(retVal, std::vector<std::string>({ "RES 1 1 1", "GRENADE", "MOVE U U" }));
+
+    answer.mPlaceGrenade = false;
+    answer.mSteps = { 'U', 'U' };
+    answer.mThrow = { Throw::Direction::Up, 2 };
+    retVal = createAnswer(answer, 1, 1, 1);
+    EXPECT_EQ(retVal, std::vector<std::string>({ "RES 1 1 1", "THROW U 2", "MOVE U U" }));
+
+    answer.mPlaceGrenade = false;
+    answer.mSteps = { 'U', 'U' };
+    answer.mThrow = { Throw::Direction::XDown, 2 };
+    retVal = createAnswer(answer, 1, 1, 1);
+    EXPECT_EQ(retVal, std::vector<std::string>({ "RES 1 1 1", "THROW XD 2", "MOVE U U" }));
+
+    answer.mPlaceGrenade = true;
+    answer.mSteps = { 'U', 'U' };
+    answer.mThrow = { Throw::Direction::Up, 2 };
+    EXPECT_THROW(createAnswer(answer, 1, 1, 1), std::runtime_error);
+}
+
+TEST(Parser, ParseAnswer)
+{
+    Answer answer;
+
+    answer = parseAnswer({ "RES 1 1 1" });
+    EXPECT_EQ(answer.mPlaceGrenade, false);
+    EXPECT_EQ(answer.mThrow, std::nullopt);
+    EXPECT_EQ(answer.mSteps, std::vector<char>({}));
+
+    answer = parseAnswer({ "RES 1 1 1", "MOVE U U" });
+    EXPECT_EQ(answer.mPlaceGrenade, false);
+    EXPECT_EQ(answer.mThrow, std::nullopt);
+    EXPECT_EQ(answer.mSteps, std::vector<char>({ 'U', 'U' }));
+
+    answer = parseAnswer({ "RES 1 1 1", "GRENADE", "MOVE U U" });
+    EXPECT_EQ(answer.mPlaceGrenade, true);
+    EXPECT_EQ(answer.mThrow, std::nullopt);
+    EXPECT_EQ(answer.mSteps, std::vector<char>({ 'U', 'U' }));
+
+    answer = parseAnswer({ "RES 1 1 1", "THROW U 2", "MOVE U U" });
+    EXPECT_EQ(answer.mPlaceGrenade, false);
+    EXPECT_EQ(answer.mThrow->mDirection, Throw::Direction::Up);
+    EXPECT_EQ(answer.mThrow->mDistance, 2);
+    EXPECT_EQ(answer.mSteps, std::vector<char>({ 'U', 'U' }));
+
+    answer = parseAnswer({ "RES 1 1 1", "THROW XD 2", "MOVE U U" });
+    EXPECT_EQ(answer.mPlaceGrenade, false);
+    EXPECT_EQ(answer.mThrow->mDirection, Throw::Direction::XDown);
+    EXPECT_EQ(answer.mThrow->mDistance, 2);
+    EXPECT_EQ(answer.mSteps, std::vector<char>({ 'U', 'U' }));
 }

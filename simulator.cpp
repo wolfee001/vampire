@@ -109,6 +109,11 @@ const Simulator::Area& Simulator::GetReachableArea() const
     return mReachableArea;
 }
 
+const Simulator::Area& Simulator::GetThrowableArea() const
+{
+    return mThrowableArea;
+}
+
 const Simulator::Area& Simulator::GetLitArea() const
 {
     return mLitArea;

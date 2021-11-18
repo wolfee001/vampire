@@ -52,6 +52,7 @@ public:
     std::vector<BlowArea> GetBlowAreas(const bool blowNow = false);
     Area GetBlowArea(const Grenade& grenade);
     const Area& GetReachableArea() const;
+    const Area& GetThrowableArea() const;
     const Area& GetLitArea() const;
     void KillVampire(int id);
 

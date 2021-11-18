@@ -165,14 +165,18 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
 
             Answer move = action.GetAnswer();
             if (mLevels.size() == 2 && mAvoids && action.GetNumberOfSteps() > 0) {
-                if ((mAvoids & 1) && move.mSteps[0] == 'U')
+                if ((mAvoids & 1) && move.mSteps[0] == 'U') {
                     continue;
-                if ((mAvoids & 2) && move.mSteps[0] == 'R')
+                }
+                if ((mAvoids & 2) && move.mSteps[0] == 'R') {
                     continue;
-                if ((mAvoids & 4) && move.mSteps[0] == 'D')
+                }
+                if ((mAvoids & 4) && move.mSteps[0] == 'D') {
                     continue;
-                if ((mAvoids & 8) && move.mSteps[0] == 'L')
+                }
+                if ((mAvoids & 8) && move.mSteps[0] == 'L') {
                     continue;
+                }
             }
 
             if (currentLevelIndex == 1) {
@@ -574,14 +578,6 @@ void Search::CalculateMoveRestrictions([[maybe_unused]] const bool defense /* = 
         }
 
         // calculate future positions for the enemies
-        const size_t enemyOptimalMoveCount = std::invoke([&enemyIds, &GetMovesWithoutBombing, &rootTick]() {
-            size_t enemyMoves = 0;
-            for (int enemyId : enemyIds) {
-                enemyMoves += GetMovesWithoutBombing(rootTick, enemyId).size();
-            }
-            return enemyMoves;
-        });
-
         std::vector<std::vector<ActionSequence>> enemyMoves(enemyIds.size());
         if (myMove.IsGrenade()) {
             // "simulate" grenade to block enemy movement
@@ -593,17 +589,13 @@ void Search::CalculateMoveRestrictions([[maybe_unused]] const bool defense /* = 
             myGrenade.mY = rootTick.mMe.mY;
         }
 
-        size_t restrictedMoveCount = 0;
         for (size_t enemyIndex = 0; enemyIndex < enemyIds.size(); ++enemyIndex) {
             enemyMoves[enemyIndex] = GetMovesWithoutBombing(rootTick, enemyIds[enemyIndex]);
-            restrictedMoveCount += enemyMoves[enemyIndex].size();
         }
 
         if (myMove.IsGrenade()) {
             rootTick.mGrenades.pop_back();
         }
-
-        child.mRestrictionScore += 1.F - (static_cast<float>(restrictedMoveCount) / static_cast<float>(enemyOptimalMoveCount));
 
         size_t worstMoveCount = std::numeric_limits<size_t>::max();
 

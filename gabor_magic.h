@@ -17,6 +17,7 @@ public:
     void SetPreferGrenade(int prefer);
     void SetLevelLimit(const size_t maxLevel);
     void SetReachDiff(int reachdiff);
+    void SetThrow(std::optional<Throw> pThrow);
 
 private:
     size_t mMaxLevel = 10;
@@ -26,4 +27,5 @@ private:
     int mReachDiff = 0;
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
+    std::optional<Throw> mThrow;
 };

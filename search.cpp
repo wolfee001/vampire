@@ -258,7 +258,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 node.mPermanentScore + newPoints.at(mPlayerId) * std::pow(0.99F, static_cast<float>(currentLevelIndex)),
                 node.mHeuristicScore + heuristicScore * std::pow(0.99F, static_cast<float>(currentLevelIndex)), action.GetId());
 
-            nextNode.mThrowLength = static_cast<uint8_t>(move.mThrow->mDistance);
+            nextNode.mThrowLength = static_cast<uint8_t>(move.mThrow ? move.mThrow->mDistance : 0);
         } while (action.GetNextId());
     }
 

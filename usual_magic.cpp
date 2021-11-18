@@ -710,7 +710,7 @@ int avoidkicks(map_t& m, pos_t bomb, int d, pos_t player, int oriradius)
 		p2 = p2.GetPos(d);
 		if (p2.x == 0 || p2.y == 0 || p2.x >= SZ(m) - 1 || p2.y >= SZ(m))
 			break;
-		if (m[p2.y][p2.x] != ' ' && (m[p2.y][p2.x] < '1' && m[p2.y][p2.x] > '9'))
+		if (m[p2.y][p2.x] != ' ' && (m[p2.y][p2.x] < '1' || m[p2.y][p2.x] > '9'))
 			continue;
 		if (checkkickthreat(m, bomb, p2, player)) {
 			avoids |= 16;

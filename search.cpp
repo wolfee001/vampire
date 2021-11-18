@@ -1,5 +1,6 @@
 #include "search.h"
 #include "action_sequence.h"
+#include "check.h"
 #include "gabor_magic.h"
 
 #ifdef _WIN32
@@ -55,38 +56,21 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
     auto& nextLevel = mLevels.back();
     nextLevel.reserve(currentLevel.size() * 3);
 
-    const auto FindGrenadeThrowDistance
-        = [&mGameDescription = mGameDescription](const TickDescription& tick, const Grenade& grenade, const ActionSequence& action) -> uint8_t {
-        const auto direction = action.GetThrowDirection();
+    const auto FindGrenadeThrowDistance = [&mGameDescription = mGameDescription](const TickDescription& tick, Answer move) -> uint8_t {
         Simulator simulator(mGameDescription);
         simulator.SetState(tick);
-        const auto throwAbleArea = simulator.GetThrowableArea();
 
-        if (direction == Throw::Direction::Up || direction == Throw::Direction::XUp || direction == Throw::Direction::Down
-            || direction == Throw::Direction::XDown) {
+        CHECK(move.mThrow, "missing throw");
 
-            const int coefficient = (direction == Throw::Direction::Up || direction == Throw::Direction::XUp) ? -1 : 1;
-            for (int length = mGameDescription.mGrenadeRadius + 1; length >= 0; ++length) {
-                const int y = grenade.mY - coefficient * length;
-                if (y > 0 && y < mGameDescription.mMapSize && throwAbleArea.find(grenade.mX, y)) {
-                    return static_cast<uint8_t>(length);
-                }
+        for (int length = mGameDescription.mGrenadeRadius + 1; length >= 0; --length) {
+            move.mThrow->mDistance = length;
+
+            if (simulator.GetThrowPosition(std::make_pair(tick.mMe.mX, tick.mMe.mY), *move.mThrow)) {
+                return static_cast<uint8_t>(length);
             }
         }
 
-        if (direction == Throw::Direction::Right || direction == Throw::Direction::XRight || direction == Throw::Direction::Left
-            || direction == Throw::Direction::XLeft) {
-
-            const int coefficient = (direction == Throw::Direction::Left || direction == Throw::Direction::XLeft) ? -1 : 1;
-            for (int length = mGameDescription.mGrenadeRadius + 1; length >= 0; ++length) {
-                const int x = grenade.mX - coefficient * length;
-                if (x > 0 && x < mGameDescription.mMapSize && throwAbleArea.find(x, grenade.mY)) {
-                    return static_cast<uint8_t>(length);
-                }
-            }
-        }
-
-        throw std::runtime_error("what?");
+        return 0;
     };
 
     Simulator simulator(mGameDescription);
@@ -102,11 +86,12 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
         ActionSequence action(0);
 
         do {
+            Answer move = action.GetAnswer();
+
             if (action.IsGrenade() && action.IsThrow()) {
                 continue;
             }
 
-            std::optional<Grenade> thrownGrenade;
             if (action.IsThrow()) {
                 int grenadeX = node.mTickDescription.mMe.mX;
                 int grenadeY = node.mTickDescription.mMe.mY;
@@ -139,7 +124,10 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                     continue;
                 }
 
-                thrownGrenade = *gIt;
+                move.mThrow->mDistance = FindGrenadeThrowDistance(node.mTickDescription, move);
+                if (move.mThrow->mDistance == 0) {
+                    continue;
+                }
             }
 
             const auto now = std::chrono::steady_clock::now();
@@ -178,8 +166,9 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             }
 
             if (action.IsGrenade() && action.GetNumberOfSteps() < 2) {
-                if (mLevels.size() > 2 || !mPreferGrenade || action.GetNumberOfSteps() == 1)
+                if (mLevels.size() > 2 || !mPreferGrenade || action.GetNumberOfSteps() == 1) {
                     continue;
+                }
             }
 
             if (mLevels.size() == 2 && (mAvoids & 16) && action.GetNumberOfSteps() == 0) {
@@ -235,7 +224,6 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
-            Answer move = action.GetAnswer();
             if (mLevels.size() == 2 && mAvoids && action.GetNumberOfSteps() > 0) {
                 if ((mAvoids & 1) && move.mSteps[0] == 'U') {
                     continue;
@@ -255,10 +243,6 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 if (mThrow) {
                     move.mThrow = mThrow;
                 }
-            }
-
-            if (!mThrow && move.mThrow) {
-                move.mThrow->mDistance = FindGrenadeThrowDistance(node.mTickDescription, *thrownGrenade, action);
             }
 
             simulator.SetVampireMove(mPlayerId, move);
@@ -385,21 +369,21 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     float pathTargetScore = 0;
 
     const pos_t mypos(tickDescription.mMe.mY, tickDescription.mMe.mX);
+    /*
+        if (mPhase == PHASE1 && !mBombSequence.empty()) {
+            for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
+                const auto& bombingPlace = mBombSequence[bombIndex];
 
-    if (mPhase == PHASE1 && !mBombSequence.empty()) {
-        for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
-            const auto& bombingPlace = mBombSequence[bombIndex];
+                const auto gIt = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
+                    [&bombingPlace](const Grenade& grenade) { return bombingPlace.x == grenade.mX && bombingPlace.y == grenade.mY; });
 
-            const auto gIt = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
-                [&bombingPlace](const Grenade& grenade) { return bombingPlace.x == grenade.mX && bombingPlace.y == grenade.mY; });
-
-            if (gIt != std::cend(tickDescription.mGrenades)) {
-                // reward earch covered bombing place, prioritize the first one
-                bombingTargetScore += 12.F * (bombIndex == 0 ? 1.F : 0.2F);
+                if (gIt != std::cend(tickDescription.mGrenades)) {
+                    // reward earch covered bombing place, prioritize the first one
+                    bombingTargetScore += 12.F * (bombIndex == 0 ? 1.F : 0.2F);
+                }
             }
         }
-    }
-
+    */
     if (mPhase == WOLFEE && !mBombSequence.empty()) {
         for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
             const auto& bombingPlace = mBombSequence[bombIndex];

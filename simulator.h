@@ -62,6 +62,9 @@ public:
     const Area& GetLitArea() const;
     void KillVampire(int id);
 
+    // position is x, y
+    std::optional<ThrowPositions> GetThrowPosition(const std::pair<int, int>& position, const Throw& th) const;
+
 private:
     void RecalculateTicks();
     void RemoveDisappearedPowerups();
@@ -71,8 +74,6 @@ private:
     void PlantGrenades();
     void ThrowGrenades();
     void Move();
-
-    std::optional<ThrowPositions> GetThrowPosition(const std::pair<int, int>& position, const Throw& th) const;
 
 private:
     GameDescription mGameDescription;

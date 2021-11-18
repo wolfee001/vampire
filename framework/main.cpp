@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     if (!glfwInit()) {
         return 1;
     }
-    GLFWwindow* window = glfwCreateWindow(1280, 1024, "IJEGGYE MEG, BASZOD!", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1280, 1024, "IJEGGYE MEG!", NULL, NULL);
     if (window == nullptr) {
         return 1;
     }

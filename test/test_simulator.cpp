@@ -809,6 +809,208 @@ TEST_F(SimulateTest, PlantgrenadeAfterDeath)
     ASSERT_EQ(newState.mGrenades.size(), 0);
 }
 
+TEST_F(SimulateTest, ThrowGrenadeNextToMeValid)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 2 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::Right, 3 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    EXPECT_EQ(newState.mGrenades[0].mX, 5);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_TRUE(mSimulator->GetReachableArea().find(2, 1));
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(5, 1));
+}
+
+TEST_F(SimulateTest, ThrowGrenadeUnderMeValid)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 1 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::XRight, 3 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    EXPECT_EQ(newState.mGrenades[0].mX, 4);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_TRUE(mSimulator->GetReachableArea().find(1, 1));
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(4, 1));
+}
+
+TEST_F(SimulateTest, ThrowGrenadeNextToMeInvalidNoGrenade)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 1 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::Right, 3 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    EXPECT_EQ(newState.mGrenades[0].mX, 1);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_TRUE(mSimulator->GetReachableArea().find(5, 1));
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(1, 1));
+}
+
+TEST_F(SimulateTest, ThrowGrenadeUnderMeInvalidNoGrenade)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 2 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::XRight, 3 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    EXPECT_EQ(newState.mGrenades[0].mX, 2);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_TRUE(mSimulator->GetReachableArea().find(1, 1));
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(2, 1));
+}
+
+TEST_F(SimulateTest, ThrowGrenadeUnderMeInvalidOtherGrenade)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 2 1 1 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::XRight, 3 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    EXPECT_EQ(newState.mGrenades[0].mX, 1);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_TRUE(mSimulator->GetReachableArea().find(2, 1));
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(1, 1));
+}
+
+TEST_F(SimulateTest, ThrowGrenadeUnderMeInvalidJezusomVeryBig)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 1 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::XRight, 5 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    EXPECT_EQ(newState.mGrenades[0].mX, 1);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_TRUE(mSimulator->GetReachableArea().find(2, 1));
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(1, 1));
+}
+
+TEST_F(SimulateTest, ThrowGrenadeUnderMeInvalidOutOfField)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 1 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::XUp, 3 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    EXPECT_EQ(newState.mGrenades[0].mX, 1);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_TRUE(mSimulator->GetReachableArea().find(2, 1));
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(1, 1));
+}
+
+TEST_F(SimulateTest, ThrowGrenadeUnderMeInvalidLandOnBush)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 1 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::XUp, 1 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    EXPECT_EQ(newState.mGrenades[0].mX, 1);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_TRUE(mSimulator->GetReachableArea().find(2, 1));
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(1, 1));
+}
+
+TEST_F(SimulateTest, ThrowGrenadeUnderMeInvalidLandOnBat)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 1 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+        "BAT1 1 2"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::XRight, 1 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 1);
+    EXPECT_EQ(newState.mGrenades[0].mX, 1);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(2, 1));
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(1, 1));
+}
+
+TEST_F(SimulateTest, ThrowGrenadeUnderMeValidLandOnGrenade)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "GRENADE 1 1 1 5 2",
+        "GRENADE 1 1 2 5 2",
+        "VAMPIRE 1 1 1 1 1 2 0",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, {}, Throw({ Throw::Direction::XRight, 1 }) });
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 2);
+    EXPECT_EQ(newState.mGrenades[0].mX, 2);
+    EXPECT_EQ(newState.mGrenades[0].mY, 1);
+    EXPECT_FALSE(mSimulator->GetReachableArea().find(2, 1));
+    EXPECT_TRUE(mSimulator->GetReachableArea().find(1, 1));
+}
+
 TEST_F(SimulateTest, StepSimple)
 {
     // clang-format off

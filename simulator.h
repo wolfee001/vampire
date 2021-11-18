@@ -62,6 +62,7 @@ private:
     void BlowUpGrenades();
     void HitLight();
     void PlantGrenades();
+    void ThrowGrenades();
     void Move();
 
 private:
@@ -70,6 +71,7 @@ private:
     std::unordered_map<int, Answer> mVampireMoves;
     NewPoints mNewPoints;
     Area mReachableArea;
+    Area mThrowableArea;
     Area mLitArea;
     bool mValid = false;
 };

@@ -8,6 +8,7 @@
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "check.h"
@@ -50,6 +51,7 @@ const Simulator::Area::AreaVector& Simulator::Area::getAsVector() const
 Simulator::Simulator(const GameDescription& gameDescription)
     : mGameDescription(gameDescription)
     , mReachableArea(mGameDescription.mMapSize)
+    , mThrowableArea(mGameDescription.mMapSize)
     , mLitArea(mGameDescription.mMapSize)
 {
 }
@@ -59,8 +61,10 @@ void Simulator::SetState(const TickDescription& state)
     if (mGameDescription.mMapSize != 0) {
         if (mState.mAllBats != state.mAllBats || mState.mGrenades != state.mGrenades || !mReachableArea.mAreas.any()) {
             mReachableArea = Area(mGameDescription.mMapSize);
+            mThrowableArea = Area(mGameDescription.mMapSize);
             for (const auto& bat : state.mAllBats) {
                 mReachableArea.insert(bat.mX, bat.mY);
+                mThrowableArea.insert(bat.mX, bat.mY);
             }
             for (const auto& grenade : state.mGrenades) {
                 mReachableArea.insert(grenade.mX, grenade.mY);
@@ -69,10 +73,12 @@ void Simulator::SetState(const TickDescription& state)
                 for (int y = 0; y < mGameDescription.mMapSize; ++y) {
                     if (x == 0 || y == 0 || x == mGameDescription.mMapSize - 1 || y == mGameDescription.mMapSize - 1 || (!(x % 2) && !(y % 2))) {
                         mReachableArea.insert(x, y);
+                        mThrowableArea.insert(x, y);
                     }
                 }
             }
             mReachableArea.mAreas.flip();
+            mThrowableArea.mAreas.flip();
         }
 
         mLitArea = Area(mGameDescription.mMapSize);
@@ -160,7 +166,8 @@ std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
     // c) blow up grenades recursively and calculate grenade damage
     // d) calculate light damage
     // e) plant grenades
-    // f) move
+    // f) throw grenades
+    // g) move
 
     // Implementation:
     // 1) recalculate ticks
@@ -173,9 +180,11 @@ std::pair<TickDescription, Simulator::NewPoints> Simulator::Tick()
     BlowUpGrenades();
     // 5) (d) calculate light damage
     HitLight();
-    // 7) (e) plant grenades
+    // 6) (e) plant grenades
     PlantGrenades();
-    // 7) (f) move
+    // 7) (f) throw grenades
+    ThrowGrenades();
+    // 8) (g) move
     Move();
 
     mVampireMoves.clear();
@@ -456,6 +465,94 @@ void Simulator::PlantGrenades()
                     mState.mGrenades.push_back({ vampire->mId, vampire->mX, vampire->mY, 5, vampire->mGrenadeRange });
                     --vampire->mPlacableGrenades;
                     mReachableArea.clear(vampire->mX, vampire->mY);
+                }
+            }
+        }
+    }
+}
+
+void Simulator::ThrowGrenades()
+{
+    std::vector<Vampire*> vampRefs;
+    vampRefs.push_back(&mState.mMe);
+    for (auto& element : mState.mEnemyVampires) {
+        vampRefs.push_back(&element);
+    }
+
+    for (const auto& vampire : vampRefs) {
+        if (vampire->mHealth <= 0) {
+            continue;
+        }
+        if (const auto it = mVampireMoves.find(vampire->mId); it != mVampireMoves.end()) {
+            if (it->second.mThrow) {
+                // ???
+                // if (vampire->mGhostModeTick != 0) {
+                //     continue;
+                // }
+                const auto& th = *(it->second.mThrow);
+                if (th.mDistance > mGameDescription.mGrenadeRadius + 1) {
+                    continue;
+                }
+                std::pair<int, int> origin;
+                std::pair<int, int> target;
+                switch (th.mDirection) {
+                case Throw::Direction::Up:
+                    origin = std::make_pair(vampire->mX, vampire->mY - 1);
+                    target = std::make_pair(vampire->mX, vampire->mY - 1 - th.mDistance);
+                    break;
+                case Throw::Direction::Down:
+                    origin = std::make_pair(vampire->mX, vampire->mY + 1);
+                    target = std::make_pair(vampire->mX, vampire->mY + 1 + th.mDistance);
+                    break;
+                case Throw::Direction::Left:
+                    origin = std::make_pair(vampire->mX - 1, vampire->mY);
+                    target = std::make_pair(vampire->mX - 1 - th.mDistance, vampire->mY);
+                    break;
+                case Throw::Direction::Right:
+                    origin = std::make_pair(vampire->mX + 1, vampire->mY);
+                    target = std::make_pair(vampire->mX + 1 + th.mDistance, vampire->mY);
+                    break;
+                case Throw::Direction::XUp:
+                    origin = std::make_pair(vampire->mX, vampire->mY);
+                    target = std::make_pair(vampire->mX, vampire->mY - th.mDistance);
+                    break;
+                case Throw::Direction::XDown:
+                    origin = std::make_pair(vampire->mX, vampire->mY);
+                    target = std::make_pair(vampire->mX, vampire->mY + th.mDistance);
+                    break;
+                case Throw::Direction::XLeft:
+                    origin = std::make_pair(vampire->mX, vampire->mY);
+                    target = std::make_pair(vampire->mX - th.mDistance, vampire->mY);
+                    break;
+                case Throw::Direction::XRight:
+                    origin = std::make_pair(vampire->mX, vampire->mY);
+                    target = std::make_pair(vampire->mX + th.mDistance, vampire->mY);
+                    break;
+                }
+
+                if (!mThrowableArea.find(target.first, target.second)) {
+                    continue;
+                }
+
+                bool originHasNonMeBomb = false;
+                bool successfullThrow = false;
+                for (auto& grenade : mState.mGrenades) {
+                    if (grenade.mX == origin.first && grenade.mY == origin.second) {
+                        if (grenade.mId == mState.mMe.mId) {
+                            grenade.mX = target.first;
+                            grenade.mY = target.second;
+                            successfullThrow = true;
+                        } else {
+                            originHasNonMeBomb = true;
+                        }
+                    }
+                }
+
+                if (successfullThrow) {
+                    mReachableArea.clear(target.first, target.second);
+                }
+                if (!originHasNonMeBomb) {
+                    mReachableArea.insert(origin.first, origin.second);
                 }
             }
         }

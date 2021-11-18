@@ -524,6 +524,69 @@ TEST_F(SimulateTest, InjureOneVampireTwoGrenade)
     ASSERT_EQ(newPoints.at(3), 0);
 }
 
+TEST_F(SimulateTest, InjureOneVampireTwoGrenadeChain)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "VAMPIRE 3 1 1 2 1 2 0",
+        "GRENADE 1 1 2 1 2",
+        "GRENADE 2 1 4 3 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), 48);
+    ASSERT_EQ(newPoints.at(2), 0);
+    ASSERT_EQ(newPoints.at(3), 0);
+    ASSERT_TRUE(newState.mGrenades.empty());
+}
+
+TEST_F(SimulateTest, InjureOneVampireTwoGrenadeChain2)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "VAMPIRE 3 1 1 2 1 2 0",
+        "GRENADE 1 1 2 1 2",
+        "GRENADE 2 1 3 3 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), 48 / 2);
+    ASSERT_EQ(newPoints.at(2), 48 / 2);
+    ASSERT_EQ(newPoints.at(3), 0);
+    ASSERT_TRUE(newState.mGrenades.empty());
+}
+
+TEST_F(SimulateTest, InjureOneVampireTwoGrenadeChain3)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 5 5 2 1 2 0",
+        "VAMPIRE 2 5 5 2 1 2 0",
+        "VAMPIRE 3 1 1 2 1 2 0",
+        "GRENADE 1 1 3 1 2",
+        "GRENADE 2 3 3 3 2",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newPoints.at(1), 48);
+    ASSERT_EQ(newPoints.at(2), 0);
+    ASSERT_EQ(newPoints.at(3), 0);
+    ASSERT_TRUE(newState.mGrenades.empty());
+}
+
 TEST_F(SimulateTest, KillOneVampireTwoGrenade)
 {
     // clang-format off

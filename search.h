@@ -36,6 +36,11 @@ public:
         mPreferGrenade = prefer;
     }
 
+    void SetReachDiff(int reachdiff)
+    {
+        mReachDiff = reachdiff;
+    }
+
     bool CalculateNextLevel(std::chrono::time_point<std::chrono::steady_clock> deadline);
 
     Answer GetBestMove();
@@ -74,6 +79,7 @@ public:
     phase_t mPhase = NONE;
     int mAvoids = 0;
     int mPreferGrenade = 0;
+    int mReachDiff = 0;
     std::vector<pos_t> mBombSequence;
     std::vector<pos_t> mPathSequence;
     pos_t mMyOriginalPos;

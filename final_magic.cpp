@@ -25,6 +25,7 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const Simulator:
     mGaborMagic.SetPhase(mUsualMagic.mPhase);
     mGaborMagic.SetAvoids(mUsualMagic.mAvoids);
     mGaborMagic.SetPreferGrenade(mUsualMagic.mPreferGrenade);
+    mGaborMagic.SetReachDiff(mUsualMagic.mReachDiff);
 
     if (mUsualMagic.mPhase == PHASE1) {
         mGaborMagic.SetBombSequence(mUsualMagic.mPath);

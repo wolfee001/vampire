@@ -63,6 +63,7 @@ add_library(libmagic
     usual_magic.cpp
     gabor_magic.cpp
     final_magic.cpp
+    wolfee_magic.cpp
 )
 target_link_libraries(libmagic
     PUBLIC project_options
@@ -98,6 +99,7 @@ add_executable(unittest
     test/test_usual_magic.cpp
     test/test_search.cpp
     test/test_final.cpp
+    test/test_wolfee_magic.cpp
 )
 target_link_directories(unittest
     PRIVATE ${CONAN_LIB_DIRS}

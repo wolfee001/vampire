@@ -41,10 +41,10 @@ TEST(Parsing, ParseTick)
         "BAT3 5 3 5 4 3 5 4 5 5 5 6 5 7 5 5 6 5 7",
         "GRENADE 1 1 3 15 2",
         "GRENADE 1 9 3 0 2",
-        "POWERUP TOMATO -3 2 1",
-        "POWERUP GRENADE 2 3 1",
-        "POWERUP BATTERY 10 7 1",
-        "POWERUP SHOE -10 8 1"
+        "POWERUP TOMATO -3 2 1 2",
+        "POWERUP GRENADE 2 3 1 1",
+        "POWERUP BATTERY 10 7 1 3",
+        "POWERUP SHOE -10 8 1 1"
     };
     // clang-format on
     desc = parseTickDescription(info);
@@ -126,10 +126,10 @@ TEST(Parsing, ParseTick)
 
     // clang-format off
     info = { 
-        "POWERUP TOMATO -3 1 2",
-        "POWERUP GRENADE 2 3 1",
-        "POWERUP BATTERY 10 7 1",
-        "POWERUP SHOE -10 8 1"
+        "POWERUP TOMATO -3 1 2 1",
+        "POWERUP GRENADE 2 3 1 2",
+        "POWERUP BATTERY 10 7 1 3",
+        "POWERUP SHOE -10 8 1 4"
     };
     // clang-format on
     desc = parseTickDescription(info);
@@ -141,4 +141,5 @@ TEST(Parsing, ParseTick)
     EXPECT_EQ(desc.mPowerUps[0].mRemainingTick, -3);
     EXPECT_EQ(desc.mPowerUps[0].mX, 2);
     EXPECT_EQ(desc.mPowerUps[0].mY, 1);
+    EXPECT_EQ(desc.mPowerUps[0].mDefensTime, 1);
 }

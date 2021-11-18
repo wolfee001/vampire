@@ -410,7 +410,7 @@ TEST_F(SearchTest, PreferBomb)
     const std::vector<std::string> info = {
         "REQ 6493 0 1",
         "VAMPIRE 1 3 3 3 1 2 0",
-        "POWERUP TOMATO -3 3 3"
+        "POWERUP TOMATO -3 3 3 0"
     };
     // clang-format on
     TickDescription state = parseTickDescription(info);

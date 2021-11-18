@@ -121,11 +121,12 @@ struct TickDescription {
     }
 };
 
-struct Answer {
-    struct Throw {
-        enum class Direction { Up, Down, Left, Right, XUp, XDown, XLeft, XRight };
-    };
+struct Throw {
+    enum class Direction { Up, Down, Left, Right, XUp, XDown, XLeft, XRight };
+    int mDistance = -1;
+};
 
+struct Answer {
     bool mPlaceGrenade = false;
     std::vector<char> mSteps;
     std::optional<Throw> mThrow = std::nullopt;

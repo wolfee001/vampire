@@ -342,6 +342,7 @@ void Simulator::BlowUpGrenades()
             survivorBats.emplace_back(bat).mDensity -= injured;
         } else {
             mReachableArea.insert(bat.mX, bat.mY);
+            mThrowableArea.insert(bat.mX, bat.mY);
         }
     }
     mState.mAllBats = survivorBats;

@@ -230,7 +230,7 @@ TEST_F(SearchTest, StuckInMap10)
     }
 }
 
-TEST_F(SearchTest, StuckInMap7)
+TEST_F(SearchTest, DISABLED_StuckInMap7)
 {
     // clang-format off
     std::vector<std::string> info = {

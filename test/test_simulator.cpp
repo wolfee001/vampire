@@ -61,11 +61,11 @@ TEST_F(SimulateTest, TickDecreases)
         "REQ 775 0 1",
         "GRENADE 1 1 3 5 2",
         "GRENADE 1 9 3 3 2",
-        "POWERUP TOMATO -3 2 1",
-        "POWERUP TOMATO -1 2 1",
-        "POWERUP GRENADE 2 3 1",
-        "POWERUP BATTERY 10 7 1",
-        "POWERUP SHOE -10 8 1"
+        "POWERUP TOMATO -3 2 1 0",
+        "POWERUP TOMATO -1 2 1 0",
+        "POWERUP GRENADE 2 3 1 0",
+        "POWERUP BATTERY 10 7 1 0",
+        "POWERUP SHOE -10 8 1 0"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -85,9 +85,9 @@ TEST_F(SimulateTest, PowerupDisappear)
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "POWERUP TOMATO -3 2 1",
-        "POWERUP TOMATO -1 2 1",
-        "POWERUP TOMATO 1 2 1",
+        "POWERUP TOMATO -3 2 1 0",
+        "POWERUP TOMATO -1 2 1 0",
+        "POWERUP TOMATO 1 2 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -104,9 +104,9 @@ TEST_F(SimulateTest, PowerupPickupSingleMeTomatoNoEffect)
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 3 1 2 0",
-        "POWERUP TOMATO 3 2 1",
-        "POWERUP TOMATO 3 1 1",
-        "POWERUP TOMATO 5 3 1",
+        "POWERUP TOMATO 3 2 1 0",
+        "POWERUP TOMATO 3 1 1 0",
+        "POWERUP TOMATO 5 3 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -125,7 +125,7 @@ TEST_F(SimulateTest, PowerupNoPickupOnCountdown)
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 1 1 2 0",
-        "POWERUP TOMATO -3 1 1",
+        "POWERUP TOMATO -3 1 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -143,9 +143,9 @@ TEST_F(SimulateTest, PowerupPickupSingleMeTomato)
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 1 1 2 0",
-        "POWERUP TOMATO 3 2 1",
-        "POWERUP TOMATO 3 1 1",
-        "POWERUP TOMATO 5 3 1",
+        "POWERUP TOMATO 3 2 1 0",
+        "POWERUP TOMATO 3 1 1 0",
+        "POWERUP TOMATO 5 3 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -165,9 +165,9 @@ TEST_F(SimulateTest, PowerupPickupMeWithOtherTomato)
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 1 1 2 0",
         "VAMPIRE 2 1 1 2 1 2 0",
-        "POWERUP TOMATO 3 2 1",
-        "POWERUP TOMATO 3 1 1",
-        "POWERUP TOMATO 5 3 1",
+        "POWERUP TOMATO 3 2 1 0",
+        "POWERUP TOMATO 3 1 1 0",
+        "POWERUP TOMATO 5 3 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -190,9 +190,9 @@ TEST_F(SimulateTest, PowerupPickupOthersTomato)
         "VAMPIRE 1 4 1 1 1 2 0",
         "VAMPIRE 2 1 1 2 1 2 0",
         "VAMPIRE 3 1 1 1 1 2 0",
-        "POWERUP TOMATO 3 2 1",
-        "POWERUP TOMATO 3 1 1",
-        "POWERUP TOMATO 5 3 1",
+        "POWERUP TOMATO 3 2 1 0",
+        "POWERUP TOMATO 3 1 1 0",
+        "POWERUP TOMATO 5 3 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -217,9 +217,9 @@ TEST_F(SimulateTest, PowerupPickupOthersTomato2)
         "VAMPIRE 1 4 1 1 1 2 0",
         "VAMPIRE 2 1 1 2 1 2 0",
         "VAMPIRE 3 1 1 3 1 2 0",
-        "POWERUP TOMATO 3 2 1",
-        "POWERUP TOMATO 3 1 1",
-        "POWERUP TOMATO 5 3 1",
+        "POWERUP TOMATO 3 2 1 0",
+        "POWERUP TOMATO 3 1 1 0",
+        "POWERUP TOMATO 5 3 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -242,7 +242,7 @@ TEST_F(SimulateTest, PowerupPickupGrenade)
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 1 1 2 0",
-        "POWERUP GRENADE 3 1 1",
+        "POWERUP GRENADE 3 1 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -259,7 +259,7 @@ TEST_F(SimulateTest, PowerupPickupBattery)
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 1 1 2 0",
-        "POWERUP BATTERY 3 1 1",
+        "POWERUP BATTERY 3 1 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -276,7 +276,7 @@ TEST_F(SimulateTest, PowerupPickupShoe)
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 1 1 2 0",
-        "POWERUP SHOE 3 1 1",
+        "POWERUP SHOE 3 1 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -293,7 +293,7 @@ TEST_F(SimulateTest, PowerupPickupShoeAddition)
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 1 1 2 7",
-        "POWERUP SHOE 3 1 1",
+        "POWERUP SHOE 3 1 1 0",
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);

@@ -87,12 +87,14 @@ void Game::GeneratePowerups(TickDescription& tick)
 
         const int pre = 5 + rand() % 6;
         const int duration = 10 + rand() % 11;
+        const int defenseTime = 1 + rand() % 3;
 
         int alivePlayers = tick.mEnemyVampires.size() + (tick.mMe.mHealth > 0 ? 1 : 0);
 
-        tick.mPowerUps.push_back({ type, -pre, position.first, position.second, duration });
+        tick.mPowerUps.push_back({ type, -pre, position.first, position.second, defenseTime, duration });
         if (alivePlayers > 2) {
-            tick.mPowerUps.push_back({ type, -pre, mGameDescription.mMapSize - position.first - 1, mGameDescription.mMapSize - position.second - 1, duration });
+            tick.mPowerUps.push_back(
+                { type, -pre, mGameDescription.mMapSize - position.first - 1, mGameDescription.mMapSize - position.second - 1, defenseTime, duration });
         }
     }
     if (!tick.mPowerUps.empty()) {

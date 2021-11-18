@@ -41,7 +41,7 @@ TEST_F(FinalTest, RunToItem)
     std::vector<std::string> info = {
         "REQ 775 0 1",
         "VAMPIRE 1 1 1 2 15 10 266", // we have running shoes!
-        "POWERUP TOMATO 10 9 9"
+        "POWERUP TOMATO 10 9 9 0"
     };
     // clang-format on
     TickDescription state = parseTickDescription(info);
@@ -88,7 +88,7 @@ TEST_F(FinalTest, HangLevel7)
         "REQ 6493 0 1",
         "VAMPIRE 1 17 10 3 3 4 0",
         "VAMPIRE 4 2 19 2 1 3 0",
-        "POWERUP TOMATO 19 17 10",
+        "POWERUP TOMATO 19 17 10 0",
         "BAT1 8 17",
         "BAT2 7 1 8 1 10 1 13 1 9 18 12 19",
         "BAT3 6 1 12 1 14 1 7 18 6 19 7 19 8 19 9 19 10 19 11 19",

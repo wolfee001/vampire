@@ -114,6 +114,7 @@ TickDescription parseTickDescription(const std::vector<std::string>& infos)
             stream >> powerUp.mRemainingTick;
             stream >> powerUp.mY;
             stream >> powerUp.mX;
+            stream >> powerUp.mDefensTime;
         } else if (msg == "BAT1") {
             while (true) {
                 BatSquad squad;

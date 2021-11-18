@@ -39,5 +39,7 @@ csak dontobe:
 
 -Gabor: if -1<=reachdiff<=1 do not break path for 1 bat bombing
 
+-Adam kodja utan utanahuzni a between item ertekeles
+
 
 

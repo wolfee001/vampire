@@ -101,7 +101,31 @@ void Simulator::SetState(const TickDescription& state)
         }
     }
 
+    std::unordered_map<int, int> mRestsToSet;
+    if (mState.mMe.mX == state.mMe.mX && mState.mMe.mY == state.mMe.mY) {
+        mRestsToSet.emplace(mState.mMe.mId, mState.mMe.mRestCount);
+    }
+    for (const auto& element : state.mEnemyVampires) {
+        const auto it = std::find_if(mState.mEnemyVampires.begin(), mState.mEnemyVampires.end(), [&element](const Vampire& v) { return v.mId == element.mId; });
+        if (it != mState.mEnemyVampires.end() && it->mX == element.mX && it->mY == element.mY) {
+            mRestsToSet.emplace(it->mId, it->mRestCount);
+        }
+    }
+
     mState = state;
+
+    if (const auto it = mRestsToSet.find(mState.mMe.mId); it != mRestsToSet.end()) {
+        mState.mMe.mRestCount = it->second;
+    } else {
+        mState.mMe.mRestCount = 0;
+    }
+    for (auto& element : mState.mEnemyVampires) {
+        if (const auto it = mRestsToSet.find(element.mId); it != mRestsToSet.end()) {
+            element.mRestCount = it->second;
+        } else {
+            element.mRestCount = 0;
+        }
+    }
     mValid = true;
 }
 
@@ -217,20 +241,24 @@ void Simulator::RecalculateTicks()
 
     mState.mMe.mRunningShoesTick = std::max(mState.mMe.mRunningShoesTick - 1, 0);
     mState.mMe.mGhostModeTick = std::max(mState.mMe.mGhostModeTick - 1, 0);
+    mState.mMe.mRestCount++;
     for (auto& vampire : mState.mEnemyVampires) {
         vampire.mRunningShoesTick = std::max(vampire.mRunningShoesTick - 1, 0);
         vampire.mGhostModeTick = std::max(vampire.mGhostModeTick - 1, 0);
+        vampire.mRestCount++;
     }
 }
 
 void Simulator::RemoveDisappearedPowerups()
 {
+    // TODO!!
     mState.mPowerUps.erase(std::remove_if(mState.mPowerUps.begin(), mState.mPowerUps.end(), [](const auto& element) { return element.mRemainingTick == 0; }),
         mState.mPowerUps.end());
 }
 
 void Simulator::PowerupPickUp()
 {
+    // TODO!!
     std::vector<Vampire*> vampRefs;
     vampRefs.push_back(&mState.mMe);
     for (auto& element : mState.mEnemyVampires) {

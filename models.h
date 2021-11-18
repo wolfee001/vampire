@@ -137,7 +137,12 @@ struct pos_t {
         , x(_x)
     {
     }
-    pos_t GetPos(int d) const;
+    pos_t GetPos(int d) const
+    {
+        pos_t dir[5] = { { -1, 0 }, { 0, 1 }, { 1, 0 }, { 0, -1 }, { 0, 0 } };
+        return pos_t(y + dir[d].y, x + dir[d].x);
+    }
+
     int GetDir(pos_t p2) const
     {
         if (p2.y < y) {

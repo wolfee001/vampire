@@ -60,14 +60,8 @@ int g_seed = 777778;
 
 inline int randn0(int mod) { g_seed = (214013 * g_seed + 2531011); return (((g_seed >> 16) & 0x7FFF) * mod) >> 15; }
 
-pos_t dir[5] = { { -1,0 },{ 0,1 },{ 1,0 },{ 0,-1 }, {0, 0} };
 char dirc[5] = "^>V<";
 char dirc2[5] = "URDL";
-
-pos_t pos_t::GetPos(int d) const
-{
-	return pos_t(y + dir[d].y, x + dir[d].x);
-}
 
 void bomb(map_t& m, map_t& orim, pos_t p0, int r, bool dot = true)
 {

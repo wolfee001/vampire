@@ -58,8 +58,12 @@ public:
     std::vector<BlowArea> GetBlowAreas(const bool blowNow = false);
     Area GetBlowArea(const Grenade& grenade);
     const Area& GetReachableArea() const;
+    const Area& GetThrowableArea() const;
     const Area& GetLitArea() const;
     void KillVampire(int id);
+
+    // position is x, y
+    std::optional<ThrowPositions> GetThrowPosition(const std::pair<int, int>& position, const Throw& th) const;
 
 private:
     void RecalculateTicks();
@@ -70,8 +74,6 @@ private:
     void PlantGrenades();
     void ThrowGrenades();
     void Move();
-
-    std::optional<ThrowPositions> GetThrowPosition(const std::pair<int, int>& position, const Throw& th) const;
 
 private:
     GameDescription mGameDescription;

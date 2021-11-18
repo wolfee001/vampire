@@ -32,7 +32,7 @@ TEST(ActionSequence, UpWithoutBomb)
 
     const ActionSequence as(answer);
     EXPECT_EQ(as.GetAnswer(), answer);
-    EXPECT_EQ(as.GetId(), 2);
+    EXPECT_EQ(as.GetId(), 1 << 8);
 }
 
 TEST(ActionSequence, UpWithBomb)
@@ -43,7 +43,7 @@ TEST(ActionSequence, UpWithBomb)
 
     const ActionSequence as(answer);
     EXPECT_EQ(as.GetAnswer(), answer);
-    EXPECT_EQ(as.GetId(), 3);
+    EXPECT_EQ(as.GetId(), (1 << 8) | 1);
 }
 
 TEST(ActionSequence, UpLeftRightWithBomb)
@@ -60,13 +60,9 @@ TEST(ActionSequence, AllFromAnswer)
 {
     Answer answer;
 
-    std::vector<bool> ids(ActionSequence::MaxSequenceId + 1, false);
-
-    const auto test = [&answer, &ids]() {
+    const auto test = [&answer]() {
         const ActionSequence as(answer);
         EXPECT_EQ(as.GetAnswer(), answer);
-        EXPECT_LT(as.GetId(), ids.size());
-        EXPECT_FALSE(ids[as.GetId()]);
 
         EXPECT_EQ(answer.mSteps.size(), as.GetNumberOfSteps());
         EXPECT_EQ(answer.mPlaceGrenade, as.IsGrenade());
@@ -89,8 +85,6 @@ TEST(ActionSequence, AllFromAnswer)
                 throw std::runtime_error("Invalid step");
             }
         }
-
-        ids[as.GetId()] = true;
     };
 
     answer.mSteps = {};
@@ -117,8 +111,6 @@ TEST(ActionSequence, AllFromAnswer)
             }
         }
     }
-
-    EXPECT_TRUE(std::all_of(std::cbegin(ids), std::cend(ids), [](bool v) { return v; }));
 }
 
 TEST(ActionSequence, GetNthStep)

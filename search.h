@@ -67,6 +67,7 @@ public:
         float mHeuristicScore;
         float mRestrictionScore = 0;
         ActionSequence::ActionSequence_t mAction = std::numeric_limits<ActionSequence::ActionSequence_t>::max();
+        uint8_t mThrowLength = 255;
     };
 
     float Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move, const size_t level,

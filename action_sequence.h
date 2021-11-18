@@ -8,19 +8,23 @@
 class ActionSequence {
 public:
     ActionSequence() = default;
-    using ActionSequence_t = uint8_t;
+    using ActionSequence_t = uint16_t;
 
     explicit ActionSequence(const ActionSequence_t sequence)
-        : mSequence(sequence)
+        : mMove(static_cast<uint8_t>(sequence >> 8))
+        , mBombing(static_cast<uint8_t>(sequence & 0xFF))
     {
-        if (mSequence > MaxSequenceId) {
+        if (mMove > MaxMoveId) {
             throw std::runtime_error("Too big ActionSequenceId");
+        }
+        if (mBombing > MaxBombingId) {
+            throw std::runtime_error("Too big bombing");
         }
     }
 
     explicit ActionSequence(const Answer& answer)
     {
-        const auto getMoveIndex = [](const char step) -> ActionSequence_t {
+        const auto getMoveIndex = [](const char step) -> uint8_t {
             switch (step) {
             case 'U':
                 return 0;
@@ -35,7 +39,7 @@ public:
             }
         };
 
-        mSequence = std::invoke([&answer]() -> ActionSequence_t {
+        mMove = std::invoke([&answer]() -> uint8_t {
             switch (answer.mSteps.size()) {
             case 0:
                 return 0; // empty
@@ -51,38 +55,74 @@ public:
         });
 
         for (size_t i = 0; i < answer.mSteps.size(); ++i) {
-            mSequence = static_cast<ActionSequence_t>(mSequence + getMoveIndex(answer.mSteps[i]) * std::pow(4, i));
+            mMove = static_cast<uint8_t>(mMove + getMoveIndex(answer.mSteps[i]) * std::pow(4, i));
         }
 
-        mSequence = static_cast<ActionSequence_t>((mSequence << 1) | (answer.mPlaceGrenade ? 1 : 0));
+        if (answer.mPlaceGrenade) {
+            mBombing = 1;
+        } else {
+            if (answer.mThrow) {
+                switch (answer.mThrow->mDirection) {
+                case Throw::Direction::Up:
+                    mBombing = 2;
+                    break;
+                case Throw::Direction::Down:
+                    mBombing = 3;
+                    break;
+                case Throw::Direction::Left:
+                    mBombing = 4;
+                    break;
+                case Throw::Direction::Right:
+                    mBombing = 5;
+                    break;
+                case Throw::Direction::XUp:
+                    mBombing = 6;
+                    break;
+                case Throw::Direction::XDown:
+                    mBombing = 7;
+                    break;
+                case Throw::Direction::XLeft:
+                    mBombing = 8;
+                    break;
+                case Throw::Direction::XRight:
+                    mBombing = 9;
+                    break;
+                }
+            } else {
+                mBombing = 0;
+            }
+        }
     }
 
     bool operator==(const ActionSequence& other) const
     {
-        return mSequence == other.mSequence;
+        return mMove == other.mMove && mBombing == other.mBombing;
     }
 
     [[nodiscard]] ActionSequence_t GetId() const
     {
-        return mSequence;
+        return static_cast<ActionSequence_t>((ActionSequence_t(mMove) << 8) | static_cast<ActionSequence_t>(mBombing));
     }
 
     [[nodiscard]] bool IsGrenade() const
     {
-        return static_cast<bool>(mSequence & 1);
+        return mBombing == 1;
+    }
+
+    [[nodiscard]] bool IsThrow() const
+    {
+        return mBombing > 1;
     }
 
     [[nodiscard]] uint8_t GetNumberOfSteps() const
     {
-        const auto moves = static_cast<ActionSequence_t>(mSequence >> 1);
-
-        if (moves == 0) {
+        if (mMove == 0) {
             return 0;
         }
-        if (moves < 5) {
+        if (mMove < 5) {
             return 1;
         }
-        if (moves < 21) {
+        if (mMove < 21) {
             return 2;
         }
 
@@ -91,14 +131,13 @@ public:
 
     [[nodiscard]] uint8_t GetNthStep(int n) const
     {
-        auto moves = static_cast<ActionSequence_t>(mSequence >> 1);
-
+        auto moves = mMove;
         if (moves < 5) {
-            moves = static_cast<ActionSequence_t>(moves - 1);
+            moves = static_cast<uint8_t>(moves - 1);
         } else if (moves < 21) {
-            moves = static_cast<ActionSequence_t>(moves - 5);
+            moves = static_cast<uint8_t>(moves - 5);
         } else {
-            moves = static_cast<ActionSequence_t>(moves - 21);
+            moves = static_cast<uint8_t>(moves - 21);
         }
 
         switch (n) {
@@ -113,10 +152,34 @@ public:
         return 255;
     }
 
+    [[nodiscard]] Throw::Direction GetThrowDirection() const
+    {
+        switch (mBombing) {
+        case 2:
+            return Throw::Direction::Up;
+        case 3:
+            return Throw::Direction::Down;
+        case 4:
+            return Throw::Direction::Left;
+        case 5:
+            return Throw::Direction::Right;
+        case 6:
+            return Throw::Direction::XUp;
+        case 7:
+            return Throw::Direction::XDown;
+        case 8:
+            return Throw::Direction::XLeft;
+        case 9:
+            return Throw::Direction::XRight;
+        default:
+            throw std::runtime_error("invalid throw");
+        }
+    }
+
     Answer GetAnswer() const
     {
         Answer answer;
-        answer.mPlaceGrenade = static_cast<bool>(mSequence & 1);
+        answer.mPlaceGrenade = IsGrenade();
 
         const auto indexToStep = [](const ActionSequence_t step) -> char {
             switch (step) {
@@ -133,26 +196,26 @@ public:
             }
         };
 
-        ActionSequence_t moves = static_cast<ActionSequence_t>(mSequence >> 1);
-
-        const size_t size = std::invoke([&moves]() -> size_t {
-            if (moves == 0) {
+        const size_t size = std::invoke([&mMove = mMove]() -> size_t {
+            if (mMove == 0) {
                 return 0;
-            } else if (moves < 5) {
-                return 1;
-            } else if (moves < 21) {
-                return 2;
-            } else {
-                return 3;
             }
+            if (mMove < 5) {
+                return 1;
+            }
+            if (mMove < 21) {
+                return 2;
+            }
+            return 3;
         });
 
+        uint8_t moves = mMove;
         if (size == 1) {
-            moves = static_cast<ActionSequence_t>(moves - 1);
+            moves = static_cast<uint8_t>(moves - 1);
         } else if (size == 2) {
-            moves = static_cast<ActionSequence_t>(moves - 5);
+            moves = static_cast<uint8_t>(moves - 5);
         } else if (size == 3) {
-            moves = static_cast<ActionSequence_t>(moves - 21);
+            moves = static_cast<uint8_t>(moves - 21);
         }
 
         answer.mSteps.reserve(size);
@@ -160,6 +223,39 @@ public:
         for (size_t i = 0; i < size; ++i) {
             answer.mSteps.push_back(indexToStep(moves % 4));
             moves /= 4;
+        }
+
+        if (!IsThrow()) {
+            return answer;
+        }
+
+        answer.mThrow = std::make_optional<Throw>();
+
+        switch (mBombing) {
+        case 2:
+            answer.mThrow->mDirection = Throw::Direction::Up;
+            break;
+        case 3:
+            answer.mThrow->mDirection = Throw::Direction::Down;
+            break;
+        case 4:
+            answer.mThrow->mDirection = Throw::Direction::Left;
+            break;
+        case 5:
+            answer.mThrow->mDirection = Throw::Direction::Right;
+            break;
+        case 6:
+            answer.mThrow->mDirection = Throw::Direction::XUp;
+            break;
+        case 7:
+            answer.mThrow->mDirection = Throw::Direction::XDown;
+            break;
+        case 8:
+            answer.mThrow->mDirection = Throw::Direction::XLeft;
+            break;
+        case 9:
+            answer.mThrow->mDirection = Throw::Direction::XRight;
+            break;
         }
 
         return answer;
@@ -175,8 +271,28 @@ public:
         std::cerr << std::endl;
     }
 
-    static const constexpr ActionSequence_t MaxSequenceId = ((21 + 3 * (1) + 3 * (4) + 3 * (4 * 4)) << 1) + 1; // bomb, right, right, right
+    bool GetNextId()
+    {
+        if (mBombing == MaxBombingId) {
+            mBombing = 0;
+
+            if (mMove == MaxMoveId) {
+                return false;
+            }
+            ++mMove;
+        } else {
+            ++mBombing;
+        }
+
+        return true;
+    }
+
+    static const constexpr uint8_t MaxMoveId = 21 + 3 * (1) + 3 * (4) + 3 * (4 * 4); // right, right, right
+    static const constexpr uint8_t MaxBombingId = 9;
+
+    static const constexpr ActionSequence_t IdCount = MaxMoveId * MaxBombingId;
 
 private:
-    ActionSequence_t mSequence = 0;
+    uint8_t mMove = 0;
+    uint8_t mBombing = 0;
 };

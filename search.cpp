@@ -472,7 +472,7 @@ void Search::CalculateMoveRestrictions([[maybe_unused]] const bool defense /* = 
         return;
     }
 
-    const auto& rootTick = mLevels.front().front().mTickDescription;
+    auto& rootTick = mLevels.front().front().mTickDescription;
     if (rootTick.mEnemyVampires.empty()) {
         std::cerr << "Move restriction heuristic: missing enemy vampires" << std::endl;
         return;
@@ -576,11 +576,37 @@ void Search::CalculateMoveRestrictions([[maybe_unused]] const bool defense /* = 
             }
         }
 
-        // calculate move count for the future position
+        // calculate future positions for the enemies
+        const size_t enemyOptimalMoveCount = std::invoke([&enemyIds, &GetMovesWithoutBombing, &rootTick]() {
+            size_t enemyMoves = 0;
+            for (int enemyId : enemyIds) {
+                enemyMoves += GetMovesWithoutBombing(rootTick, enemyId).size();
+            }
+            return enemyMoves;
+        });
+
         std::vector<std::vector<ActionSequence>> enemyMoves(enemyIds.size());
+        if (myMove.IsGrenade()) {
+            // "simulate" grenade to block enemy movement
+            auto& myGrenade = rootTick.mGrenades.emplace_back();
+            myGrenade.mId = rootTick.mMe.mId;
+            myGrenade.mTick = 5;
+            myGrenade.mRange = rootTick.mMe.mGrenadeRange;
+            myGrenade.mX = rootTick.mMe.mX;
+            myGrenade.mY = rootTick.mMe.mY;
+        }
+
+        size_t restrictedMoveCount = 0;
         for (size_t enemyIndex = 0; enemyIndex < enemyIds.size(); ++enemyIndex) {
             enemyMoves[enemyIndex] = GetMovesWithoutBombing(rootTick, enemyIds[enemyIndex]);
+            restrictedMoveCount += enemyMoves[enemyIndex].size();
         }
+
+        if (myMove.IsGrenade()) {
+            rootTick.mGrenades.pop_back();
+        }
+
+        child.mRestrictionScore += 1.F - (static_cast<float>(restrictedMoveCount) / static_cast<float>(enemyOptimalMoveCount));
 
         size_t worstMoveCount = std::numeric_limits<size_t>::max();
 

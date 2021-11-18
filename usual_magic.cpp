@@ -1011,6 +1011,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		}
 		else {
 			cerr << "closest target: " << targets[best] << endl;
+			mReachDiff = closestenemydist[best] - closest;
+			if (mReachDiff < 0 && !mEnemyPredict[tickDescription.mEnemyVampires[closestenemy[best]].mId].bombonitem)
+				mReachDiff = 0; // we don't care
 			if (show(m, mypos, targets[best])) {
 
 				int stepcnt = me.mRunningShoesTick > 0 ? 3 : 2;

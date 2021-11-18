@@ -33,6 +33,11 @@ csak dontobe:
 
 -stay on bomb+item (do not move away, cause i put that for a reason)
 
+-vegjatekban: kimenekulni a fenybe, ha vezetunk?
+
+-Adam: bombseq on path if reachdiff < 0 and opponent protects
+
+-Gabor: if -1<=reachdiff<=1 do not break path for 1 bat bombing
 
 
 

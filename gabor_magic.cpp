@@ -15,6 +15,11 @@ void GaborMagic::SetLevelLimit(const size_t maxLevel)
     mMaxLevel = maxLevel;
 }
 
+void GaborMagic::SetReachDiff(int reachdiff)
+{
+    mReachDiff = reachdiff;
+}
+
 Answer GaborMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
     Search search(tickDescription, mGameDescription, tickDescription.mMe.mId);
@@ -24,6 +29,7 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const Simulator:
     search.SetAvoids(mAvoids);
     search.SetPreferGrenade(mPreferGrenade);
     search.SetPathSequence(mPathSequence);
+    search.SetReachDiff(mReachDiff);
 
     const auto t1 = std::chrono::steady_clock::now();
     auto calculationTime = mTimeout;

@@ -40,6 +40,7 @@ public:
 	std::vector<pos_t> mPath;
 	int mAvoids;
 	int mPreferGrenade;
+	int mReachDiff;
 	std::map<int, enemypredict_t> mEnemyPredict;
 };
 

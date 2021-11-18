@@ -1132,6 +1132,124 @@ TEST_F(SimulateTest, StepBackToGrenade)
     ASSERT_EQ(newPoints.at(1), 0);
 }
 
+TEST_F(SimulateTest, RestCountIncreasing)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    for (int i = 0; i < 3; ++i) {
+        const auto [newState, newPoints] = mSimulator->Tick();
+        EXPECT_EQ(newState.mMe.mRestCount, i + 1);
+        mSimulator->SetState(newState);
+    }
+}
+
+TEST_F(SimulateTest, RestCountIncreasingWithExternalTickSet)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    for (int i = 0; i < 3; ++i) {
+        const auto [newState, newPoints] = mSimulator->Tick();
+        EXPECT_EQ(newState.mMe.mRestCount, i + 1);
+        mSimulator->SetState(parseTickDescription(info));
+    }
+}
+
+TEST_F(SimulateTest, RestCountReset)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    EXPECT_EQ(newState.mMe.mRestCount, 1);
+
+    // clang-format off
+    std::vector<std::string> info2 = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 2 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick2 = parseTickDescription(info2);
+    mSimulator->SetState(tick2);
+    const auto [newState2, newPoints2] = mSimulator->Tick();
+    EXPECT_EQ(newState2.mMe.mRestCount, 1);
+}
+
+TEST_F(SimulateTest, RestCountIncreasingEnemy)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 2 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    for (int i = 0; i < 3; ++i) {
+        const auto [newState, newPoints] = mSimulator->Tick();
+        EXPECT_EQ(newState.mEnemyVampires[0].mRestCount, i + 1);
+        mSimulator->SetState(newState);
+    }
+}
+
+TEST_F(SimulateTest, RestCountIncreasingWithExternalTickSetEnemy)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 2 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    for (int i = 0; i < 3; ++i) {
+        const auto [newState, newPoints] = mSimulator->Tick();
+        EXPECT_EQ(newState.mEnemyVampires[0].mRestCount, i + 1);
+        mSimulator->SetState(parseTickDescription(info));
+    }
+}
+
+TEST_F(SimulateTest, RestCountResetEnemy)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 2 1 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    EXPECT_EQ(newState.mEnemyVampires[0].mRestCount, 1);
+
+    // clang-format off
+    std::vector<std::string> info2 = {
+        "REQ 775 0 1",
+        "VAMPIRE 2 2 1 2 1 2 0"
+    };
+    // clang-format on
+    const TickDescription tick2 = parseTickDescription(info2);
+    mSimulator->SetState(tick2);
+    const auto [newState2, newPoints2] = mSimulator->Tick();
+    EXPECT_EQ(newState2.mEnemyVampires[0].mRestCount, 1);
+}
+
 TEST_F(SimulateTest, TrivialBadBombPlant)
 {
     // clang-format off

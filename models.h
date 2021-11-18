@@ -41,6 +41,7 @@ struct Vampire {
     int mRunningShoesTick = 0;
 
     int mGhostModeTick = 0;
+    int mRestCount = 0;
 
     bool operator==(const Vampire& other) const
     {

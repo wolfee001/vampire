@@ -217,14 +217,14 @@ Levels::Levels()
                 "TEST 1",
                 "MAXTICK 1000",
                 "GRENADERADIUS 3",
-                "SIZE 19",
+                "SIZE 23",
             },
             {
                 "REQ 55544 0 1",
-                "VAMPIRE 1 1 1 3 1 2 0",
-                "VAMPIRE 2 1 17 3 1 2 0",
-                "VAMPIRE 3 17 1 3 1 2 0",
-                "VAMPIRE 4 17 17 3 1 2 0",
+                "VAMPIRE 1 1 1 3 4 3 0",
+                "VAMPIRE 2 1 21 3 4 3 0",
+                "VAMPIRE 3 21 1 3 4 3 0",
+                "VAMPIRE 4 21 21 3 4 3 0",
             }
         }
     };

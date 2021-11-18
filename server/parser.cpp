@@ -76,7 +76,7 @@ std::vector<std::string> CreateInfo(const TickDescription& tick, int player)
             }
             CHECK(false, "unhandled type!");
         }(powerup.mType);
-        retVal.push_back(fmt::format("POWERUP {} {} {} {}", type, powerup.mRemainingTick, powerup.mY, powerup.mX));
+        retVal.push_back(fmt::format("POWERUP {} {} {} {} {}", type, powerup.mRemainingTick, powerup.mY, powerup.mX, powerup.mDefensTime));
     }
     if (!tick.mBat1.empty()) {
         std::string bat1 = "BAT1";

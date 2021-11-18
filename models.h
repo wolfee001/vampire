@@ -69,7 +69,7 @@ struct PowerUp {
     int mRemainingTick = 0;
     int mX = -1;
     int mY = -1;
-    int mDefensTime = -1;
+    int mDefensTime = 0;
 
     int mKeepAliveHint = -1;
 

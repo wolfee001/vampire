@@ -55,11 +55,14 @@ public:
         TickDescription mTickDescription;
         float mPermanentScore;
         float mHeuristicScore;
+        float mRestrictionScore = 0;
         ActionSequence::ActionSequence_t mAction = std::numeric_limits<ActionSequence::ActionSequence_t>::max();
     };
 
     float Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move, const size_t level,
         const bool printScores = false) const;
+
+    void CalculateMoveRestrictions(const bool defense = true);
 
     std::vector<std::vector<TreeNode>> mLevels;
 

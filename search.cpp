@@ -1,6 +1,7 @@
 #include "search.h"
 #include "action_sequence.h"
 #include "gabor_magic.h"
+#include <boost/container/flat_map.hpp>
 #include <boost/iterator/filter_iterator.hpp>
 #include <cmath>
 #include <iostream>
@@ -216,9 +217,11 @@ Answer Search::GetBestMove()
         }
     };
 
+    // CalculateMoveRestrictions();
+
     const auto bestIt = std::max_element(std::cbegin(mLevels.back()), std::cend(mLevels.back()), [&](const TreeNode& x, const TreeNode& y) {
-        const auto score1 = x.mPermanentScore + x.mHeuristicScore;
-        const auto score2 = y.mPermanentScore + y.mHeuristicScore;
+        const auto score1 = x.mPermanentScore + x.mHeuristicScore + x.mRestrictionScore;
+        const auto score2 = y.mPermanentScore + y.mHeuristicScore + y.mRestrictionScore;
 
         if (std::fabs(score1 - score2) < 0.0001F) {
             // std::cerr << "score: " << score1 << std::endl;
@@ -440,4 +443,188 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     }
 
     return batScore + grenadePenalty + powerUpScore + healthPenalty + positionScore + bombingTargetScore + pathTargetScore;
+}
+
+void Search::CalculateMoveRestrictions([[maybe_unused]] const bool defense /* = true */)
+{
+    if (mLevels.size() < 2) {
+        std::cerr << "Move restriction heuristic: too few levels are calculated" << std::endl;
+        return;
+    }
+
+    const auto& rootTick = mLevels.front().front().mTickDescription;
+    if (rootTick.mEnemyVampires.empty()) {
+        std::cerr << "Move restriction heuristic: missing enemy vampires" << std::endl;
+        return;
+    }
+
+    const auto SimulateMove = [](int x, int y, const ActionSequence& move) {
+        const auto steps = move.GetNumberOfSteps();
+
+        for (int n = 0; n < steps; ++n) {
+            const auto d = move.GetNthStep(n);
+            switch (d) {
+            case 0:
+                y--;
+                break;
+            case 1:
+                y++;
+                break;
+            case 2:
+                x--;
+                break;
+            case 3:
+                x++;
+                break;
+            default:
+                throw std::runtime_error("Invalid step");
+            }
+        }
+        return pos_t(y, x);
+    };
+
+    const auto GetMovesWithoutBombing = [&mGameDescription = mGameDescription](const TickDescription& tick, const int playerId) -> std::vector<ActionSequence> {
+        Simulator simulator(mGameDescription);
+        simulator.SetState(tick);
+
+        std::vector<ActionSequence> moves;
+
+        for (ActionSequence::ActionSequence_t i = 0; i <= 84; ++i) {
+            const ActionSequence move(static_cast<ActionSequence::ActionSequence_t>(i << 1));
+
+            if (move.GetNumberOfSteps() > 1) {
+                const auto firstStep = move.GetNthStep(0);
+                const auto secondStep = move.GetNthStep(1);
+
+                if ((firstStep == 0 && secondStep == 1) || (firstStep == 1 && secondStep == 0) || (firstStep == 2 && secondStep == 3)
+                    || (firstStep == 3 && secondStep == 2)) {
+                    continue;
+                }
+
+                if (move.GetNumberOfSteps() == 3) {
+                    const auto thirdStep = move.GetNthStep(2);
+                    if ((thirdStep == 0 && secondStep == 1) || (thirdStep == 1 && secondStep == 0) || (thirdStep == 2 && secondStep == 3)
+                        || (thirdStep == 3 && secondStep == 2)) {
+                        continue;
+                    }
+                }
+            }
+
+            if (simulator.IsValidMove(playerId, move)) {
+                moves.push_back(move);
+            }
+        }
+        return moves;
+    };
+
+    const std::vector<int> enemyIds = std::invoke([&rootTick]() {
+        const auto distance2 = [](int x, int y) -> float { return static_cast<float>(std::max(x, y) - std::min(x, y)); };
+        const auto distance = [&distance2](int x1, int y1, int x2, int y2) -> float { return distance2(x1, x2) + distance2(y1, y2); };
+
+        std::vector<int> ret;
+        for (const auto& v : rootTick.mEnemyVampires) {
+            if (distance(rootTick.mMe.mX, rootTick.mMe.mY, v.mX, v.mY) <= 9) {
+                ret.push_back(v.mId);
+            }
+        }
+        return ret;
+    });
+
+    if (enemyIds.empty()) {
+        std::cerr << "Move restriction heuristic: enemies are too far away" << std::endl;
+        return;
+    }
+
+    Simulator simulator(mGameDescription);
+    for (auto& child : mLevels[1]) {
+        const ActionSequence myMove(child.mAction);
+
+        // see move count if every enemy vampire places a bomb to their position in the first tick (same as our first move)
+        {
+            simulator.SetState(rootTick);
+            simulator.SetVampireMove(rootTick.mMe.mId, myMove.GetAnswer());
+
+            const Answer bombingMove { true, {} };
+            for (const auto& id : enemyIds) {
+                simulator.SetVampireMove(id, bombingMove);
+            }
+
+            const auto desiredFuturePosition = SimulateMove(rootTick.mMe.mX, rootTick.mMe.mY, myMove);
+            const auto [futureTick, points] = simulator.Tick();
+            if (desiredFuturePosition.x == futureTick.mMe.mX && desiredFuturePosition.y == futureTick.mMe.mY) {
+                child.mRestrictionScore += 10.F; // reward uninterruptible moves
+            }
+        }
+
+        // calculate move count for the future position
+        std::vector<std::vector<ActionSequence>> enemyMoves(enemyIds.size());
+        for (size_t enemyIndex = 0; enemyIndex < enemyIds.size(); ++enemyIndex) {
+            enemyMoves[enemyIndex] = GetMovesWithoutBombing(rootTick, enemyIds[enemyIndex]);
+        }
+
+        size_t worstMoveCount = std::numeric_limits<size_t>::max();
+
+        bool calculationDone = false;
+        std::vector<size_t> moveIndices(enemyIds.size(), 0);
+
+        while (!calculationDone) {
+            simulator.SetState(rootTick);
+            simulator.SetVampireMove(rootTick.mMe.mId, myMove.GetAnswer());
+
+            for (size_t enemyIndex = 0; enemyIndex < enemyIds.size(); ++enemyIndex) {
+                const auto enemyId = enemyIds[enemyIndex];
+                simulator.SetVampireMove(enemyId, enemyMoves[enemyIndex][moveIndices[enemyIndex]].GetAnswer());
+            }
+
+            auto [futureTick, points] = simulator.Tick();
+
+            // place bombs as if the enemies would place it in the next turn
+            for (const auto enemyId : enemyIds) {
+                const auto vampireIt = std::find_if(
+                    std::cbegin(futureTick.mEnemyVampires), std::cend(futureTick.mEnemyVampires), [&enemyId](const Vampire& v) { return v.mId == enemyId; });
+
+                if (vampireIt != std::cend(futureTick.mEnemyVampires)) {
+                    auto& grenade = futureTick.mGrenades.emplace_back();
+                    grenade.mTick = 5;
+                    grenade.mRange = 2;
+                    grenade.mId = enemyId;
+                    grenade.mX = vampireIt->mX;
+                    grenade.mY = vampireIt->mY;
+                }
+            }
+
+            const auto possibleMoveCount = GetMovesWithoutBombing(futureTick, futureTick.mMe.mId).size();
+            worstMoveCount = std::min(possibleMoveCount, worstMoveCount);
+
+            ++moveIndices[0];
+            for (int i = static_cast<int>(moveIndices.size() - 1); i >= 0; --i) {
+                const auto& iS = static_cast<size_t>(i);
+
+                if (moveIndices[iS] == enemyMoves[iS].size()) {
+                    if (i == 0) {
+                        calculationDone = true;
+                        break;
+                    }
+
+                    moveIndices[iS] = 0;
+                    ++moveIndices[iS - 1];
+                }
+            }
+        }
+
+        // calculate optimal move count
+        simulator.SetState(rootTick);
+        simulator.SetVampireMove(rootTick.mMe.mId, myMove.GetAnswer());
+        const auto [futureTick, points] = simulator.Tick();
+        const auto optimalMoveCount = GetMovesWithoutBombing(futureTick, futureTick.mMe.mId).size();
+
+        child.mRestrictionScore += static_cast<float>(worstMoveCount) / static_cast<float>(optimalMoveCount) * 10.F;
+    }
+
+    // move down restriction scores
+    for (size_t i = 2; i < mLevels.size(); ++i) {
+        for (auto& node : mLevels[i]) {
+            node.mRestrictionScore = static_cast<float>(i) * mLevels[i - 1][node.mParentIndex].mRestrictionScore;
+        }
+    }
 }

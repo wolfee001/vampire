@@ -60,7 +60,7 @@ TEST(ActionSequence, AllFromAnswer)
 {
     Answer answer;
 
-    std::vector<bool> ids(170, false);
+    std::vector<bool> ids(ActionSequence::MaxSequenceId + 1, false);
 
     const auto test = [&answer, &ids]() {
         const ActionSequence as(answer);

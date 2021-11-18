@@ -42,7 +42,7 @@ public:
             case 1:
                 return 1; // 1-4 (4^1)
             case 2:
-                return 5; // 5-21 (4^2)
+                return 5; // 5-20 (4^2)
             case 3:
                 return 21; // 21-84 (4^3)
             default:

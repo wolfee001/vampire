@@ -425,3 +425,20 @@ TEST_F(SearchTest, PreferBomb)
     const auto move = search.GetBestMove();
     EXPECT_TRUE(move.mPlaceGrenade);
 }
+
+TEST_F(SearchTest, CalculateMoveRestrictions)
+{
+    // clang-format off
+    const std::vector<std::string> info = {
+        "REQ 6493 0 1",
+        "VAMPIRE 1 3 3 3 1 2 0",
+        "VAMPIRE 2 3 3 3 1 2 0"
+    };
+    // clang-format on
+    TickDescription state = parseTickDescription(info);
+
+    Search search(state, mGameDescripton, 1);
+    search.CalculateNextLevel(std::chrono::steady_clock::now() + std::chrono::hours(100));
+
+    search.CalculateMoveRestrictions();
+}

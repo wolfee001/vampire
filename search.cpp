@@ -73,6 +73,11 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
             }
 
             const ActionSequence action(i);
+
+            if (mThrow && action.IsGrenade()) {
+                continue;
+            }
+
             if (action.GetNumberOfSteps() == 3 && node.mTickDescription.mMe.mRunningShoesTick == 0) {
                 continue;
             }
@@ -265,7 +270,9 @@ Answer Search::GetBestMove()
             printBranch(mLevels.back()[i]);
         }
     */
-    return ActionSequence(current->mAction).GetAnswer();
+    Answer answer = ActionSequence(current->mAction).GetAnswer();
+    answer.mThrow = mThrow;
+    return answer;
 }
 
 float Search::Evaluate(const TickDescription& tickDescription, const Simulator::NewPoints& newPoints, const Answer& move, const size_t level,

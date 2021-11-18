@@ -42,6 +42,12 @@ public:
 
     using NewPoints = std::unordered_map<int, float>; // indexed by player id
 
+private:
+    struct ThrowPositions {
+        std::pair<int, int> origin;
+        std::pair<int, int> target;
+    };
+
 public:
     explicit Simulator(const GameDescription& gameDescription);
     void SetState(const TickDescription& state);
@@ -65,6 +71,8 @@ private:
     void PlantGrenades();
     void ThrowGrenades();
     void Move();
+
+    std::optional<ThrowPositions> GetThrowPosition(const std::pair<int, int>& position, const Throw& th) const;
 
 private:
     GameDescription mGameDescription;

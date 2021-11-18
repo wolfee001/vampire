@@ -73,6 +73,8 @@ std::vector<pos_t> GetChainAttackBombSequenceForGaborAndKovi(
     forbiddenArea.insert(gd.mMapSize - 1 - 2, gd.mMapSize - 1 - 1);
 
     for (int usedBombCount = 1; usedBombCount <= std::min(tickDesc.mMe.mPlacableGrenades, 5); ++usedBombCount) {
+        if (path.size() < usedBombCount)
+            break;
         std::vector<bool> places(path.size());
         for (size_t i = 0; i < usedBombCount; ++i) {
             places[places.size() - 1 - i] = true;

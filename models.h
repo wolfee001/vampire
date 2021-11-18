@@ -193,4 +193,4 @@ struct pos_t {
     }
 };
 
-enum phase_t { NONE, PHASE1, ITEM, BETWEEN_ITEMS, CHARGE };
+enum phase_t { NONE, PHASE1, ITEM, BETWEEN_ITEMS, CHARGE, WOLFEE };

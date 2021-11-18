@@ -297,6 +297,20 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
         }
     }
 
+    if (mPhase == WOLFEE && !mBombSequence.empty()) {
+        for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
+            const auto& bombingPlace = mBombSequence[bombIndex];
+
+            const auto gIt = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
+                [&bombingPlace](const Grenade& grenade) { return bombingPlace.x == grenade.mX && bombingPlace.y == grenade.mY; });
+
+            if (gIt != std::cend(tickDescription.mGrenades)) {
+                // reward earch covered bombing place, prioritize the first one
+                bombingTargetScore += 96.F * (bombIndex == 0 ? 1.F : 0.2F);
+            }
+        }
+    }
+
     if ((mPhase == BETWEEN_ITEMS || mPhase == CHARGE) && level == 1) {
         if (mPathSequence.empty() && move.mSteps.empty()) {
             pathTargetScore = 3.0F;
@@ -320,7 +334,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
         }
     }
 
-    if (mPhase == ITEM && !mPathSequence.empty()) {
+    if ((mPhase == ITEM || mPhase == WOLFEE) && !mPathSequence.empty()) {
         const auto powerUpIt = std::find_if(std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps),
             [&mPathSequence = mPathSequence](const PowerUp& powerup) { return powerup.mX == mPathSequence.back().x && powerup.mY == mPathSequence.back().y; });
         if (powerUpIt != std::cend(tickDescription.mPowerUps) && (powerUpIt->mType != PowerUp::Type::Tomato || !mTomatoSafePlay)) {

@@ -1,6 +1,7 @@
 #include "final_magic.h"
 #include "models.h"
 #include <chrono>
+#include "wolfee_magic.h"
 
 FinalMagic::FinalMagic(const GameDescription& gameDescription)
     : IMagic(gameDescription)
@@ -27,7 +28,19 @@ Answer FinalMagic::Tick(const TickDescription& tickDescription, const Simulator:
     mGaborMagic.SetPreferGrenade(mUsualMagic.mPreferGrenade);
     mGaborMagic.SetReachDiff(mUsualMagic.mReachDiff);
 
-    if (mUsualMagic.mPhase == PHASE1) {
+    std::vector<pos_t> bombseq;
+    if (mUsualMagic.mPhase == ITEM && !mUsualMagic.mPath.empty() && mUsualMagic.mReachDiff < 0 && !tickDescription.mPowerUps.empty() && mUsualMagic.mInPhase1) {
+        bombseq = GetChainAttackBombSequenceForGaborAndKovi(mUsualMagic.mPath, tickDescription.mPowerUps[0].mRemainingTick, mGameDescription, tickDescription);
+        if (!bombseq.empty()) {
+            std::cerr << "Wolfee override" << std::endl;
+            mUsualMagic.mPhase = WOLFEE;
+        }
+    }
+
+    if (mUsualMagic.mPhase == WOLFEE) {
+        mGaborMagic.SetBombSequence(bombseq);
+        mGaborMagic.SetPathSequence(mUsualMagic.mPath);
+    } else if (mUsualMagic.mPhase == PHASE1) {
         mGaborMagic.SetBombSequence(mUsualMagic.mPath);
     } else if (mUsualMagic.mPhase == ITEM || mUsualMagic.mPhase == BETWEEN_ITEMS || mUsualMagic.mPhase == CHARGE) {
         mGaborMagic.SetPathSequence(mUsualMagic.mPath);

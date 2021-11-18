@@ -111,17 +111,27 @@ std::vector<pos_t> GetChainAttackBombSequenceForGaborAndKovi(
                 const int ticks = tickDistance(prevBomb, nextBomb, sc);
 
                 if (bc == 0) {
-                    int tickDecrease = 0;
+                    bool isInArea = false;
                     for (const auto& area : alreadyBlowAreas) {
                         if (area.mArea.find(path[nextBomb].x, path[nextBomb].y)) {
-                            tickDecrease = 6 - area.mTickCount; // 6, mert csak a kovetkezo tickben fog megjelenni (5tel)
+                            isInArea = true;
+                            if (area.mTickCount < std::abs(itemTick) - ticks) {
+                                isGoodCandidate = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (!isGoodCandidate) {
+                        break;
+                    }
+                    if (!isInArea) {
+                        const int blowTime = 6;
+                        if (blowTime > std::abs(itemTick) - ticks) {
+                            isGoodCandidate = false;
                             break;
                         }
                     }
-                    if (itemTick + ticks > -6 + tickDecrease) {
-                        isGoodCandidate = false;
-                        break;
-                    }
+
                     firstTickCount = ticks;
                 }
 
@@ -142,7 +152,7 @@ std::vector<pos_t> GetChainAttackBombSequenceForGaborAndKovi(
                     if (tickCount - firstTickCount > 4) {
                         isGoodCandidate = false;
                     }
-                    if ((path[nextBomb].x % 2) != 0 && (path[nextBomb].y % 2) != 0 && sc == 0 && nextBomb == path.size() - 2) {
+                    if ((path[nextBomb].x % 2) != 0 && (path[nextBomb].y % 2) != 0 && sc == 0) {
                         isGoodCandidate = false;
                     }
                     if (nextBomb == places.size() - 1) {

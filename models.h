@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -68,6 +69,7 @@ struct PowerUp {
     int mRemainingTick = 0;
     int mX = -1;
     int mY = -1;
+    int mDefensTime = -1;
 
     int mKeepAliveHint = -1;
 
@@ -120,8 +122,13 @@ struct TickDescription {
 };
 
 struct Answer {
+    struct Throw {
+        enum class Direction { Up, Down, Left, Right, XUp, XDown, XLeft, XRight };
+    };
+
     bool mPlaceGrenade = false;
     std::vector<char> mSteps;
+    std::optional<Throw> mThrow = std::nullopt;
 
     bool operator==(const Answer& other) const
     {

@@ -1,5 +1,5 @@
 #pragma once
 
 #ifndef TIMEOUT
-#define TIMEOUT 1500
+#define TIMEOUT 200
 #endif

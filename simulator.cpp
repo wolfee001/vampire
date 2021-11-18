@@ -535,6 +535,10 @@ void Simulator::ThrowGrenades()
                     break;
                 }
 
+                if (target.first < 0 || target.first > mGameDescription.mMapSize - 1 || target.second < 0 || target.second > mGameDescription.mMapSize - 1) {
+                    continue;
+                }
+
                 if (!mThrowableArea.find(target.first, target.second)) {
                     continue;
                 }

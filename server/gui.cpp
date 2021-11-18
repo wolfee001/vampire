@@ -340,7 +340,7 @@ void GUI::Run()
                 }(pu.mType);
                 ImVec2 pos = ImVec2(p.x + static_cast<float>(pu.mX) * 34 + 1, p.y + static_cast<float>(pu.mY) * 34 + 1);
                 draw_list->AddImage(mAssets[icon], pos, ImVec2(pos.x + 32, pos.y + 32), { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, 128));
-                draw_list->AddText({ pos.x + 12, pos.y + 10 }, IM_COL32(0, 0, 0, 255), fmt::format("{}", pu.mRemainingTick).c_str());
+                draw_list->AddText({ pos.x, pos.y + 10 }, IM_COL32(0, 0, 0, 255), fmt::format("{}/{}", pu.mRemainingTick, pu.mDefensTime).c_str());
             }
 
             for (const auto& bat : mTickDescription.mAllBats) {

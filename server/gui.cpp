@@ -66,7 +66,7 @@ void GUI::Run()
     if (!glfwInit()) {
         return;
     }
-    GLFWwindow* window = glfwCreateWindow(1076, 817, "SZERVER, BASZOD!", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1076, 817, "SZERVER!", NULL, NULL);
     if (window == nullptr) {
         return;
     }

@@ -221,7 +221,9 @@ Answer Search::GetBestMove()
         }
     };
 
-    // CalculateMoveRestrictions();
+    if (mPhase != ITEM) {
+        CalculateMoveRestrictions();
+    }
 
     const auto bestIt = std::max_element(std::cbegin(mLevels.back()), std::cend(mLevels.back()), [&](const TreeNode& x, const TreeNode& y) {
         const auto score1 = x.mPermanentScore + x.mHeuristicScore + x.mRestrictionScore;
@@ -570,7 +572,7 @@ void Search::CalculateMoveRestrictions([[maybe_unused]] const bool defense /* = 
             const auto desiredFuturePosition = SimulateMove(rootTick.mMe.mX, rootTick.mMe.mY, myMove);
             const auto [futureTick, points] = simulator.Tick();
             if (desiredFuturePosition.x == futureTick.mMe.mX && desiredFuturePosition.y == futureTick.mMe.mY) {
-                child.mRestrictionScore += 10.F; // reward uninterruptible moves
+                child.mRestrictionScore += 1.F; // reward uninterruptible moves
             }
         }
 
@@ -636,7 +638,7 @@ void Search::CalculateMoveRestrictions([[maybe_unused]] const bool defense /* = 
         const auto [futureTick, points] = simulator.Tick();
         const auto optimalMoveCount = GetMovesWithoutBombing(futureTick, futureTick.mMe.mId).size();
 
-        child.mRestrictionScore += static_cast<float>(worstMoveCount) / static_cast<float>(optimalMoveCount) * 10.F;
+        child.mRestrictionScore += static_cast<float>(worstMoveCount) / static_cast<float>(optimalMoveCount) * 1.F;
     }
 
     // move down restriction scores

@@ -640,7 +640,7 @@ bool Simulator::IsValidMove(int id, const ActionSequence& move) const
         CHECK(false, "Invalid id: " + std::to_string(id));
     }
 
-    std::optional<Throw> throwOpt = move.GetThrow();
+    std::optional<Throw> throwOpt = move.GetAnswer().mThrow;
 
     if (move.IsGrenade() && throwOpt) {
         return false;

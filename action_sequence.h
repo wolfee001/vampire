@@ -114,12 +114,6 @@ public:
         return 255;
     }
 
-    std::optional<Throw> GetThrow() const
-    {
-        // TODO: Gabor!!!
-        return std::nullopt;
-    }
-
     Answer GetAnswer() const
     {
         Answer answer;

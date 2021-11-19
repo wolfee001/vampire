@@ -1111,7 +1111,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 								pos_t p(enemy.mY, enemy.mX); 
 								int theirdist = p.GetDist(targets[best]);
 								int reldist = p.GetDist(mypos);
-								if (p != mypos && theirdist <= (enemy.mRunningShoesTick ? 3 : 2) &&
+								if (me.mPlacableGrenades > 0 && p != mypos && theirdist <= (enemy.mRunningShoesTick ? 3 : 2) &&
 									mydist < theirdist && (mydist <= 1 || reldist == 1)) {
 									mPreferGrenade = 1;
 									cerr << "prefer grenade to protect item" << endl;
@@ -1137,9 +1137,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	if (mInPhase1) {
 //		bombseqbatcnt = true;
 		bombtimeout = mTimeout.count();
-		vector<pos_t> seq;
+//		vector<pos_t> seq;
 // no phase1
-//		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30, true, mAvoids); // todo how many steps (not turns) ahead
+		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30, true, mAvoids); // todo how many steps (not turns) ahead
 		if (seq.empty())
 			mInPhase1 = false;
 		else {

@@ -371,7 +371,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     float pathTargetScore = 0;
 
     const pos_t mypos(tickDescription.mMe.mY, tickDescription.mMe.mX);
-    /*
+    
         if (mPhase == PHASE1 && !mBombSequence.empty()) {
             for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
                 const auto& bombingPlace = mBombSequence[bombIndex];
@@ -385,7 +385,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
                 }
             }
         }
-    */
+    
     if (mPhase == WOLFEE && !mBombSequence.empty()) {
         for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
             const auto& bombingPlace = mBombSequence[bombIndex];

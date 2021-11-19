@@ -8,8 +8,8 @@
 #pragma warning(push, 0)
 #endif
 
-#include <boost/container/flat_map.hpp>
-#include <boost/iterator/filter_iterator.hpp>
+// #include <boost/container/flat_map.hpp>
+// #include <boost/iterator/filter_iterator.hpp>
 
 #ifdef _WIN32
 #pragma warning(pop)
@@ -38,8 +38,9 @@ Search::Search(const TickDescription& tickDescription, const GameDescription& ga
                                   [&firstTick](const PowerUp& powerUp) {
                                       return powerUp.mRemainingTick >= -1
                                           && std::find_if(std::cbegin(firstTick.mEnemyVampires), std::cend(firstTick.mEnemyVampires),
-                                                 [&powerUp](const Vampire& vampire) { return vampire.mX == powerUp.mX && vampire.mY == powerUp.mY &&
-                                              vampire.mRestCount >= powerUp.mDefensTime; })
+                                                 [&powerUp](const Vampire& vampire) {
+                                                     return vampire.mX == powerUp.mX && vampire.mY == powerUp.mY && vampire.mRestCount >= powerUp.mDefensTime;
+                                                 })
                                           != std::cend(firstTick.mEnemyVampires);
                                   }),
         std::cend(firstTick.mPowerUps));
@@ -372,21 +373,21 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     float pathTargetScore = 0;
 
     const pos_t mypos(tickDescription.mMe.mY, tickDescription.mMe.mX);
-    
-        if (mPhase == PHASE1 && !mBombSequence.empty()) {
-            for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
-                const auto& bombingPlace = mBombSequence[bombIndex];
 
-                const auto gIt = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
-                    [&bombingPlace](const Grenade& grenade) { return bombingPlace.x == grenade.mX && bombingPlace.y == grenade.mY; });
+    if (mPhase == PHASE1 && !mBombSequence.empty()) {
+        for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
+            const auto& bombingPlace = mBombSequence[bombIndex];
 
-                if (gIt != std::cend(tickDescription.mGrenades)) {
-                    // reward earch covered bombing place, prioritize the first one
-                    bombingTargetScore += 12.F * (bombIndex == 0 ? 1.F : 0.2F);
-                }
+            const auto gIt = std::find_if(std::cbegin(tickDescription.mGrenades), std::cend(tickDescription.mGrenades),
+                [&bombingPlace](const Grenade& grenade) { return bombingPlace.x == grenade.mX && bombingPlace.y == grenade.mY; });
+
+            if (gIt != std::cend(tickDescription.mGrenades)) {
+                // reward earch covered bombing place, prioritize the first one
+                bombingTargetScore += 12.F * (bombIndex == 0 ? 1.F : 0.2F);
             }
         }
-    
+    }
+
     if (mPhase == WOLFEE && !mBombSequence.empty()) {
         for (size_t bombIndex = 0; bombIndex < mBombSequence.size(); ++bombIndex) {
             const auto& bombingPlace = mBombSequence[bombIndex];
@@ -534,7 +535,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
         for (const auto& powerUp : tickDescription.mPowerUps) {
             if (!isValidPowerUp(powerUp)) {
                 continue;
-        }
+            }
             const auto d = distance(powerUp.mX, powerUp.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
             if (d < minDistance) {
                 powerUpPtr = &powerUp;

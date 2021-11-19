@@ -37,7 +37,8 @@ Search::Search(const TickDescription& tickDescription, const GameDescription& ga
                                   [&firstTick](const PowerUp& powerUp) {
                                       return powerUp.mRemainingTick >= -1
                                           && std::find_if(std::cbegin(firstTick.mEnemyVampires), std::cend(firstTick.mEnemyVampires),
-                                                 [&powerUp](const Vampire& vampire) { return vampire.mX == powerUp.mX && vampire.mY == powerUp.mY; })
+                                                 [&powerUp](const Vampire& vampire) { return vampire.mX == powerUp.mX && vampire.mY == powerUp.mY &&
+                                              vampire.mRestCount >= powerUp.mDefensTime; })
                                           != std::cend(firstTick.mEnemyVampires);
                                   }),
         std::cend(firstTick.mPowerUps));
@@ -532,7 +533,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
 
     if (powerUpPtr != nullptr && (!mTomatoSafePlay || powerUpPtr->mType != PowerUp::Type::Tomato)) {
         const auto d = distance(powerUpPtr->mX, powerUpPtr->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
-        if (powerUpPtr->mRemainingTick > 0) {
+        if (powerUpPtr->mRemainingTick > 0 && tickDescription.mMe.mRestCount >= powerUpPtr->mDefensTime) {
             powerUpScore -= 48.F;
         } else {
             powerUpScore += 48.F / (1.F + d);

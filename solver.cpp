@@ -87,6 +87,10 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
 {
     auto tick = parseTickDescription(infos);
 
+    if (tick.mMe.mId == -1) {
+        return {};
+    }
+
     bool skipCalc = false;
     for (const auto& element : tick.mWarnings) {
         if (element == "Wrong") {

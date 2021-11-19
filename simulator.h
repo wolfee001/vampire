@@ -61,7 +61,7 @@ public:
     void SetVampireMove(int id, const Answer& move);
     std::pair<TickDescription, NewPoints> Tick();
     bool IsValidMove(int id, const Answer& move) const;
-    bool IsValidMove(int id, const ActionSequence& move) const;
+    bool IsValidMove(int id, const ActionSequence& move, const int throwDistance = -1) const;
     std::vector<BlowArea> GetBlowAreas(const bool blowNow = false);
     Area GetBlowArea(const Grenade& grenade);
     const Area& GetReachableArea() const;

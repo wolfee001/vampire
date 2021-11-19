@@ -711,10 +711,10 @@ std::optional<Simulator::ThrowPositions> Simulator::GetThrowPosition(const std::
 
 bool Simulator::IsValidMove(int id, const Answer& move) const
 {
-    return IsValidMove(id, ActionSequence(move));
+    return IsValidMove(id, ActionSequence(move), move.mThrow ? move.mThrow->mDistance : -1);
 }
 
-bool Simulator::IsValidMove(int id, const ActionSequence& move) const
+bool Simulator::IsValidMove(int id, const ActionSequence& move, const int throwDistance /*= -1*/) const
 {
     const Vampire* vampire = nullptr;
 
@@ -749,7 +749,11 @@ bool Simulator::IsValidMove(int id, const ActionSequence& move) const
     }
 
     if (throwOpt) {
-        std::optional<ThrowPositions> targetsOpt = GetThrowPosition(std::make_pair(vampire->mX, vampire->mY), *(throwOpt));
+        Throw lthrow;
+        lthrow.mDirection = move.GetThrowDirection();
+        lthrow.mDistance = throwDistance;
+
+        std::optional<ThrowPositions> targetsOpt = GetThrowPosition(std::make_pair(vampire->mX, vampire->mY), lthrow);
         if (!targetsOpt) {
             return false;
         }

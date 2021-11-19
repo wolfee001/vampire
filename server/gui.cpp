@@ -349,6 +349,14 @@ void GUI::Run()
                 draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
             }
 
+            for (int i = 0; i < mGameDescription.mMapSize; ++i) {
+                draw_list->AddText(ImVec2(p.x + 5.F + i * 34, p.y + mGameDescription.mMapSize * 34), IM_COL32(0, 0, 0, 255), fmt::format("{}", i).c_str());
+            }
+
+            for (int i = 0; i < mGameDescription.mMapSize; ++i) {
+                draw_list->AddText(ImVec2(p.x + mGameDescription.mMapSize * 34, p.y + 5.F + i * 34), IM_COL32(0, 0, 0, 255), fmt::format("{}", i).c_str());
+            }
+
             ImGui::End();
         }
 

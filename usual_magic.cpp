@@ -1071,6 +1071,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					if (enemyon)
 						continue;
 				}
+				if (me.mHealth == 1 && tickDescription.mEnemyVampires.size() > 2 && 
+					closestenemydist[i] <= reach + 5 && tickDescription.mPowerUps[i].mType != PowerUp::Type::Tomato)
+					continue;
 				if ((closestenemydist[i] >= reach && lastturn >= reach) || (reach <= waitturn && 
 					(!mEnemyPredict[tickDescription.mEnemyVampires[closestenemy[i]].mId].bombonitem || waitturn - reach > 4 || tr == 1)))
 					MINA2(closest, reach, best, i);

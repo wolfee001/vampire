@@ -116,6 +116,35 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
             }
         }
     }
+
+    Simulator::Area puAreas = Simulator::Area(mGameDescription.mMapSize);
+    for (const auto& pu : tick.mPowerUps) {
+        if (pu.mRemainingTick > 0) {
+            puAreas.insert(pu.mX, pu.mY);
+        }
+    }
+    std::vector<Vampire*> vampRefs;
+    if (tick.mMe.mHealth > 0) {
+        if (puAreas.find(tick.mMe.mX, tick.mMe.mY)) {
+            tick.mMe.mRestCount = mTickDescription.mMe.mRestCount + 1;
+        } else {
+            tick.mMe.mRestCount = 0;
+        }
+    }
+    for (auto& vampire : tick.mEnemyVampires) {
+        for (const auto& element : mTickDescription.mEnemyVampires) {
+            if (element.mId == vampire.mId) {
+                if (element.mHealth > vampire.mHealth) {
+                    if (puAreas.find(vampire.mX, vampire.mY)) {
+                        vampire.mRestCount = element.mRestCount + 1;
+                    } else {
+                        vampire.mRestCount = 0;
+                    }
+                }
+            }
+        }
+    }
+
     Simulator::NewPoints points;
     if (mTickDescription.mRequest.mGameId != -1) {
         mSimulator->SetState(mTickDescription);

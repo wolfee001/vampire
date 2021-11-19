@@ -41,5 +41,42 @@ csak dontobe:
 
 -Adam kodja utan utanahuzni a between item ertekeles
 
+-ha nincs path, ne hivjuk item-nek, valtsunk between-re
+
+
+////////////////////////////
+
++avoid kick kill
+~Gabor attack with kick/etc
+
+
+-Gabor lvl7 stuck in release bug
+
+-phase1: egyelore nem
+-wolfee: egyelore nem
+
+-item csatak
+-rugott csapda
+
+-between items hatasok
+-closest item hatasok
+~deprecate item if too long
+
+
+defend tick range??
+100 test = sanity check
+
+
+item battle close
+.O.
+ATB
+.O.
+
+new variation: do not risk of crossing?
+
+item battle from distance
+.O.
+A.$
+.O.
 
 

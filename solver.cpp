@@ -89,8 +89,9 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
 
     bool skipCalc = false;
     for (const auto& element : tick.mWarnings) {
-        if (element.find("Wrong header") != std::string::npos) {
+        if (element == "Wrong") {
             skipCalc = true;
+            std::cerr << "SKIP CALC!!" << std::endl;
         }
     }
 

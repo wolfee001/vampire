@@ -576,6 +576,7 @@ void Framework::Render()
         ImGui::EndGroup();
         ImGui::SameLine();
         ImGui::BeginGroup();
+        ImGui::Text("ID:");
         ImGui::Text("Health:");
         ImGui::Text("Placable grenades:");
         ImGui::Text("Grenade range:");
@@ -584,6 +585,7 @@ void Framework::Render()
         ImGui::EndGroup();
         ImGui::SameLine();
         ImGui::BeginGroup();
+        ImGui::Text("%d", mTickDescription.mMe.mId);
         ImGui::Text("%d", mTickDescription.mMe.mHealth);
         ImGui::Text("%d", mTickDescription.mMe.mPlacableGrenades);
         ImGui::Text("%d", mTickDescription.mMe.mGrenadeRange);
@@ -601,6 +603,7 @@ void Framework::Render()
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::BeginGroup();
+            ImGui::Text("ID:");
             ImGui::Text("Health:");
             ImGui::Text("Placable grenades:");
             ImGui::Text("Grenade range:");
@@ -609,6 +612,7 @@ void Framework::Render()
             ImGui::EndGroup();
             ImGui::SameLine();
             ImGui::BeginGroup();
+            ImGui::Text("%d", vampire.mId);
             ImGui::Text("%d", vampire.mHealth);
             ImGui::Text("%d", vampire.mPlacableGrenades);
             ImGui::Text("%d", vampire.mGrenadeRange);

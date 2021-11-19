@@ -447,7 +447,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
 
             for (const auto& vampire : mLevels.front().front().mTickDescription.mEnemyVampires) {
                 if (area.find(vampire.mX, vampire.mY)) {
-                    bombingTargetScore += 12.F;
+                    bombingTargetScore += 24.F;
                 }
             }
         }
@@ -457,10 +457,12 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
     for (const auto& area : areas) {
 
         if (area.mArea.find(tickDescription.mMe.mX, tickDescription.mMe.mY)) {
-            grenadePenalty -= 12.F / static_cast<float>(area.mTickCount);
+            if (tickDescription.mMe.mGhostModeTick < area.mTickCount) {
+                grenadePenalty -= 12.F / static_cast<float>(area.mTickCount);
 
-            if (area.mTickCount == 1) {
-                grenadePenalty -= 96.F;
+                if (area.mTickCount == 1) {
+                    grenadePenalty -= 96.F;
+                }
             }
         }
 

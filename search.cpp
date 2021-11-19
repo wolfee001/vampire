@@ -2,6 +2,7 @@
 #include "action_sequence.h"
 #include "check.h"
 #include "gabor_magic.h"
+#include <limits>
 
 #ifdef _WIN32
 #pragma warning(push, 0)
@@ -519,16 +520,30 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
             return reachableArea.find(powerUp.mX, powerUp.mY) || (powerUp.mX == mMyOriginalPos.x && powerUp.mY == mMyOriginalPos.y);
         };
 
+        /*
         const auto beginIt = boost::make_filter_iterator(isValidPowerUp, std::cbegin(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
         const auto endIt = boost::make_filter_iterator(isValidPowerUp, std::cend(tickDescription.mPowerUps), std::cend(tickDescription.mPowerUps));
 
         const auto powerUpIt = std::min_element(beginIt, endIt, [&distance, &tickDescription](const PowerUp& x, const PowerUp& y) {
-            return distance(x.mX, x.mY, tickDescription.mMe.mX, tickDescription.mMe.mY) < distance(y.mX, y.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
+                    return distance(x.mX, x.mY, tickDescription.mMe.mX, tickDescription.mMe.mY) < distance(y.mX, y.mY, tickDescription.mMe.mX,
+           tickDescription.mMe.mY);
         });
+        */
 
-        if (powerUpIt != endIt) {
-            powerUpPtr = &(*powerUpIt);
+        float minDistance = std::numeric_limits<float>::max();
+        for (const auto& powerUp : tickDescription.mPowerUps) {
+            if (!isValidPowerUp(powerUp)) {
+                continue;
         }
+            const auto d = distance(powerUp.mX, powerUp.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
+            if (d < minDistance) {
+                powerUpPtr = &powerUp;
+            }
+        }
+
+        // if (powerUpIt != endIt) {
+        //    powerUpPtr = &(*powerUpIt);
+        //}
     }
 
     if (powerUpPtr != nullptr && (!mTomatoSafePlay || powerUpPtr->mType != PowerUp::Type::Tomato)) {

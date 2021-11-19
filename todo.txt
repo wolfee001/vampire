@@ -49,7 +49,6 @@ csak dontobe:
 +avoid kick kill
 ~Gabor attack with kick/etc
 
-
 -Gabor lvl7 stuck in release bug
 
 -phase1: egyelore nem
@@ -66,6 +65,7 @@ csak dontobe:
 defend tick range??
 100 test = sanity check
 
+/////////////////////////////
 
 item battle close
 .O.
@@ -78,5 +78,21 @@ item battle from distance
 .O.
 A.$
 .O.
+
+Adam
+-hozzuk at a palyakat
+
+
+-----------------
+batch alatt
+-aggresszio
+-tomato (a, b)
+-------------
+eval - halal
+-tomato b, nem veszes
+---------------
+
+
+
 
 

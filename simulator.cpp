@@ -246,9 +246,13 @@ void Simulator::RecalculateTicks()
         }
     }
     std::vector<Vampire*> vampRefs;
-    vampRefs.push_back(&mState.mMe);
+    if (mState.mMe.mHealth > 0) {
+        vampRefs.push_back(&mState.mMe);
+    }
     for (auto& element : mState.mEnemyVampires) {
-        vampRefs.push_back(&element);
+        if (element.mHealth > 0) {
+            vampRefs.push_back(&element);
+        }
     }
 
     for (auto& vampire : vampRefs) {
@@ -297,9 +301,13 @@ void Simulator::RemoveDisappearedPowerups()
 void Simulator::PowerupPickUp()
 {
     std::vector<Vampire*> vampRefs;
-    vampRefs.push_back(&mState.mMe);
+    if (mState.mMe.mHealth > 0) {
+        vampRefs.push_back(&mState.mMe);
+    }
     for (auto& element : mState.mEnemyVampires) {
-        vampRefs.push_back(&element);
+        if (element.mHealth > 0) {
+            vampRefs.push_back(&element);
+        }
     }
 
     std::vector<PowerUp> survivors;

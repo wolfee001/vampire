@@ -777,6 +777,8 @@ bool dobomb(const TickDescription& tickDescription)
 	return false;
 }
 
+int stuckdir = -1;
+
 Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
 	int turn = tickDescription.mRequest.mTick;
@@ -850,7 +852,34 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		}
 	}
 	mEnemyPredict[me.mId].prevpos = mypos;
+/*
+	if (tickDescription.mRequest.mTick == 0) {
+		int dir = -1;
+		int cnt = 0;
+		stuckdir = -1;
+		FOR0(d, 4) {
+			pos_t p = mypos.GetPos(d);
+			if (m[p.y][p.x] == ' ') {
+				pos_t p2 = p.GetPos(d);
+				if (m[p2.y][p2.x] != ' ') {
+					++cnt;
+					dir = d;
+				}
+			}
+		}
+		if (cnt == 2) {
+			answer.mSteps.push_back(dirc2[dir]);
+			stuckdir = dir;
+			return answer;
+		}
+	}
 
+	if (stuckdir != -1 && tickDescription.mRequest.mTick == 1) {
+		answer.mPlaceGrenade = true;
+		answer.mSteps.push_back(dirc2[(stuckdir + 2) % 4]);
+		return answer;
+	}
+*/
 	bool onitem = false;
 	bool ontomato = false;
 	for (const auto& powerup : tickDescription.mPowerUps) {

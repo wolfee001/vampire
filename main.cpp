@@ -209,7 +209,7 @@ int main(int argc, char** argv)
     const bool from_console = (argc > 2 && 0 == std::strcmp("console", argv[2])) || (argc > 1 && 0 == std::strcmp("console", argv[1]));
 
     /* config area */
-    const char* host_name = from_console ? "" : argc < 3 ? "itechchallenge.dyndns.org" : argv[argc - 2];
+    const char* host_name = from_console ? "" : argc < 3 ? "20.82.65.82" : argv[argc - 2];
     const unsigned short port = from_console ? 0 : (argc < 3 && argv[argc - 1][0]) ? 11224 : std::atoi(argv[argc - 1]);
     const char token[] = TOKEN;
 

@@ -87,7 +87,7 @@ void Game::GeneratePowerups(TickDescription& tick)
 
         const int pre = 5 + rand() % 6;
         const int duration = 10 + rand() % 11;
-        const int defenseTime = 1 + rand() % 3;
+        const int defenseTime = 4 + rand() % 4;
 
         int alivePlayers = tick.mEnemyVampires.size() + (tick.mMe.mHealth > 0 ? 1 : 0);
 

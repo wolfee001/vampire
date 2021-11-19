@@ -462,6 +462,10 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
 
                 if (area.mTickCount == 1) {
                     grenadePenalty -= 96.F;
+
+                    if (tickDescription.mMe.mHealth == 1) {
+                        grenadePenalty -= 1000.F;
+                    }
                 }
             }
         }

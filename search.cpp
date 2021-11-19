@@ -227,7 +227,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 continue;
             }
 
-            if (!simulator.IsValidMove(mPlayerId, action)) {
+            if (!simulator.IsValidMove(mPlayerId, move)) {
                 continue;
             }
 

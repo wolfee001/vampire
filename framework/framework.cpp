@@ -524,6 +524,12 @@ void Framework::Render()
             draw_list->AddImage(mAssets[batAvatar], pos, ImVec2(pos.x + 32, pos.y + 32));
         }
 
+        ImVec2 realPos = { ImGui::GetMousePos().x - p.x, ImGui::GetMousePos().y - p.y };
+        if (realPos.x > -1 && realPos.x < 23 * 34 && realPos.y > -1 && realPos.x < 23 * 34) {
+            draw_list->AddText(ImVec2(p.x, p.y + 23 * 34), IM_COL32(255, 255, 255, 255),
+                fmt::format("y: {}; x: {}", static_cast<int>(realPos.y) / 34, static_cast<int>(realPos.x) / 34).c_str());
+        }
+
         ImGui::End();
     }
 

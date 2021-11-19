@@ -2153,6 +2153,110 @@ const scoreData = {
       700
     ]
   },
+  "13": {
+    "best": {
+      "score": 812,
+      "gameID": 703,
+      "date": "Fri, 19 Nov 2021 16:36:10 +0000"
+    },
+    "scores": [
+      812
+    ],
+    "labels": [
+      703
+    ]
+  },
+  "14": {
+    "best": {
+      "score": 354.88,
+      "gameID": 706,
+      "date": "Fri, 19 Nov 2021 16:38:33 +0000"
+    },
+    "scores": [
+      354.88
+    ],
+    "labels": [
+      706
+    ]
+  },
+  "15": {
+    "best": {
+      "score": 1092.3,
+      "gameID": 710,
+      "date": "Fri, 19 Nov 2021 16:42:09 +0000"
+    },
+    "scores": [
+      1092.3
+    ],
+    "labels": [
+      710
+    ]
+  },
+  "16": {
+    "best": {
+      "score": 1200,
+      "gameID": 712,
+      "date": "Fri, 19 Nov 2021 16:45:08 +0000"
+    },
+    "scores": [
+      1200
+    ],
+    "labels": [
+      712
+    ]
+  },
+  "17": {
+    "best": {
+      "score": 1056.46,
+      "gameID": 715,
+      "date": "Fri, 19 Nov 2021 16:47:56 +0000"
+    },
+    "scores": [
+      1056.46
+    ],
+    "labels": [
+      715
+    ]
+  },
+  "18": {
+    "best": {
+      "score": 2748,
+      "gameID": 719,
+      "date": "Fri, 19 Nov 2021 16:52:45 +0000"
+    },
+    "scores": [
+      2748
+    ],
+    "labels": [
+      719
+    ]
+  },
+  "19": {
+    "best": {
+      "score": 1112.8,
+      "gameID": 721,
+      "date": "Fri, 19 Nov 2021 16:54:52 +0000"
+    },
+    "scores": [
+      1112.8
+    ],
+    "labels": [
+      721
+    ]
+  },
+  "20": {
+    "best": {
+      "score": 1942.51,
+      "gameID": 724,
+      "date": "Fri, 19 Nov 2021 16:58:01 +0000"
+    },
+    "scores": [
+      1942.51
+    ],
+    "labels": [
+      724
+    ]
+  },
   "undefined": {
     "best": {
       "score": 100,

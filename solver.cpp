@@ -94,11 +94,11 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
         }
     }
 
-    tick.mMe.mGhostModeTick = mTickDescription.mMe.mGhostModeTick;
+    tick.mMe.mGhostModeTick = std::max(0, mTickDescription.mMe.mGhostModeTick - 1);
     for (auto& vampire : tick.mEnemyVampires) {
         for (const auto& element : mTickDescription.mEnemyVampires) {
             if (element.mId == vampire.mId) {
-                vampire.mGhostModeTick = element.mGhostModeTick;
+                tick.mMe.mGhostModeTick = std::max(0, element.mGhostModeTick - 1);
             }
         }
     }

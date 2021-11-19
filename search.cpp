@@ -447,7 +447,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
 
             for (const auto& vampire : mLevels.front().front().mTickDescription.mEnemyVampires) {
                 if (area.find(vampire.mX, vampire.mY)) {
-                    bombingTargetScore += 24.F;
+                    bombingTargetScore += 12.F;
                 }
             }
         }
@@ -538,6 +538,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
             if (!isValidPowerUp(powerUp)) {
                 continue;
             }
+
             const auto d = distance(powerUp.mX, powerUp.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
             if (d < minDistance) {
                 minDistance = d;
@@ -550,7 +551,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
         //}
     }
 
-    if (powerUpPtr != nullptr && (!mTomatoSafePlay || powerUpPtr->mType != PowerUp::Type::Tomato)) {
+    if (powerUpPtr != nullptr && (mPhase == ITEM || tickDescription.mMe.mHealth > 1)) {
         const auto d = distance(powerUpPtr->mX, powerUpPtr->mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
         if (powerUpPtr->mRemainingTick > 0 && tickDescription.mMe.mRestCount >= powerUpPtr->mDefensTime) {
             powerUpScore -= 48.F;

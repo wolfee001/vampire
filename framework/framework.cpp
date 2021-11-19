@@ -530,6 +530,14 @@ void Framework::Render()
         //         fmt::format("y: {}; x: {}", static_cast<int>(realPos.y) / 34, static_cast<int>(realPos.x) / 34).c_str());
         // }
 
+        for (int i = 0; i < mGameDescription.mMapSize; ++i) {
+            draw_list->AddText(ImVec2(p.x + 5.F + i * 34, p.y + mGameDescription.mMapSize * 34), IM_COL32(0, 0, 0, 255), fmt::format("{}", i).c_str());
+        }
+
+        for (int i = 0; i < mGameDescription.mMapSize; ++i) {
+            draw_list->AddText(ImVec2(p.x + mGameDescription.mMapSize * 34, p.y + 5.F + i * 34), IM_COL32(0, 0, 0, 255), fmt::format("{}", i).c_str());
+        }
+
         for (int i = 0; i < 23; ++i) {
             draw_list->AddText(ImVec2(p.x + 5.F + i * 34, p.y + 23 * 34), IM_COL32(255, 255, 255, 255), fmt::format("{}", i).c_str());
         }

@@ -239,13 +239,25 @@ void Simulator::RecalculateTicks()
         }
     }
 
-    mState.mMe.mRunningShoesTick = std::max(mState.mMe.mRunningShoesTick - 1, 0);
-    mState.mMe.mGhostModeTick = std::max(mState.mMe.mGhostModeTick - 1, 0);
-    mState.mMe.mRestCount++;
-    for (auto& vampire : mState.mEnemyVampires) {
-        vampire.mRunningShoesTick = std::max(vampire.mRunningShoesTick - 1, 0);
-        vampire.mGhostModeTick = std::max(vampire.mGhostModeTick - 1, 0);
-        vampire.mRestCount++;
+    Area puAreas = Area(mGameDescription.mMapSize);
+    for (const auto& pu : mState.mPowerUps) {
+        if (pu.mRemainingTick > 0) {
+            puAreas.insert(pu.mX, pu.mY);
+        }
+    }
+    std::vector<Vampire*> vampRefs;
+    vampRefs.push_back(&mState.mMe);
+    for (auto& element : mState.mEnemyVampires) {
+        vampRefs.push_back(&element);
+    }
+
+    for (auto& vampire : vampRefs) {
+        vampire->mRunningShoesTick = std::max(vampire->mRunningShoesTick - 1, 0);
+        vampire->mGhostModeTick = std::max(vampire->mGhostModeTick - 1, 0);
+        vampire->mRestCount++;
+        if (!puAreas.find(vampire->mX, vampire->mY)) {
+            vampire->mRestCount = 0;
+        }
     }
 }
 

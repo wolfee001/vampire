@@ -183,6 +183,34 @@ TEST_F(SimulateTest, PowerupPickupWithDefense)
     ASSERT_EQ(tick.mPowerUps.size(), 0);
 }
 
+TEST_F(SimulateTest, PowerupPickupWithNegativeCount)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 2 1 3 2 2 0",
+        "POWERUP TOMATO -2 2 1 3",
+    };
+    // clang-format on
+    TickDescription tick;
+    tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 0);
+}
+
 TEST_F(SimulateTest, PowerupPickupStepoffRestartsDefense)
 {
     // clang-format off
@@ -1262,7 +1290,8 @@ TEST_F(SimulateTest, RestCountIncreasing)
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "VAMPIRE 1 1 1 2 1 2 0"
+        "VAMPIRE 1 1 1 2 1 2 0",
+        "POWERUP TOMATO 20 1 1 20"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -1279,7 +1308,8 @@ TEST_F(SimulateTest, RestCountIncreasingWithExternalTickSet)
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "VAMPIRE 1 1 1 2 1 2 0"
+        "VAMPIRE 1 1 1 2 1 2 0",
+        "POWERUP TOMATO 20 1 1 20"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -1296,7 +1326,8 @@ TEST_F(SimulateTest, RestCountReset)
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "VAMPIRE 1 1 1 2 1 2 0"
+        "VAMPIRE 1 1 1 2 1 2 0",
+        "POWERUP TOMATO 20 1 1 20"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -1307,13 +1338,14 @@ TEST_F(SimulateTest, RestCountReset)
     // clang-format off
     std::vector<std::string> info2 = {
         "REQ 775 0 1",
-        "VAMPIRE 1 2 1 2 1 2 0"
+        "VAMPIRE 1 2 1 2 1 2 0",
+        "POWERUP TOMATO 20 1 1 20"
     };
     // clang-format on
     const TickDescription tick2 = parseTickDescription(info2);
     mSimulator->SetState(tick2);
     const auto [newState2, newPoints2] = mSimulator->Tick();
-    EXPECT_EQ(newState2.mMe.mRestCount, 1);
+    EXPECT_EQ(newState2.mMe.mRestCount, 0);
 }
 
 TEST_F(SimulateTest, RestCountIncreasingEnemy)
@@ -1321,7 +1353,8 @@ TEST_F(SimulateTest, RestCountIncreasingEnemy)
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "VAMPIRE 2 1 1 2 1 2 0"
+        "VAMPIRE 2 1 1 2 1 2 0",
+        "POWERUP TOMATO 20 1 1 20"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -1338,7 +1371,8 @@ TEST_F(SimulateTest, RestCountIncreasingWithExternalTickSetEnemy)
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "VAMPIRE 2 1 1 2 1 2 0"
+        "VAMPIRE 2 1 1 2 1 2 0",
+        "POWERUP TOMATO 20 1 1 20"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -1355,7 +1389,8 @@ TEST_F(SimulateTest, RestCountResetEnemy)
     // clang-format off
     std::vector<std::string> info = {
         "REQ 775 0 1",
-        "VAMPIRE 2 1 1 2 1 2 0"
+        "VAMPIRE 2 1 1 2 1 2 0",
+        "POWERUP TOMATO 20 1 1 20"
     };
     // clang-format on
     const TickDescription tick = parseTickDescription(info);
@@ -1366,13 +1401,14 @@ TEST_F(SimulateTest, RestCountResetEnemy)
     // clang-format off
     std::vector<std::string> info2 = {
         "REQ 775 0 1",
-        "VAMPIRE 2 2 1 2 1 2 0"
+        "VAMPIRE 2 2 1 2 1 2 0",
+        "POWERUP TOMATO 20 1 1 20"
     };
     // clang-format on
     const TickDescription tick2 = parseTickDescription(info2);
     mSimulator->SetState(tick2);
     const auto [newState2, newPoints2] = mSimulator->Tick();
-    EXPECT_EQ(newState2.mEnemyVampires[0].mRestCount, 1);
+    EXPECT_EQ(newState2.mEnemyVampires[0].mRestCount, 0);
 }
 
 TEST_F(SimulateTest, TrivialBadBombPlant)

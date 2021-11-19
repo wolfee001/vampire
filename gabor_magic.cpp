@@ -39,9 +39,9 @@ Answer GaborMagic::Tick(const TickDescription& tickDescription, const Simulator:
     const auto t1 = std::chrono::steady_clock::now();
     auto calculationTime = mTimeout;
 
-    if (tickDescription.mAllBats.empty() && tickDescription.mPowerUps.empty() && tickDescription.mGrenades.empty()) {
-        calculationTime = mTimeout / 2;
-    }
+    //    if (tickDescription.mAllBats.empty() && tickDescription.mPowerUps.empty() && tickDescription.mGrenades.empty()) {
+    //        calculationTime = mTimeout / 2;
+    //    }
 
     for (size_t i = 0; i < mMaxLevel; ++i) {
         if (!search.CalculateNextLevel(t1 + calculationTime)) {

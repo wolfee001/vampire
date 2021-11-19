@@ -251,14 +251,39 @@ void Simulator::RecalculateTicks()
 
 void Simulator::RemoveDisappearedPowerups()
 {
-    // TODO!!
+    bool hasNewPu = false;
+    for (const auto& pu : mState.mPowerUps) {
+        if (pu.mRemainingTick < 0) {
+            hasNewPu = true;
+        }
+    }
+
+    if (!hasNewPu) {
+        std::vector<const Vampire*> vampRefs;
+        if (mState.mMe.mHealth > 0) {
+            vampRefs.emplace_back(&mState.mMe);
+        }
+        for (const auto& v : mState.mEnemyVampires) {
+            if (v.mHealth > 0) {
+                vampRefs.emplace_back(&v);
+            }
+        }
+        for (auto& pu : mState.mPowerUps) {
+            if (pu.mRemainingTick == 0) {
+                for (const auto& v : vampRefs) {
+                    if (v->mX == pu.mX && v->mY == pu.mY) {
+                        pu.mRemainingTick = 1;
+                    }
+                }
+            }
+        }
+    }
     mState.mPowerUps.erase(std::remove_if(mState.mPowerUps.begin(), mState.mPowerUps.end(), [](const auto& element) { return element.mRemainingTick == 0; }),
         mState.mPowerUps.end());
 }
 
 void Simulator::PowerupPickUp()
 {
-    // TODO!!
     std::vector<Vampire*> vampRefs;
     vampRefs.push_back(&mState.mMe);
     for (auto& element : mState.mEnemyVampires) {
@@ -271,7 +296,7 @@ void Simulator::PowerupPickUp()
         bool shouldDelete = false;
         if (pu.mRemainingTick > 0) {
             for (auto* vampire : vampRefs) {
-                if (vampire->mX == pu.mX && vampire->mY == pu.mY) {
+                if (vampire->mX == pu.mX && vampire->mY == pu.mY && vampire->mRestCount >= pu.mDefensTime) {
                     mNewPoints[vampire->mId] += 48;
                     shouldDelete = true;
                     switch (pu.mType) {
@@ -591,6 +616,7 @@ void Simulator::Move()
                 }
                 vampire->mX = static_cast<int>(newX);
                 vampire->mY = static_cast<int>(newY);
+                vampire->mRestCount = 0;
             }
         }
     }

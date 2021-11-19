@@ -98,6 +98,130 @@ TEST_F(SimulateTest, PowerupDisappear)
     ASSERT_EQ(newState.mPowerUps[1].mRemainingTick, 10);
 }
 
+TEST_F(SimulateTest, PowerupKeepAlive)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "POWERUP TOMATO 1 2 1 3",
+        "VAMPIRE 1 2 1 3 2 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mPowerUps.size(), 1);
+    ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, 1);
+}
+
+TEST_F(SimulateTest, PowerupRemoveIfStepOff)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "POWERUP TOMATO 1 2 1 3",
+        "VAMPIRE 1 2 1 3 2 2 0"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mPowerUps.size(), 1);
+    ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, 1);
+
+    // clang-format off
+    std::vector<std::string> info2 = {
+        "REQ 775 0 1",
+        "POWERUP TOMATO 1 2 1 3",
+        "VAMPIRE 1 1 1 3 2 2 0"
+    };
+    // clang-format on
+    const TickDescription tick2 = parseTickDescription(info2);
+    mSimulator->SetState(tick2);
+    const auto [newState2, newPoints2] = mSimulator->Tick();
+    ASSERT_EQ(newState2.mPowerUps.size(), 0);
+}
+
+TEST_F(SimulateTest, PowerupRemoveIfNewComes)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 2 1 3 2 2 0"
+        "POWERUP TOMATO 1 2 1 3",
+        "POWERUP TOMATO -5 3 1 3",
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mPowerUps.size(), 1);
+    ASSERT_EQ(newState.mPowerUps[0].mRemainingTick, -4);
+}
+
+TEST_F(SimulateTest, PowerupPickupWithDefense)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 2 1 3 2 2 0",
+        "POWERUP TOMATO 20 2 1 3",
+    };
+    // clang-format on
+    TickDescription tick;
+    tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 0);
+}
+
+TEST_F(SimulateTest, PowerupPickupStepoffRestartsDefense)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 2 1 3 2 2 0",
+        "POWERUP TOMATO 20 2 1 3",
+    };
+    // clang-format on
+    TickDescription tick;
+    tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, { 'U' } });
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    mSimulator->SetState(tick);
+    mSimulator->SetVampireMove(1, { false, { 'D' } });
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 1);
+
+    mSimulator->SetState(tick);
+    tick = mSimulator->Tick().first;
+    ASSERT_EQ(tick.mPowerUps.size(), 0);
+}
+
 TEST_F(SimulateTest, PowerupPickupSingleMeTomatoNoEffect)
 {
     // clang-format off
@@ -1025,6 +1149,7 @@ TEST_F(SimulateTest, StepSimple)
     const auto [newState, newPoints] = mSimulator->Tick();
     ASSERT_EQ(newState.mMe.mX, 3);
     ASSERT_EQ(newState.mMe.mY, 1);
+    ASSERT_EQ(newState.mMe.mRestCount, 0);
     ASSERT_EQ(newPoints.at(1), 0);
 }
 

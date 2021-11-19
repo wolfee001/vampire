@@ -97,9 +97,6 @@ void Game::GeneratePowerups(TickDescription& tick)
                 { type, -pre, mGameDescription.mMapSize - position.first - 1, mGameDescription.mMapSize - position.second - 1, defenseTime, duration });
         }
     }
-    if (!tick.mPowerUps.empty()) {
-        return;
-    }
     mNextPowerupTick = tick.mRequest.mTick + 10 + rand() % 11;
 }
 

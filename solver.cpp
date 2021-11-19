@@ -86,6 +86,14 @@ void solver::startMessage(const std::vector<std::string>& startInfos)
 std::vector<std::string> solver::processTick(const std::vector<std::string>& infos)
 {
     auto tick = parseTickDescription(infos);
+
+    bool skipCalc = false;
+    for (const auto& element : tick.mWarnings) {
+        if (element.find("Wrong header") != std::string::npos) {
+            skipCalc = true;
+        }
+    }
+
     if (mTickDescription.mMe.mHealth > tick.mMe.mHealth) {
         tick.mMe.mGhostModeTick = 3;
     }
@@ -118,17 +126,15 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
     }
 
     Answer answer;
-    answer.mSteps.push_back('R');
-    answer.mSteps.push_back('R');
-    try {
-        answer = mMagic->Tick(mTickDescription, mCumulatedPoints);
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << "exception " << e.what() << std::endl;
-    } 
-    catch (...) {
-        std::cerr << "exception other" << std::endl;   
+
+    if (!skipCalc) {
+        try {
+            answer = mMagic->Tick(mTickDescription, mCumulatedPoints);
+        } catch (const std::exception& e) {
+            std::cerr << "exception " << e.what() << std::endl;
+        } catch (...) {
+            std::cerr << "exception other" << std::endl;
+        }
     }
 
     auto commands = createAnswer(answer, mTickDescription.mRequest.mGameId, mTickDescription.mRequest.mTick, mTickDescription.mRequest.mVampireId);

@@ -777,6 +777,8 @@ bool dobomb(const TickDescription& tickDescription)
 	return false;
 }
 
+int stuckdir = -1;
+
 Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator::NewPoints& points)
 {
 	int turn = tickDescription.mRequest.mTick;
@@ -850,7 +852,34 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		}
 	}
 	mEnemyPredict[me.mId].prevpos = mypos;
+/*
+	if (tickDescription.mRequest.mTick == 0) {
+		int dir = -1;
+		int cnt = 0;
+		stuckdir = -1;
+		FOR0(d, 4) {
+			pos_t p = mypos.GetPos(d);
+			if (m[p.y][p.x] == ' ') {
+				pos_t p2 = p.GetPos(d);
+				if (m[p2.y][p2.x] != ' ') {
+					++cnt;
+					dir = d;
+				}
+			}
+		}
+		if (cnt == 2) {
+			answer.mSteps.push_back(dirc2[dir]);
+			stuckdir = dir;
+			return answer;
+		}
+	}
 
+	if (stuckdir != -1 && tickDescription.mRequest.mTick == 1) {
+		answer.mPlaceGrenade = true;
+		answer.mSteps.push_back(dirc2[(stuckdir + 2) % 4]);
+		return answer;
+	}
+*/
 	bool onitem = false;
 	bool ontomato = false;
 	for (const auto& powerup : tickDescription.mPowerUps) {
@@ -984,6 +1013,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		vector<int> closestenemydist;
 		vector<int> closestenemy;
 		int waitturn = 0;
+		int oriwaitturn = 0;
 		int lastturn = 0;
 		int defendturn = 0;
 		for (const auto& powerup : tickDescription.mPowerUps) {
@@ -992,10 +1022,14 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			closestenemy.push_back(-1);
 			defendturn = powerup.mDefensTime;
 			if (powerup.mRemainingTick < 0) {
+				oriwaitturn = -powerup.mRemainingTick - 1;
 				waitturn = -powerup.mRemainingTick - 1 + defendturn;
 				lastturn = waitturn + 15;
-			} else
+			} else {
+				oriwaitturn = 0;
 				lastturn = powerup.mRemainingTick - 1;
+				waitturn = defendturn;
+			}
 		}
 		FOR0(ei, SZ(tickDescription.mEnemyVampires)) {
 			const auto& enemy = tickDescription.mEnemyVampires[ei];
@@ -1020,9 +1054,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			FOR0(i, SZ(targets)) {
 				int reach = reaches[targets[i].y][targets[i].x].turn;
 				if (mypos == targets[i]) {
-					if (waitturn == 0 && me.mRestCount >= defendturn)
+                    if (oriwaitturn == 0 && me.mRestCount >= defendturn)
 						continue;
 					best = i;
+					waitturn = defendturn - me.mRestCount;
 					break;
 				}
 				if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemydist[i] == 0) { // to late

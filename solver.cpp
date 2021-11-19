@@ -94,6 +94,15 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
         }
     }
 
+    tick.mMe.mGhostModeTick = mTickDescription.mMe.mGhostModeTick;
+    for (auto& vampire : tick.mEnemyVampires) {
+        for (const auto& element : mTickDescription.mEnemyVampires) {
+            if (element.mId == vampire.mId) {
+                vampire.mGhostModeTick = element.mGhostModeTick;
+            }
+        }
+    }
+
     if (mTickDescription.mMe.mHealth > tick.mMe.mHealth) {
         tick.mMe.mGhostModeTick = 3;
     }

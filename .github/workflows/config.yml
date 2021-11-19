@@ -36,32 +36,32 @@ jobs:
         cd ${{github.workspace}}/build
         ctest . -C Release
 
-  recommit:
-    needs: build
-    runs-on: ubuntu-latest
+  # recommit:
+  #   needs: build
+  #   runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+  #   steps:
+  #   - name: Checkout
+  #     uses: actions/checkout@v2
 
-    - name: Checkout the other
-      run: |
-        git clone http://routing_all_stars:${{ secrets.GITLAB_PASSWORD }}@git-ecosim.dyndns.org:11111/graphisoft/2021/routing_all_stars.git
-        cd routing_all_stars
-        git checkout main_vampire
-        git config --global user.email "routing@all.stars"
-        git config --global user.name "Routing All Stars"
+  #   - name: Checkout the other
+  #     run: |
+  #       git clone http://routing_all_stars:${{ secrets.GITLAB_PASSWORD }}@git-ecosim.dyndns.org:11111/graphisoft/2021/routing_all_stars.git
+  #       cd routing_all_stars
+  #       git checkout main_vampire
+  #       git config --global user.email "routing@all.stars"
+  #       git config --global user.name "Routing All Stars"
 
-    - name: Copy source
-      run: |
-        cd routing_all_stars
-        rm -rf *
-        cp  -f ${{github.workspace}}/*.h ./
-        cp  -f ${{github.workspace}}/*.cpp ./
+  #   - name: Copy source
+  #     run: |
+  #       cd routing_all_stars
+  #       rm -rf *
+  #       cp  -f ${{github.workspace}}/*.h ./
+  #       cp  -f ${{github.workspace}}/*.cpp ./
 
-    - name: Commit & push
-      run: |
-        cd routing_all_stars
-        git add .
-        git commit -m "${{ github.event.head_commit.message }}" || echo "Nothing changed"
-        git push || echo "Nothing changed"
+  #   - name: Commit & push
+  #     run: |
+  #       cd routing_all_stars
+  #       git add .
+  #       git commit -m "${{ github.event.head_commit.message }}" || echo "Nothing changed"
+  #       git push || echo "Nothing changed"

@@ -864,6 +864,41 @@ TEST_F(SimulateTest, GhostMode)
     ASSERT_EQ(finalPoints.at(2), 0);
 }
 
+TEST_F(SimulateTest, GhostModeWithExternalTick)
+{
+    // clang-format off
+    std::vector<std::string> info = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 3 2 2 1 2 0",
+        "VAMPIRE 2 3 1 2 1 2 0",
+        "GRENADE 1 3 3 1 2"
+    };
+    // clang-format on
+    const TickDescription tick = parseTickDescription(info);
+    mSimulator->SetState(tick);
+    const auto [newState, newPoints] = mSimulator->Tick();
+    ASSERT_EQ(newState.mGrenades.size(), 0);
+    ASSERT_EQ(newState.mMe.mGhostModeTick, 3);
+    ASSERT_EQ(newState.mEnemyVampires[0].mGhostModeTick, 3);
+    ASSERT_EQ(newPoints.at(1), 0); // -48 +48
+    ASSERT_EQ(newPoints.at(2), 0);
+
+    // clang-format off
+    std::vector<std::string> info2 = {
+        "REQ 775 0 1",
+        "VAMPIRE 1 3 2 2 1 2 0",
+        "VAMPIRE 2 3 1 2 1 2 0"
+    };
+    // clang-format on
+    mSimulator->SetState(parseTickDescription(info2));
+    const auto [finalState, finalPoints] = mSimulator->Tick();
+    ASSERT_EQ(finalState.mMe.mGhostModeTick, 2);
+    ASSERT_EQ(finalState.mEnemyVampires[0].mGhostModeTick, 2);
+
+    ASSERT_EQ(finalPoints.at(1), 0);
+    ASSERT_EQ(finalPoints.at(2), 0);
+}
+
 TEST_F(SimulateTest, GhostModeProtection)
 {
     // clang-format off

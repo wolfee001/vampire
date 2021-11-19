@@ -102,13 +102,16 @@ void Simulator::SetState(const TickDescription& state)
     }
 
     std::unordered_map<int, int> mRestsToSet;
+    std::unordered_map<int, int> mGhostsToSet;
     if (mState.mMe.mX == state.mMe.mX && mState.mMe.mY == state.mMe.mY) {
         mRestsToSet.emplace(mState.mMe.mId, mState.mMe.mRestCount);
+        mGhostsToSet.emplace(mState.mMe.mId, mState.mMe.mGhostModeTick);
     }
     for (const auto& element : state.mEnemyVampires) {
         const auto it = std::find_if(mState.mEnemyVampires.begin(), mState.mEnemyVampires.end(), [&element](const Vampire& v) { return v.mId == element.mId; });
         if (it != mState.mEnemyVampires.end() && it->mX == element.mX && it->mY == element.mY) {
             mRestsToSet.emplace(it->mId, it->mRestCount);
+            mGhostsToSet.emplace(it->mId, it->mGhostModeTick);
         }
     }
 
@@ -119,11 +122,21 @@ void Simulator::SetState(const TickDescription& state)
     } else {
         mState.mMe.mRestCount = 0;
     }
+    if (const auto it = mGhostsToSet.find(mState.mMe.mId); it != mGhostsToSet.end()) {
+        mState.mMe.mGhostModeTick = it->second;
+    } else {
+        mState.mMe.mGhostModeTick = 0;
+    }
     for (auto& element : mState.mEnemyVampires) {
         if (const auto it = mRestsToSet.find(element.mId); it != mRestsToSet.end()) {
             element.mRestCount = it->second;
         } else {
             element.mRestCount = 0;
+        }
+        if (const auto it = mGhostsToSet.find(element.mId); it != mGhostsToSet.end()) {
+            element.mGhostModeTick = it->second;
+        } else {
+            element.mGhostModeTick = 0;
         }
     }
     mValid = true;

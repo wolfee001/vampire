@@ -889,7 +889,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					if (ep.GetDist(p) <= 1) {
 						if (ep != p && (mEnemyPredict[enemy.mId].bombnexttoitem || mEnemyPredict[enemy.mId].doublebomber) && enemy.mPlacableGrenades >= 2 &&
 							(!importantitem || me.mHealth == 1)) {
-							if (me.mPlacableGrenades >= 2 && turn % 2 == 0) {
+							if (me.mPlacableGrenades >= 2 && turn % 3 == 0) { // attack more than pick
 								attackableenemy = true;
 								continue;
 							}
@@ -985,12 +985,14 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		vector<int> closestenemy;
 		int waitturn = 0;
 		int lastturn = 0;
+		int defendturn = 0;
 		for (const auto& powerup : tickDescription.mPowerUps) {
 			targets.push_back(pos_t(powerup.mY, powerup.mX));
 			closestenemydist.push_back(MAXTURN + 1);
 			closestenemy.push_back(-1);
+			defendturn = powerup.mDefensTime;
 			if (powerup.mRemainingTick < 0) {
-				waitturn = -powerup.mRemainingTick - 1;
+				waitturn = -powerup.mRemainingTick - 1 + defendturn;
 				lastturn = waitturn + 15;
 			} else
 				lastturn = powerup.mRemainingTick - 1;
@@ -998,8 +1000,11 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		FOR0(ei, SZ(tickDescription.mEnemyVampires)) {
 			const auto& enemy = tickDescription.mEnemyVampires[ei];
 			getdist(m, targets, tickDescription, enemy);
-			FOR0(i, SZ(targets))
+			FOR0(i, SZ(targets)) {
 				MINA2(closestenemydist[i], reaches[targets[i].y][targets[i].x].turn, closestenemy[i], ei);
+				if (lastturn == 0 && pos_t(enemy.mY, enemy.mX) == targets[i])
+					lastturn = 1;
+			}
 		}
 		getdist(m, targets, tickDescription, me, mAvoids);
 
@@ -1015,15 +1020,15 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 			FOR0(i, SZ(targets)) {
 				int reach = reaches[targets[i].y][targets[i].x].turn;
 				if (mypos == targets[i]) {
-					if (waitturn == 0)
+					if (waitturn == 0 && me.mRestCount >= defendturn)
 						continue;
 					best = i;
 					break;
 				}
-				if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemydist[i] == 0) {
+				if (reach == 0 && mypos != targets[i] && waitturn == 0 && closestenemydist[i] == 0) { // to late
 					bool enemyon = false;
 					for (const auto& enemy : tickDescription.mEnemyVampires) {
-						if (pos_t(enemy.mY, enemy.mX) == targets[i]) {
+						if (pos_t(enemy.mY, enemy.mX) == targets[i] && enemy.mRestCount >= defendturn) {
 							enemyon = true;
 							break;
 						}
@@ -1120,6 +1125,10 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 					mPreferGrenade = 1;
 					cerr << "and prefer grenade to attack" << endl;
 				}
+/*				if (!mPreferGrenade && mydist <= 4 && mydist >= 2 && closestenemydist[best] > closest && mPath.size() <= mGameDescription.mGrenadeRadius && !(mAvoids & 16) && me.mPlacableGrenades > 1) { // prepare throwable
+					mPreferGrenade = true;
+					cerr << "and randomly put grenade to be thrown";
+				} */
 				return answer;
 			}
 		}
@@ -1128,7 +1137,9 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 	if (mInPhase1) {
 //		bombseqbatcnt = true;
 		bombtimeout = mTimeout.count();
-		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30, true, mAvoids); // todo how many steps (not turns) ahead
+		vector<pos_t> seq;
+// no phase1
+//		auto seq = bombsequence(m, mypos, me.mGrenadeRange, 30, true, mAvoids); // todo how many steps (not turns) ahead
 		if (seq.empty())
 			mInPhase1 = false;
 		else {
@@ -1228,11 +1239,13 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 						float cnt = 0;
 						FOR0(i, SZ(targets)) {
 							int reach = reaches[targets[i].y][targets[i].x].turn;
-							if (closestenemydist[i] > reach)
+							if (closestenemydist[i] > reach + 2)
 								cnt += 2;
-							else if (closestenemydist[i] == reach)
-								++cnt;
-							else if (reach <= 5 && !mEnemyPredict[tickDescription.mEnemyVampires[closestenemy[i]].mId].bombonitem)
+							else if (closestenemydist[i] > reach + 1)
+								cnt += 1.5;
+							else if (closestenemydist[i] > reach)
+								cnt += 1.2;
+							else if (reach <= 7)
 								++cnt;
 						}
 						int dq = (abs(SZ(m) / 2 - p3.y) + 1) * (abs(SZ(m) / 2 - p3.x) + 1); // prefer center
@@ -1270,6 +1283,11 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 				cerr << c;
 			}
 			cerr << endl;
+
+/*			if (!mPreferGrenade && mPath.empty() && !(mAvoids & 16) && me.mPlaceableGrenades > 1 && turn % 3 == 0) {
+				mPreferGrenade = true;
+				cerr << "randomly put grenade to be thrown";
+			} */
 			return answer;
 		}
 	}

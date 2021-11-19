@@ -22,7 +22,7 @@ Search::Search(const TickDescription& tickDescription, const GameDescription& ga
     : mGameDescription(gameDescription)
     , mPlayerId(playerId)
 {
-    const auto heuristicScore = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0.F } }, {}, 1);
+    const auto heuristicScore = Evaluate(tickDescription, Simulator::NewPoints { { mPlayerId, 0.F } }, {}, 0);
     mLevels.reserve(10);
 
     const auto grenadeIt
@@ -165,12 +165,16 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 }
             }
 
-            if (action.IsGrenade() && action.GetNumberOfSteps() < 2) {
-                if (mLevels.size() > 2 || !mPreferGrenade || action.GetNumberOfSteps() == 1) {
-                    continue;
-                }
+            if (action.IsGrenade() && action.GetNumberOfSteps() == 1) {
+                continue;
             }
-
+            /*
+                        if (action.IsGrenade() && action.GetNumberOfSteps() < 2) {
+                            if (mLevels.size() > 2 || !mPreferGrenade || action.GetNumberOfSteps() == 1) {
+                                continue;
+                            }
+                        }
+            */
             if (mLevels.size() == 2 && (mAvoids & 16) && action.GetNumberOfSteps() == 0) {
                 continue;
             }
@@ -254,7 +258,7 @@ bool Search::CalculateNextLevel(std::chrono::time_point<std::chrono::steady_cloc
                 node.mPermanentScore + newPoints.at(mPlayerId) * std::pow(0.99F, static_cast<float>(currentLevelIndex)),
                 node.mHeuristicScore + heuristicScore * std::pow(0.99F, static_cast<float>(currentLevelIndex)), action.GetId());
 
-            nextNode.mThrowLength = static_cast<uint8_t>(move.mThrow->mDistance);
+            nextNode.mThrowLength = static_cast<uint8_t>(move.mThrow ? move.mThrow->mDistance : 0);
         } while (action.GetNextId());
     }
 
@@ -284,15 +288,12 @@ Answer Search::GetBestMove()
         std::cerr << "Permanent score: " << node.mPermanentScore << " Heuristic score: " << node.mHeuristicScore << std::endl;
         size_t level = 1;
         for (const auto& currentNode : branch) {
-            const auto answer = ActionSequence(currentNode->mAction).GetAnswer();
-            std::cerr << "Level " << level << " grenade: " << answer.mPlaceGrenade << " moves: ";
-            for (const auto& s : answer.mSteps) {
-                std::cerr << s << ", ";
-            }
-            std::cerr << std::endl;
+            const ActionSequence action(currentNode->mAction);
+            std::cerr << "Level " << level << " ";
+            action.Print();
 
             if (debug) {
-                Evaluate(currentNode->mTickDescription, Simulator::NewPoints {}, ActionSequence(currentNode->mAction).GetAnswer(), level, true);
+                Evaluate(currentNode->mTickDescription, Simulator::NewPoints {}, action.GetAnswer(), level, true);
             }
             ++level;
         }
@@ -429,6 +430,22 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
             if (pathIt != std::cend(mPathSequence)) {
                 pathTargetScore += (1.1F * static_cast<float>(move.mSteps.size())) * (12.F / static_cast<float>(mPathSequence.size()))
                     * static_cast<float>(std::distance(pathIt, std::cend(mPathSequence)));
+            }
+        }
+    }
+
+    if (level == 1) {
+        for (const auto& grenade : tickDescription.mGrenades) {
+            if (grenade.mId != tickDescription.mMe.mId) {
+                continue;
+            }
+
+            const auto area = simulator.GetBlowArea(grenade);
+
+            for (const auto& vampire : mLevels.front().front().mTickDescription.mEnemyVampires) {
+                if (area.find(vampire.mX, vampire.mY)) {
+                    bombingTargetScore += 12.F;
+                }
             }
         }
     }

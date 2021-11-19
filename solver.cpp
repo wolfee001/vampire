@@ -117,7 +117,20 @@ std::vector<std::string> solver::processTick(const std::vector<std::string>& inf
         return {};
     }
 
-    Answer answer = mMagic->Tick(mTickDescription, mCumulatedPoints);
+    Answer answer;
+    answer.mSteps.push_back('R');
+    answer.mSteps.push_back('R');
+    try {
+        answer = mMagic->Tick(mTickDescription, mCumulatedPoints);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "exception " << e.what() << std::endl;
+    } 
+    catch (...) {
+        std::cerr << "exception other" << std::endl;   
+    }
+
     auto commands = createAnswer(answer, mTickDescription.mRequest.mGameId, mTickDescription.mRequest.mTick, mTickDescription.mRequest.mVampireId);
 
 #ifdef GAME_WITH_FRAMEWORK

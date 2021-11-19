@@ -691,7 +691,36 @@ int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<pos_t>& enemies
 	return avoids;
 }
 
-int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemies, map<int, enemypredict_t>& enemypredict)
+bool checkkickthreat(map_t m, pos_t oldbomb, pos_t newbomb, pos_t player)
+{
+	if (m[oldbomb.y][oldbomb.x] == '2' && newbomb == player)
+		return true;
+	m[newbomb.y][newbomb.x] = m[oldbomb.y][oldbomb.x];
+	m.bombrange[newbomb.y][newbomb.x] = m.bombrange[oldbomb.y][oldbomb.x];
+	m[oldbomb.y][oldbomb.x] = ' ';
+	auto nextmap = sim(m);
+	return nextmap[player.y][player.x] == '.';
+}
+
+int avoidkicks(map_t& m, pos_t bomb, int d, pos_t player, int oriradius)
+{
+	int avoids = 0;
+	pos_t p2 = bomb;
+	FOR0(st, oriradius) {
+		p2 = p2.GetPos(d);
+		if (p2.x == 0 || p2.y == 0 || p2.x >= SZ(m) - 1 || p2.y >= SZ(m))
+			break;
+		if (m[p2.y][p2.x] != ' ' && (m[p2.y][p2.x] < '1' || m[p2.y][p2.x] > '9'))
+			continue;
+		if (checkkickthreat(m, bomb, p2, player)) {
+			avoids |= 16;
+			avoids |= player.y == p2.y ? (player.x < p2.x ? 2 : 8) : (player.y > p2.y ? 1 : 4);
+		}
+	}
+	return avoids;
+}
+
+int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemies, map<int, enemypredict_t>& enemypredict, vector<Grenade> grenades, int oriradius)
 {	
 	int avoids;
 	vector<pos_t> enemieswithbomb;
@@ -706,13 +735,28 @@ int collectavoids(map_t& m, map_t& nextmap, pos_t player, vector<Vampire> enemie
 	avoids = collectavoids(m, nextmap, player, enemieswithbomb);
 
 	for (const auto& enemy : enemies) {
+		pos_t ep(enemy.mY, enemy.mX);
 		if (enemy.mPlacableGrenades >= 1 && nextmap[enemy.mY][enemy.mX] == '.') {
 			map_t test = m;
 			test.bombrange.clear();
-			bomb(test, test, pos_t(enemy.mY, enemy.mX), enemy.mGrenadeRange);
+			bomb(test, test, ep, enemy.mGrenadeRange);
 			if (test[player.y][player.x] == '.') {
 				avoids |= 16;
 				avoids |= player.y == enemy.mY ? (player.x < enemy.mX ? 2 : 8) : (player.y > enemy.mY ? 1 : 4);
+			}
+		}
+		for(const auto& b : grenades) {
+			if (b.mId == enemy.mId) {
+				pos_t bp(b.mY, b.mX);
+				if (ep == bp) {
+					FOR0(d, 4)
+						avoids |= avoidkicks(m, bp, d, player, oriradius);
+				}
+				FOR0(d, 4) {
+					pos_t p2 = ep.GetPos(d);
+					if (p2 == bp)
+						avoids |= avoidkicks(m, bp, d, player, oriradius);
+				}
 			}
 		}
 	}
@@ -817,7 +861,7 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 		}
 	}
 
-	mAvoids = collectavoids(m, nextmap, mypos, tickDescription.mEnemyVampires, mEnemyPredict);
+	mAvoids = collectavoids(m, nextmap, mypos, tickDescription.mEnemyVampires, mEnemyPredict, tickDescription.mGrenades, mGameDescription.mGrenadeRadius + 1);
 
 	if ((mAvoids & 48) == 48 && me.mPlacableGrenades > 0 && onitem) {
 		mAvoids &= ~48;

@@ -269,6 +269,35 @@ public:
         for (const auto& step : answer.mSteps) {
             std::cerr << step;
         }
+        std::cerr << " throw: ";
+        if (IsThrow()) {
+            switch (GetThrowDirection()) {
+            case Throw::Direction::Up:
+                std::cerr << " UP ";
+                break;
+            case Throw::Direction::Down:
+                std::cerr << " DOWN ";
+                break;
+            case Throw::Direction::Left:
+                std::cerr << " LEFT ";
+                break;
+            case Throw::Direction::Right:
+                std::cerr << " RIGHT ";
+                break;
+            case Throw::Direction::XUp:
+                std::cerr << " XUP ";
+                break;
+            case Throw::Direction::XDown:
+                std::cerr << " XDOWN ";
+                break;
+            case Throw::Direction::XLeft:
+                std::cerr << " XLEFT ";
+                break;
+            case Throw::Direction::XRight:
+                std::cerr << " XRIGHT ";
+                break;
+            }
+        }
         std::cerr << std::endl;
     }
 

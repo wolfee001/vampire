@@ -8,8 +8,8 @@
 #pragma warning(push, 0)
 #endif
 
-#include <boost/container/flat_map.hpp>
-#include <boost/iterator/filter_iterator.hpp>
+// #include <boost/container/flat_map.hpp>
+// #include <boost/iterator/filter_iterator.hpp>
 
 #ifdef _WIN32
 #pragma warning(pop)
@@ -538,6 +538,7 @@ float Search::Evaluate(const TickDescription& tickDescription, const Simulator::
             }
             const auto d = distance(powerUp.mX, powerUp.mY, tickDescription.mMe.mX, tickDescription.mMe.mY);
             if (d < minDistance) {
+                minDistance = d;
                 powerUpPtr = &powerUp;
             }
         }

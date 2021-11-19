@@ -1,0 +1,25 @@
+{
+  "versions": [
+    "local",
+    "local",
+    "final_v7b",
+    "final_v7b"
+  ],
+  "timeout": "150",
+  "levels": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "totalRun": 3,
+  "seed": "42",
+  "randomDrop": 28,
+  "batchFolderName": "subbatches/10"
+}

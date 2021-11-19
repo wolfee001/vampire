@@ -2,7 +2,7 @@
 #include "models.h"
 #include <algorithm>
 #include <bitset>
-#include <boost/functional/hash.hpp>
+//#include <boost/functional/hash.hpp>
 #include <cstddef>
 #include <exception>
 #include <optional>
@@ -810,7 +810,8 @@ bool Simulator::IsValidMove(int id, const ActionSequence& move) const
 std::vector<Simulator::BlowArea> Simulator::GetBlowAreas(const bool blowNow /*= false*/)
 {
     std::vector<Simulator::BlowArea> retVal;
-    std::unordered_map<std::pair<int, int>, std::vector<std::pair<const Grenade*, bool>>, boost::hash<std::pair<int, int>>> grenadesByPos;
+    // std::unordered_map<std::pair<int, int>, std::vector<std::pair<const Grenade*, bool>>, boost::hash<std::pair<int, int>>> grenadesByPos;
+    std::unordered_map<std::pair<int, int>, std::vector<std::pair<const Grenade*, bool>>, pair_hash> grenadesByPos;
     // collect grenades: [x, y] -> vector<{grenade*, bAlreadyProcessed}>
     for (const auto& grenade : mState.mGrenades) {
         grenadesByPos[{ grenade.mX, grenade.mY }].emplace_back(&grenade, false);

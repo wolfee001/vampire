@@ -579,7 +579,7 @@ void Simulator::ThrowGrenades()
                 bool successfullThrow = false;
                 for (auto& grenade : mState.mGrenades) {
                     if (grenade.mX == targetsOpt->origin.first && grenade.mY == targetsOpt->origin.second) {
-                        if (grenade.mId == mState.mMe.mId) {
+                        if (grenade.mId == vampire->mId) {
                             grenade.mX = targetsOpt->target.first;
                             grenade.mY = targetsOpt->target.second;
                             successfullThrow = true;

@@ -932,9 +932,12 @@ Answer UsualMagic::Tick(const TickDescription& tickDescription, const Simulator:
 						pos_t p2 = p.GetPos(d2);
 						if (p2 != mypos && m[p2.y][p2.x] == ' ' && nextmap[p2.y][p2.x] != '.') {
 							answer.mPlaceGrenade = true;
-							answer.mSteps.push_back(dirc2[d]);
-							answer.mSteps.push_back(dirc2[d2]);
-							cerr << "Encircle with direct command" << dirc2[d] << dirc2[d2] << endl;
+							if (turn % 2 == 0) {
+								answer.mSteps.push_back(dirc2[d]);
+								answer.mSteps.push_back(dirc2[d2]);
+								cerr << "Encircle with direct command" << dirc2[d] << dirc2[d2] << endl;
+							} else
+								cerr << "Encircle attempt with stay" << endl;
 							return answer;
 						}
 					}
